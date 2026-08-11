@@ -1,6 +1,6 @@
 package com.example.Spring_Coffee_Shop_Project.security;
 
-import com.example.spring_security_test.dto.CommonResponse;
+import com.example.Spring_Coffee_Shop_Project.constant.CommonResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;

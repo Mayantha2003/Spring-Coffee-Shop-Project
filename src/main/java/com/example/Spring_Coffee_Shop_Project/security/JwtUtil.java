@@ -1,6 +1,6 @@
 package com.example.Spring_Coffee_Shop_Project.security;
 
-import com.example.spring_security_test.dto.UserDTO;
+import com.example.Spring_Coffee_Shop_Project.dto.UserDTO;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -21,13 +21,13 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secretKey;
 
-        @Value("${jwt.expiration}")
+    @Value("${jwt.expiration}")
     private Long expiration; // Changed from String to Long
 
     public String generateToken(UserDTO user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getUserId());
-        claims.put("role", user.getUserRoles());
+        claims.put("role", user.getUserRole());
         claims.put("username", user.getUsername());
 
         return Jwts.builder()
