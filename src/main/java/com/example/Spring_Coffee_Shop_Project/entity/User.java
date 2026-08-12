@@ -1,6 +1,7 @@
 package com.example.Spring_Coffee_Shop_Project.entity;
 
 import com.example.Spring_Coffee_Shop_Project.enumeration.UserRole;
+import com.example.Spring_Coffee_Shop_Project.enumeration.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,8 +15,19 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long userId;
-    private String userName;
+
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false)
     private String password;
+
+    private String firstName;
+    private String lastName;
+    private String phone;
+
+    @Enumerated(EnumType.STRING)
+    private UserStatus userstatus;
 
     @Enumerated(EnumType.STRING)
     private UserRole userRole;

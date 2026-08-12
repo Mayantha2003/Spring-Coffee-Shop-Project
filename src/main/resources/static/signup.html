@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Admin Account · Cafe912</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --espresso:#241811;
+      --espresso-deep:#150e09;
+      --paper:#f7f1e6;
+      --paper-dim:#efe4d0;
+      --amber:#c17a34;
+      --amber-light:#e3a668;
+      --sage:#748a6a;
+      --sage-bg:#eaf0e6;
+      --ink:#26190f;
+      --ink-soft:#6b5c4c;
+      --line:rgba(38,25,15,0.14);
+      --error:#b23b3b;
+      --success:#4c6b41;
+      --success-bg:#eaf0e6;
+      --radius:4px;
+    }
+    *{box-sizing:border-box; margin:0; padding:0;}
+    html,body{height:100%;}
+    body{
+      font-family:'Inter', sans-serif;
+      background:var(--paper);
+      color:var(--ink);
+      display:flex;
+      min-height:100vh;
+      overflow:hidden;
+    }
+    @media (prefers-reduced-motion: reduce){
+      *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+    }
+
+    /* ===== LEFT PANEL ===== */
+    .brand-panel{
+      position:relative;
+      flex:1.1;
+      background:
+              radial-gradient(circle at 15% 20%, rgba(193,122,52,0.14), transparent 45%),
+              linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%);
+      color:var(--paper);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:56px 64px;
+      min-width:420px;
+    }
+    .brand-panel::after{
+      content:"";
+      position:absolute; inset:0;
+      background-image:
+              repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 10px),
+              repeating-linear-gradient(-45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 10px);
+      pointer-events:none;
+    }
+    .brand-panel::before{
+      content:"";
+      position:absolute;
+      top:0; right:-11px; bottom:0; width:22px;
+      background-image:radial-gradient(circle, var(--paper) 6px, transparent 6.5px);
+      background-size:22px 26px;
+      background-position:0 -13px;
+      z-index:3;
+    }
+
+    .brand-top{position:relative; z-index:1;}
+    .seal{
+      width:60px; height:60px;
+      border-radius:50%;
+      border:1.5px solid var(--amber);
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:28px;
+      position:relative;
+    }
+    .seal::before{
+      content:"";
+      position:absolute; inset:6px;
+      border:1px solid rgba(193,122,52,0.4);
+      border-radius:50%;
+    }
+    .seal svg{width:24px; height:24px; stroke:var(--amber-light); position:relative;}
+    .steam{
+      position:absolute;
+      width:2px; height:10px;
+      background:linear-gradient(180deg, transparent, rgba(227,166,104,0.7), transparent);
+      border-radius:2px;
+      top:-6px;
+      animation: rise 3.2s ease-in-out infinite;
+      opacity:0;
+    }
+    .steam.s1{left:24px; animation-delay:0s;}
+    .steam.s2{left:29px; animation-delay:1.05s;}
+    .steam.s3{left:34px; animation-delay:2.1s;}
+    @keyframes rise{
+      0%{transform:translateY(0) scaleY(0.6); opacity:0;}
+      25%{opacity:0.9;}
+      80%{opacity:0;}
+      100%{transform:translateY(-16px) scaleY(1.1); opacity:0;}
+    }
+    .brand-name{
+      font-family:'Inter', sans-serif;
+      font-size:13px;
+      letter-spacing:0.18em;
+      text-transform:uppercase;
+      color:var(--amber-light);
+      font-weight:600;
+    }
+
+    .brand-mid{position:relative; z-index:1; max-width:420px;}
+    .brand-mid h1{
+      font-family:'Newsreader', serif;
+      font-weight:500;
+      font-size:clamp(34px, 4vw, 46px);
+      line-height:1.12;
+      letter-spacing:-0.01em;
+      margin-bottom:20px;
+    }
+    .brand-mid h1 em{
+      font-style:italic;
+      color:var(--amber-light);
+      font-weight:400;
+    }
+    .brand-mid p{
+      color:rgba(247,241,230,0.68);
+      font-size:15px;
+      line-height:1.65;
+    }
+
+    .step-track{
+      position:relative; z-index:1;
+      display:flex;
+      border-top:1px solid rgba(247,241,230,0.15);
+      padding-top:24px;
+      gap:0;
+    }
+    .step{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      opacity:0.4;
+      transition:opacity .2s ease;
+    }
+    .step.active{opacity:1;}
+    .step-num{
+      width:24px; height:24px; border-radius:50%;
+      border:1.5px solid var(--amber-light);
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Newsreader', serif; font-size:12px; font-weight:600;
+      color:var(--amber-light); flex-shrink:0;
+    }
+    .step.active .step-num{background:var(--amber-light); color:var(--espresso-deep);}
+    .step-label{font-size:11.5px; text-transform:uppercase; letter-spacing:0.06em; color:rgba(247,241,230,0.7);}
+
+    /* ===== RIGHT PANEL ===== */
+    .form-panel{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding-top:20px;
+      background:var(--paper);
+      overflow-y:auto;
+    }
+    .form-card{
+      width:100%;
+      max-width:440px;
+      animation: rise-in 0.6s cubic-bezier(.2,.8,.2,1) both;
+      padding:32px 0;
+    }
+    @keyframes rise-in{
+      from{opacity:0; transform:translateY(14px);}
+      to{opacity:1; transform:translateY(0);}
+    }
+    .form-card .eyebrow{
+      font-size:11.5px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      color:var(--amber);
+      font-weight:700;
+      margin-bottom:10px;
+    }
+    .form-card h2{
+      font-family:'Newsreader', serif;
+      font-weight:500;
+      font-size:30px;
+      margin-bottom:8px;
+      color:var(--espresso);
+    }
+    .form-card .sub{
+      color:var(--ink-soft);
+      font-size:14.5px;
+      margin-bottom:30px;
+    }
+
+    .field{margin-bottom:18px;}
+    .field label{
+      display:block;
+      font-size:12.5px;
+      font-weight:600;
+      color:var(--ink);
+      margin-bottom:7px;
+    }
+    .field-row{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+    .input-wrap{position:relative;}
+    .input-wrap input, .input-wrap select{
+      width:100%;
+      padding:13px 14px 13px 42px;
+      border:1.5px solid var(--line);
+      border-radius:var(--radius);
+      font-family:'Inter', sans-serif;
+      font-size:14.5px;
+      background:#fff;
+      color:var(--ink);
+      outline:none;
+      transition:border-color .18s ease, box-shadow .18s ease;
+    }
+    .input-wrap input::placeholder{color:#b5a996;}
+    .input-wrap input:focus, .input-wrap select:focus{
+      border-color:var(--espresso);
+      box-shadow:0 0 0 3px rgba(193,122,52,0.14);
+    }
+    .input-wrap svg{
+      position:absolute; left:14px; top:50%; transform:translateY(-50%);
+      width:16px; height:16px;
+      stroke:var(--ink-soft);
+      pointer-events:none;
+    }
+    .input-wrap select{appearance:none; padding-right:36px;}
+    .input-wrap.select-wrap::after{
+      content:"";
+      position:absolute; right:14px; top:50%; transform:translateY(-50%);
+      width:9px; height:9px;
+      border-right:1.5px solid var(--ink-soft);
+      border-bottom:1.5px solid var(--ink-soft);
+      rotate:45deg;
+      pointer-events:none;
+      margin-top:-4px;
+    }
+    .toggle-pw{
+      position:absolute; right:12px; top:50%; transform:translateY(-50%);
+      background:none; border:none; cursor:pointer;
+      font-size:12px; color:var(--ink-soft); font-weight:600;
+      font-family:'Inter', sans-serif;
+      padding:4px;
+    }
+    .toggle-pw:hover{color:var(--espresso);}
+
+    .field .err{
+      font-size:11.5px; color:var(--error); margin-top:6px; display:none;
+    }
+    .field.invalid input, .field.invalid select{border-color:var(--error);}
+    .field.invalid .err{display:block;}
+
+    .pw-strength{
+      display:flex; gap:4px; margin-top:8px;
+    }
+    .pw-strength .bar{
+      height:3px; flex:1; background:var(--line); border-radius:2px;
+      transition:background .2s ease;
+    }
+    .pw-strength .bar.weak{background:var(--error);}
+    .pw-strength .bar.medium{background:var(--amber);}
+    .pw-strength .bar.strong{background:var(--success);}
+    .pw-hint{font-size:11.5px; color:var(--ink-soft); margin-top:6px;}
+
+    .admin-fields{
+      padding:16px 16px 2px;
+      background:var(--paper-dim);
+      border-radius:var(--radius);
+      margin-bottom:18px;
+      border-left:2px solid var(--amber);
+    }
+    .admin-fields .group-label{
+      font-size:11px; text-transform:uppercase; letter-spacing:0.08em;
+      color:var(--ink-soft); font-weight:700; margin-bottom:14px;
+    }
+
+    .terms-row{
+      display:flex; align-items:flex-start; gap:9px;
+      margin-bottom:24px; font-size:13px; color:var(--ink-soft); line-height:1.5;
+    }
+    .terms-row input{margin-top:3px; accent-color:var(--espresso); width:14px; height:14px; flex-shrink:0;}
+    .terms-row a{color:var(--espresso); font-weight:600; text-decoration:none;}
+    .terms-row a:hover{text-decoration:underline;}
+
+    .btn-primary{
+      width:100%;
+      padding:14px;
+      background:var(--espresso);
+      color:var(--paper);
+      border:none;
+      border-radius:var(--radius);
+      font-family:'Inter', sans-serif;
+      font-size:14.5px;
+      font-weight:600;
+      letter-spacing:0.01em;
+      cursor:pointer;
+      transition:background .18s ease, transform .12s ease;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .btn-primary:hover{background:#3a281a;}
+    .btn-primary:active{transform:scale(0.99);}
+    .btn-primary:disabled{background:#a89f8f; opacity:0.6; cursor:not-allowed;}
+    .btn-primary:focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
+
+    .banner{
+      display:none;
+      font-size:13px;
+      padding:10px 12px;
+      border-radius:var(--radius);
+      margin-bottom:18px;
+    }
+    .banner.show{display:block;}
+    .banner.error-banner{
+      background:rgba(178,59,59,0.08);
+      border:1px solid rgba(178,59,59,0.25);
+      color:var(--error);
+    }
+    .banner.success-banner{
+      background:var(--success-bg);
+      border:1px solid rgba(76,107,65,0.25);
+      color:var(--success);
+    }
+
+    .foot-note{
+      margin-top:24px;
+      text-align:center;
+      font-size:13px;
+      color:var(--ink-soft);
+    }
+    .foot-note a{color:var(--espresso); font-weight:600; text-decoration:none;}
+    .foot-note a:hover{text-decoration:underline;}
+
+    @media (max-width: 860px){
+      .brand-panel{display:none;}
+      .form-panel{padding:24px;}
+      .field-row{grid-template-columns:1fr;}
+    }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+
+<section class="brand-panel">
+  <div class="brand-top">
+    <div class="seal">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+      <div class="steam s1"></div><div class="steam s2"></div><div class="steam s3"></div>
+    </div>
+    <div class="brand-name">Cafe912</div>
+  </div>
+
+  <div class="brand-mid">
+    <h1>Admin<br><em>Onboarding.</em></h1>
+    <p>Create new admin accounts to manage inventory, oversee café operations, track roasting schedules, and monitor all locations from the centralized dashboard.</p>
+  </div>
+
+  <div class="step-track">
+    <div class="step active">
+      <div class="step-num">1</div>
+      <div class="step-label">Identity</div>
+    </div>
+    <div class="step active">
+      <div class="step-num">2</div>
+      <div class="step-label">Details</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-label">Verify</div>
+    </div>
+  </div>
+</section>
+
+<section class="form-panel">
+  <div class="form-card">
+    <div class="eyebrow">Admin Portal</div>
+    <h2>Create Admin Account</h2>
+    <p class="sub">Register a new admin user for the roastery management system.</p>
+
+    <div class="banner error-banner" id="errorBanner">Please fix the highlighted fields below.</div>
+    <div class="banner success-banner" id="successBanner">Admin account created. Redirecting to sign in…</div>
+
+    <form id="signupForm" novalidate>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="firstName">First name</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="firstName" placeholder="e.g. Nadia">
+          </div>
+          <div class="err">Please enter the first name.</div>
+        </div>
+        <div class="field">
+          <label for="lastName">Last name</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="lastName" placeholder="e.g. Fernando">
+          </div>
+          <div class="err">Please enter the last name.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Admin Email</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
+          <input type="email" id="email" placeholder="admin@cafe912.com" autocomplete="username">
+        </div>
+        <div class="err">Please enter a valid email address.</div>
+      </div>
+
+      <div class="field">
+        <label for="phone">Phone number</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <input type="tel" id="phone" placeholder="e.g. +94 77 123 4567" autocomplete="tel">
+        </div>
+        <div class="err">Please enter a valid phone number.</div>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" id="password" placeholder="Create a strong password" autocomplete="new-password" style="padding-right:66px;">
+          <button type="button" class="toggle-pw" id="togglePw">SHOW</button>
+        </div>
+        <div class="pw-strength" id="pwStrength">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+        <div class="pw-hint">Use at least 8 characters, with a number and a symbol.</div>
+        <div class="err">Password must be at least 8 characters.</div>
+      </div>
+
+      <div class="field">
+        <label for="confirmPassword">Confirm password</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" id="confirmPassword" placeholder="Re-enter the password" autocomplete="new-password">
+        </div>
+        <div class="err">Passwords do not match.</div>
+      </div>
+
+      <!-- Admin-only fields -->
+      <div class="admin-fields" id="adminFields">
+        <div class="group-label">Admin details</div>
+        <div class="field">
+          <label for="accessLevel">Role</label>
+          <div class="input-wrap select-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <select id="accessLevel">
+              <option value="">Select role</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <label class="terms-row">
+        <input type="checkbox" id="agreeTerms">
+        <span>I confirm this admin account is authorized by Cafe912 management and agree to the <a href="#">admin terms of use</a> and <a href="#">data policy</a>.</span>
+      </label>
+
+      <button type="submit" class="btn-primary" id="submitBtn">
+        Create Admin Account
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </button>
+    </form>
+
+    <p class="foot-note">Already have an admin account? <a href="login.html">Sign in instead</a></p>
+  </div>
+</section>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+  /* ---------- Password visibility ---------- */
+  const togglePw = document.getElementById('togglePw');
+  const passwordInput = document.getElementById('password');
+  togglePw.addEventListener('click', () => {
+    const isText = passwordInput.type === 'text';
+    passwordInput.type = isText ? 'password' : 'text';
+    togglePw.textContent = isText ? 'SHOW' : 'HIDE';
+  });
+
+  /* ---------- Password strength meter ---------- */
+  const pwStrengthBars = document.querySelectorAll('#pwStrength .bar');
+  passwordInput.addEventListener('input', () => {
+    const val = passwordInput.value;
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val)) score++;
+    if (val.length >= 12 && /[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+
+    pwStrengthBars.forEach((bar, i) => {
+      bar.className = 'bar';
+      if (i < score) {
+        bar.classList.add(score === 1 ? 'weak' : score === 2 ? 'medium' : 'strong');
+      }
+    });
+  });
+
+  /* ---------- Validation & Operations ---------- */
+  const form = document.getElementById('signupForm');
+  const errorBanner = document.getElementById('errorBanner');
+  const successBanner = document.getElementById('successBanner');
+
+  const fields = {
+    firstName: document.getElementById('firstName'),
+    lastName: document.getElementById('lastName'),
+    email: document.getElementById('email'),
+    phone: document.getElementById('phone'),
+    password: document.getElementById('password'),
+    confirmPassword: document.getElementById('confirmPassword'),
+    accessLevel: document.getElementById('accessLevel')
+  };
+
+  $(document).ready(function () {
+    loadUserRoles();
+  });
+
+  function clearErrors(){
+    document.querySelectorAll('.field').forEach(f => f.classList.remove('invalid'));
+    errorBanner.classList.remove('show');
+  }
+
+  function validate(){
+    clearErrors();
+    let valid = true;
+
+    if (fields.firstName.value.trim().length < 2){
+      fields.firstName.closest('.field').classList.add('invalid'); valid = false;
+    }
+    if (fields.lastName.value.trim().length < 2){
+      fields.lastName.closest('.field').classList.add('invalid'); valid = false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email.value.trim())){
+      fields.email.closest('.field').classList.add('invalid'); valid = false;
+    }
+    if (!/^[+]?[\d\s()-]{7,}$/.test(fields.phone.value.trim())){
+      fields.phone.closest('.field').classList.add('invalid'); valid = false;
+    }
+    if (fields.password.value.length < 8){
+      fields.password.closest('.field').classList.add('invalid'); valid = false;
+    }
+    if (fields.confirmPassword.value !== fields.password.value || fields.confirmPassword.value === ''){
+      fields.confirmPassword.closest('.field').classList.add('invalid'); valid = false;
+    }
+    if (fields.accessLevel.value === ''){
+      fields.accessLevel.closest('.field').classList.add('invalid'); valid = false;
+    }
+
+    if (!document.getElementById('agreeTerms').checked){
+      valid = false;
+      errorBanner.textContent = 'Please confirm authorization to continue.';
+      errorBanner.classList.add('show');
+    } else if (!valid){
+      errorBanner.textContent = 'Please fix the highlighted fields below.';
+      errorBanner.classList.add('show');
+    }
+
+    return valid;
+  }
+
+  function buildPayload(){
+    return {
+      firstName: fields.firstName.value.trim(),
+      lastName: fields.lastName.value.trim(),
+      email: fields.email.value.trim(),
+      phone: fields.phone.value.trim(),
+      password: fields.password.value,
+      accessLevel: fields.accessLevel.value
+    };
+  }
+
+  function loadUserRoles() {
+    let reqHeaders = {};
+    const token = localStorage.getItem('JWT');
+    if (token && token !== "null" && token !== "undefined") {
+      reqHeaders['Authorization'] = 'Bearer ' + token;
+    }
+
+    $.ajax({
+      url: 'http://localhost:8080/v1/users/roles',
+      type: 'GET',
+      contentType: 'application/json',
+      headers: reqHeaders,
+      success: function (roles) {
+        const roleSelect = $('#accessLevel');
+        roleSelect.find('option:not(:first)').remove();
+
+        if (Array.isArray(roles)) {
+          roles.forEach(function (role) {
+            const roleValue = (typeof role === 'object' && role !== null) ? (role.roleName || role.name) : role;
+            if(roleValue){
+              roleSelect.append(`<option value="${roleValue}">${roleValue}</option>`);
+            }
+          });
+        }
+      },
+      error: function (xhr, status, error) {
+        console.error("Roles load issue:", xhr.status, error);
+      }
+    });
+  }
+
+  function signUp(){
+    if (!validate()) return;
+
+    const payload = buildPayload();
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating admin account…';
+
+    const obj = JSON.stringify({
+      "userId": 0,
+      "username": payload.email,
+      "password": payload.password,
+      "firstName": payload.firstName,
+      "lastName": payload.lastName,
+      "phone": payload.phone,
+      "userstatus": "ACTIVE",
+      "userRole": payload.accessLevel
+    });
+
+    let reqHeaders = {};
+    const token = localStorage.getItem('JWT');
+    if (token && token !== "null" && token !== "undefined") {
+      reqHeaders['Authorization'] = 'Bearer ' + token;
+    }
+
+    $.ajax({
+      url: 'http://localhost:8080/v1/users/register',
+      type: 'POST',
+      contentType: 'application/json',
+      data: obj,
+      headers: reqHeaders,
+      success: function (response) {
+        successBanner.classList.add('show');
+        errorBanner.classList.remove('show');
+        setTimeout(() => { window.location.href = 'login.html'; }, 1400);
+      },
+      error: function (response){
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `Create Admin Account <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`;
+        errorBanner.classList.add('show');
+
+        if (response.status === 403){
+          errorBanner.textContent = "Error 403 - Access forbidden.";
+        }
+        else if (response.status === 400){
+          errorBanner.textContent = response.responseJSON?.message || "Error 400 - Please check your details.";
+        }
+        else if (response.status === 401){
+          errorBanner.textContent = "Error 401 - Unauthorized.";
+        }
+        else if (response.status === 500){
+          errorBanner.textContent = "Error 500 - Internal server error.";
+        }
+        else {
+          errorBanner.textContent = "Couldn't reach the server. Please try again.";
+        }
+      }
+    });
+  }
+
+  // Submit Handler
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    signUp();
+  });
+</script>
+</body>
+</html>
