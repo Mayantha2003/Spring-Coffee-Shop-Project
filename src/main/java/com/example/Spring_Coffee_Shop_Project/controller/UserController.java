@@ -4,6 +4,7 @@ import com.example.Spring_Coffee_Shop_Project.constant.CommonResponse;
 import com.example.Spring_Coffee_Shop_Project.dto.AuthDTO;
 import com.example.Spring_Coffee_Shop_Project.dto.UserDTO;
 import com.example.Spring_Coffee_Shop_Project.enumeration.UserRole;
+import com.example.Spring_Coffee_Shop_Project.enumeration.UserStatus;
 import com.example.Spring_Coffee_Shop_Project.security.JwtUtil;
 import com.example.Spring_Coffee_Shop_Project.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @CrossOrigin
@@ -80,5 +82,11 @@ public class UserController {
     @GetMapping("/roles")
     public ResponseEntity<UserRole[]> getUserRoles() {
         return ResponseEntity.ok(UserRole.values());
+    }
+
+    //Only Using Pass the Frontend UserStatus
+    @GetMapping("/statuses")
+    public ResponseEntity<UserStatus[]> getUserStatuses() {
+        return ResponseEntity.ok(UserStatus.values());
     }
 }

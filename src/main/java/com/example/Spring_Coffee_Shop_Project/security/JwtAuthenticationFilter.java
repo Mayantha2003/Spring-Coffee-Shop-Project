@@ -25,12 +25,18 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-
     private final JwtUtil jwtUtil;
-
-    private final UserDetailsService userDetailsService;  // comes from spring security dependency. not manually created by us
-
+    private final UserDetailsService userDetailsService;
     private final ObjectMapper objectMapper;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return path.contains("/v1/users/roles") ||
+                path.contains("/v1/users/login") ||
+                path.contains("/v1/users/register") ||
+                path.contains("/v1/users/statuses");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -42,7 +48,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            String token = authHeader.substring(7); // Remove "Bearer "
+            String token = authHeader.substring(7);
             String username = jwtUtil.extractUsername(token);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -52,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);   // manages the session
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
 
