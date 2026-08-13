@@ -5,6 +5,7 @@ import com.example.Spring_Coffee_Shop_Project.entity.User;
 import com.example.Spring_Coffee_Shop_Project.enumeration.UserStatus;
 import com.example.Spring_Coffee_Shop_Project.exception.CustomerException;
 import com.example.Spring_Coffee_Shop_Project.repository.UserRepository;
+import com.example.Spring_Coffee_Shop_Project.service.EmailService;
 import com.example.Spring_Coffee_Shop_Project.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -23,6 +25,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Override
     public UserDTO getUserDetails(String username, String password) {
@@ -37,6 +40,10 @@ public class UserServiceImpl implements UserService {
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new CustomerException(400, "Invalid password");
+        }
+
+        if (!user.isVerified()) {
+            throw new CustomerException(401, "Please verify your email address before logging in!");
         }
 
         return mapToDTO(user);
@@ -152,7 +159,29 @@ public class UserServiceImpl implements UserService {
         user.setUserstatus(userDTO.getUserstatus() != null ? userDTO.getUserstatus() : UserStatus.ACTIVE);
         user.setUserRole(userDTO.getUserRole());
 
+        String token = UUID.randomUUID().toString();
+        user.setVerificationToken(token);
+        user.setVerified(false);
+
         userRepository.save(user);
+
+        emailService.sendVerificationEmail(user.getUsername(), token);
+    }
+
+    //  Email Verification Endpoint
+    @Override
+    public boolean verifyUser(String token) {
+        Optional<User> optionalUser = userRepository.findByVerificationToken(token);
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            user.setVerified(true);
+            user.setVerificationToken(null);
+            userRepository.save(user);
+            return true;
+        }
+
+        return false;
     }
 
     private UserDTO mapToDTO(User user) {

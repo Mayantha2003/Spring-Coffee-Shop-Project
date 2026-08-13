@@ -89,4 +89,16 @@ public class UserController {
     public ResponseEntity<UserStatus[]> getUserStatuses() {
         return ResponseEntity.ok(UserStatus.values());
     }
+
+    //Verify Email
+    @GetMapping("/verify")
+    public ResponseEntity<CommonResponse> verifyUser(@RequestParam("token") String token) {
+        boolean isVerified = userService.verifyUser(token);
+
+        if (isVerified) {
+            return ResponseEntity.ok(new CommonResponse(200, "Email verification successful! You can now log in."));
+        } else {
+            return ResponseEntity.status(400).body(new CommonResponse(400, "Invalid or expired verification token!"));
+        }
+    }
 }

@@ -35,7 +35,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return path.contains("/v1/users/roles") ||
                 path.contains("/v1/users/login") ||
                 path.contains("/v1/users/register") ||
-                path.contains("/v1/users/statuses");
+                path.contains("/v1/users/statuses") ||
+                path.contains("/v1/users/verify");
+
     }
 
     @Override

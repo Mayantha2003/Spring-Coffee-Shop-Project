@@ -35,7 +35,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/v1/users/roles/**", "/v1/users/register/**", "/v1/users/login/**", "/v1/users/statuses/**").permitAll()
+                        .requestMatchers(
+                                "/v1/users/roles/**",
+                                "/v1/users/register/**",
+                                "/v1/users/login/**",
+                                "/v1/users/statuses/**",
+                                "/v1/users/verify/**",
+                                "/verify-email.html",
+                                "/login.html",
+                                "/userManger.html"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )

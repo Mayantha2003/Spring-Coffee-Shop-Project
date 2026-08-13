@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification · Cafe912</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --espresso:#241811;
+            --espresso-deep:#150e09;
+            --paper:#f7f1e6;
+            --paper-dim:#efe4d0;
+            --amber:#c17a34;
+            --amber-light:#e3a668;
+            --sage:#748a6a;
+            --sage-bg:#eaf0e6;
+            --ink:#26190f;
+            --ink-soft:#6b5c4c;
+            --line:rgba(38,25,15,0.14);
+            --error:#b23b3b;
+            --error-bg:rgba(178,59,59,0.08);
+            --success:#4c6b41;
+            --success-bg:#eaf0e6;
+            --radius:4px;
+        }
+        *{box-sizing:border-box; margin:0; padding:0;}
+        html,body{height:100%;}
+        body{
+            font-family:'Inter', sans-serif;
+            background:
+                    radial-gradient(circle at 15% 15%, rgba(193,122,52,0.08), transparent 45%),
+                    var(--paper);
+            color:var(--ink);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:100vh;
+            padding:24px;
+        }
+        @media (prefers-reduced-motion: reduce){
+            *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+        }
+
+        .card{
+            background:#fff;
+            border:1px solid var(--line);
+            border-radius:8px;
+            padding:44px 38px 38px;
+            max-width:420px;
+            width:100%;
+            text-align:center;
+            box-shadow:0 20px 50px -20px rgba(21,14,9,0.25);
+            animation:rise-in 0.5s cubic-bezier(.2,.8,.2,1) both;
+        }
+        @keyframes rise-in{
+            from{opacity:0; transform:translateY(12px);}
+            to{opacity:1; transform:translateY(0);}
+        }
+
+        .seal{
+            width:56px; height:56px;
+            border-radius:50%;
+            border:1.5px solid var(--amber);
+            display:flex; align-items:center; justify-content:center;
+            margin:0 auto 20px;
+            background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%);
+            position:relative;
+        }
+        .seal::before{
+            content:"";
+            position:absolute; inset:6px;
+            border:1px solid rgba(193,122,52,0.4);
+            border-radius:50%;
+        }
+        .seal svg{width:22px; height:22px; stroke:var(--amber-light); position:relative;}
+
+        .brand-name{
+            font-size:11.5px;
+            letter-spacing:0.16em;
+            text-transform:uppercase;
+            color:var(--amber);
+            font-weight:700;
+            margin-bottom:22px;
+        }
+
+        .status-icon{
+            width:64px; height:64px;
+            border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            margin:0 auto 22px;
+            background:var(--paper-dim);
+            transition:background .2s ease;
+        }
+        .status-icon svg{width:30px; height:30px; stroke-width:2;}
+        .status-icon.pending svg{stroke:var(--amber);}
+        .status-icon.success{background:var(--success-bg);}
+        .status-icon.success svg{stroke:var(--success);}
+        .status-icon.failed{background:var(--error-bg);}
+        .status-icon.failed svg{stroke:var(--error);}
+
+        .spinner-ring{
+            width:30px; height:30px;
+            border-radius:50%;
+            border:2.5px solid var(--line);
+            border-top-color:var(--amber);
+            animation:spin 0.8s linear infinite;
+        }
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        h2{
+            font-family:'Newsreader', serif;
+            font-weight:500;
+            font-size:24px;
+            color:var(--espresso);
+            margin-bottom:10px;
+        }
+        p#status-message{
+            color:var(--ink-soft);
+            font-size:14.5px;
+            line-height:1.6;
+            max-width:320px;
+            margin:0 auto;
+        }
+
+        .btn{
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            margin-top:28px;
+            padding:13px 26px;
+            background:var(--espresso);
+            color:var(--paper);
+            text-decoration:none;
+            border-radius:var(--radius);
+            font-family:'Inter', sans-serif;
+            font-size:14px;
+            font-weight:600;
+            transition:background .18s ease, transform .12s ease;
+        }
+        .btn:hover{background:#3a281a;}
+        .btn:active{transform:scale(0.99);}
+        .btn:focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
+
+        .btn-ghost{
+            display:none;
+            margin-top:12px;
+            background:none;
+            border:1.5px solid var(--line);
+            color:var(--ink);
+            padding:12px 24px;
+            border-radius:var(--radius);
+            font-family:'Inter', sans-serif;
+            font-size:13.5px;
+            font-weight:600;
+            cursor:pointer;
+            transition:border-color .18s ease, background .18s ease;
+        }
+        .btn-ghost:hover{border-color:var(--espresso); background:var(--paper-dim);}
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="seal">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+    </div>
+    <div class="brand-name">Cafe912</div>
+
+    <div class="status-icon pending" id="statusIcon">
+        <div class="spinner-ring" id="spinnerRing"></div>
+    </div>
+
+    <h2 id="status-title">Verifying your email…</h2>
+    <p id="status-message">Please wait while we confirm your email address.</p>
+
+    <a id="login-btn" href="/login.html" class="btn" style="display:none;">
+        Go to Sign In
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </a>
+    <button id="retry-btn" class="btn-ghost" onclick="window.location.reload()">Try again</button>
+</div>
+
+<script>
+    const iconEl = document.getElementById('statusIcon');
+    const titleEl = document.getElementById('status-title');
+    const msgEl = document.getElementById('status-message');
+    const loginBtn = document.getElementById('login-btn');
+    const retryBtn = document.getElementById('retry-btn');
+
+    const ICONS = {
+        success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+        failed:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/></svg>'
+    };
+
+    function setState({ status, title, message, showLogin, showRetry }){
+        iconEl.className = 'status-icon ' + status;
+        iconEl.innerHTML = status === 'pending' ? '<div class="spinner-ring"></div>' : (ICONS[status] || '');
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        loginBtn.style.display = showLogin ? 'inline-flex' : 'none';
+        retryBtn.style.display = showRetry ? 'inline-block' : 'none';
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    if (token) {
+        fetch(`http://localhost:8080/v1/users/verify?token=${encodeURIComponent(token)}`)
+            .then(async response => {
+                let data = null;
+                try { data = await response.json(); } catch (e) { /* non-JSON body */ }
+
+                if (response.ok && (!data || data.status === 200 || data.code === 200)) {
+                    setState({
+                        status: 'success',
+                        title: 'Verified successfully!',
+                        message: 'Your email has been verified. You can now log in to Cafe912.',
+                        showLogin: true,
+                        showRetry: false
+                    });
+                } else {
+                    setState({
+                        status: 'failed',
+                        title: 'Verification failed',
+                        message: (data && data.message) || 'This link is invalid or has expired.',
+                        showLogin: false,
+                        showRetry: false
+                    });
+                }
+            })
+            .catch(() => {
+                setState({
+                    status: 'warning',
+                    title: 'Something went wrong',
+                    message: 'We couldn\'t reach the server. Check your connection and try again.',
+                    showLogin: false,
+                    showRetry: true
+                });
+            });
+    } else {
+        setState({
+            status: 'warning',
+            title: 'Invalid request',
+            message: 'No verification token was provided in the link.',
+            showLogin: false,
+            showRetry: false
+        });
+    }
+</script>
+</body>
+</html>
