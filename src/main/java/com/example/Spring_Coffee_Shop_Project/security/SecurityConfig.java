@@ -43,7 +43,7 @@ public class SecurityConfig {
                                 "/v1/users/verify/**",
                                 "/verify-email.html",
                                 "/login.html",
-                                "/userManger.html"
+                                "/user_Management.html"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()

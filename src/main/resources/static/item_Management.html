@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Management · Cafe912</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --espresso:#241811;
+            --espresso-deep:#150e09;
+            --paper:#f7f1e6;
+            --paper-dim:#efe4d0;
+            --amber:#c17a34;
+            --amber-light:#e3a668;
+            --sage:#748a6a;
+            --sage-bg:#eaf0e6;
+            --ink:#26190f;
+            --ink-soft:#6b5c4c;
+            --line:rgba(38,25,15,0.14);
+            --error:#b23b3b;
+            --error-bg:rgba(178,59,59,0.08);
+            --success:#4c6b41;
+            --success-bg:#eaf0e6;
+            --radius:4px;
+        }
+        *{box-sizing:border-box; margin:0; padding:0;}
+        html,body{height:100%;}
+        body{font-family:'Inter', sans-serif; background:var(--paper); color:var(--ink); min-height:100vh;}
+        @media (prefers-reduced-motion: reduce){ *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;} }
+        a{color:inherit;}
+
+        .topbar{position:sticky; top:0; z-index:20; background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%); color:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px;}
+        .topbar-left{display:flex; align-items:center; gap:14px;}
+        .seal{width:34px; height:34px; border-radius:50%; border:1.5px solid var(--amber); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+        .seal svg{width:16px; height:16px; stroke:var(--amber-light);}
+        .brand-name{font-size:12.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber-light); font-weight:600;}
+        .topbar-crumb{font-size:13px; color:rgba(247,241,230,0.5); padding-left:14px; margin-left:14px; border-left:1px solid rgba(247,241,230,0.18);}
+        .topbar-crumb strong{color:rgba(247,241,230,0.92); font-weight:600;}
+        .topbar-right{display:flex; align-items:center; gap:10px;}
+        .nav-link{font-size:13px; color:rgba(247,241,230,0.65); padding:8px 12px; border-radius:var(--radius); text-decoration:none; font-weight:600; transition:background .15s ease, color .15s ease;}
+        .nav-link:hover{background:rgba(247,241,230,0.08); color:var(--paper);}
+        .signout-btn{background:none; border:1px solid rgba(247,241,230,0.25); color:var(--paper); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius); cursor:pointer; transition:border-color .18s ease, background .18s ease;}
+        .signout-btn:hover{background:rgba(247,241,230,0.08); border-color:rgba(247,241,230,0.4);}
+
+        .page{max-width:1220px; margin:0 auto; padding:44px 32px 80px;}
+        .page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:32px; flex-wrap:wrap;}
+        .eyebrow{font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); font-weight:700; margin-bottom:10px;}
+        .page-head h1{font-family:'Newsreader', serif; font-weight:500; font-size:32px; color:var(--espresso); margin-bottom:6px;}
+        .page-head .sub{color:var(--ink-soft); font-size:14.5px;}
+        .head-stat{text-align:right;}
+        .head-stat .num{font-family:'Newsreader', serif; font-size:26px; color:var(--espresso); font-weight:500;}
+        .head-stat .label{font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-top:2px;}
+
+        .toolbar{display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap;}
+        .search-wrap{position:relative; flex:1; min-width:220px;}
+        .search-wrap svg{position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; stroke:var(--ink-soft); pointer-events:none;}
+        .search-wrap input{width:100%; padding:11px 14px 11px 40px; border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter', sans-serif; font-size:14px; background:#fff; color:var(--ink); outline:none; transition:border-color .18s ease, box-shadow .18s ease;}
+        .search-wrap input:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
+        .search-wrap input::placeholder{color:#b5a996;}
+
+        .filter-select{position:relative;}
+        .filter-select select{appearance:none; padding:11px 34px 11px 14px; border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter', sans-serif; font-size:13.5px; background:#fff; color:var(--ink); outline:none; cursor:pointer; min-width:140px; transition:border-color .18s ease;}
+        .filter-select select:focus{border-color:var(--espresso);}
+        .filter-select::after{content:""; position:absolute; right:13px; top:50%; width:8px; height:8px; margin-top:-5px; border-right:1.5px solid var(--ink-soft); border-bottom:1.5px solid var(--ink-soft); rotate:45deg; pointer-events:none;}
+        .clear-filters{font-size:13px; color:var(--ink-soft); background:none; border:none; cursor:pointer; font-weight:600; padding:8px 4px; text-decoration:underline; text-underline-offset:2px; display:none;}
+        .clear-filters.show{display:inline-block;}
+
+        .refresh-btn{display:flex; align-items:center; gap:7px; padding:11px 16px; background:var(--espresso); color:var(--paper); border:none; border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; transition:background .18s ease; flex-shrink:0;}
+        .refresh-btn:hover{background:#3a281a;}
+        .refresh-btn svg{width:14px; height:14px;}
+        .refresh-btn.spinning svg{animation:spin 0.8s linear infinite;}
+        .refresh-btn.ghost-btn{background:#fff; color:var(--ink); border:1.5px solid var(--line);}
+        .refresh-btn.ghost-btn:hover{background:var(--paper-dim); border-color:var(--espresso);}
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        .table-card{background:#fff; border:1px solid var(--line); border-radius:6px; overflow:hidden;}
+        table{width:100%; border-collapse:collapse;}
+        thead th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-soft); font-weight:700; padding:14px 18px; background:var(--paper-dim); border-bottom:1px solid var(--line); white-space:nowrap;}
+        tbody td{padding:15px 18px; font-size:14px; color:var(--ink); border-bottom:1px solid var(--line); vertical-align:middle;}
+        tbody tr:last-child td{border-bottom:none;}
+        tbody tr{transition:background .12s ease;}
+        tbody tr:hover{background:rgba(193,122,52,0.045);}
+
+        .item-cell{display:flex; align-items:center; gap:11px;}
+        .avatar{width:38px; height:38px; border-radius:6px; background:var(--paper-dim); color:var(--espresso); display:flex; align-items:center; justify-content:center; font-family:'Newsreader', serif; font-weight:600; font-size:13px; flex-shrink:0; border:1px solid var(--line); overflow:hidden;}
+        .avatar img{width:100%; height:100%; object-fit:cover;}
+        .item-name{font-weight:600; color:var(--ink); line-height:1.3; display:flex; align-items:center; gap:6px;}
+        .item-desc{color:var(--ink-soft); font-size:12.5px; margin-top:1px; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+        .veg-dot{width:9px; height:9px; border:1.5px solid var(--success); border-radius:2px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;}
+        .veg-dot::after{content:""; width:4px; height:4px; border-radius:50%; background:var(--success);}
+        .veg-dot.nonveg{border-color:var(--error);}
+        .veg-dot.nonveg::after{background:var(--error);}
+
+        .price-cell{font-family:'Newsreader', serif; font-size:15px; color:var(--espresso);}
+        .price-cell .strike{color:var(--ink-soft); text-decoration:line-through; font-size:12.5px; margin-left:6px; font-family:'Inter',sans-serif;}
+
+        .pill{display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:100px; font-size:11.5px; font-weight:600; text-transform:capitalize; white-space:nowrap;}
+        .pill::before{content:""; width:6px; height:6px; border-radius:50%; flex-shrink:0;}
+        .pill.cat{background:var(--paper-dim); color:var(--espresso);}
+        .pill.cat::before{background:var(--amber);}
+        .pill.status-available{background:var(--success-bg); color:var(--success);}
+        .pill.status-available::before{background:var(--success);}
+        .pill.status-out_of_stock{background:rgba(193,122,52,0.1); color:var(--amber);}
+        .pill.status-out_of_stock::before{background:var(--amber);}
+        .pill.status-discontinued{background:var(--error-bg); color:var(--error);}
+        .pill.status-discontinued::before{background:var(--error);}
+
+        .row-actions{display:flex; gap:6px; justify-content:flex-end;}
+        .icon-btn{width:32px; height:32px; border-radius:var(--radius); border:1px solid var(--line); background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s ease, border-color .15s ease;}
+        .icon-btn svg{width:15px; height:15px; stroke:var(--ink-soft);}
+        .icon-btn:hover{border-color:var(--espresso); background:var(--paper-dim);}
+        .icon-btn.danger:hover{border-color:var(--error); background:var(--error-bg);}
+        .icon-btn.danger:hover svg{stroke:var(--error);}
+
+        .state-row td{padding:56px 18px; text-align:center;}
+        .state-box{display:flex; flex-direction:column; align-items:center; gap:10px; color:var(--ink-soft);}
+        .state-box svg{width:30px; height:30px; stroke:var(--ink-soft); opacity:0.5;}
+        .state-box .state-title{font-family:'Newsreader', serif; font-size:17px; color:var(--espresso); font-weight:500;}
+        .state-box .state-sub{font-size:13px; max-width:320px;}
+        .spinner{width:22px; height:22px; border-radius:50%; border:2.5px solid var(--line); border-top-color:var(--amber); animation:spin 0.7s linear infinite;}
+
+        .table-foot{display:flex; align-items:center; justify-content:space-between; padding:13px 18px; font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); background:var(--paper-dim);}
+
+        .banner{font-size:13px; padding:11px 14px; border-radius:var(--radius); margin-bottom:16px; display:none; align-items:center; justify-content:space-between; gap:10px;}
+        .banner.show{display:flex;}
+        .banner.error-banner{background:var(--error-bg); border:1px solid rgba(178,59,59,0.25); color:var(--error);}
+        .banner.success-banner{background:var(--success-bg); border:1px solid rgba(76,107,65,0.25); color:var(--success);}
+        .banner button{background:none; border:none; cursor:pointer; color:inherit; font-weight:700; font-size:14px;}
+
+        .modal-overlay{position:fixed; inset:0; background:rgba(21,14,9,0.55); display:none; align-items:center; justify-content:center; z-index:50; padding:24px;}
+        .modal-overlay.show{display:flex;}
+        .modal{background:var(--paper); border-radius:6px; width:100%; max-width:480px; padding:30px 30px 26px; animation:modal-in .22s cubic-bezier(.2,.8,.2,1) both; max-height:90vh; overflow-y:auto;}
+        @keyframes modal-in{from{opacity:0; transform:translateY(10px) scale(0.98);} to{opacity:1; transform:translateY(0) scale(1);}}
+        .modal h3{font-family:'Newsreader', serif; font-weight:500; font-size:22px; color:var(--espresso); margin-bottom:4px;}
+        .modal .modal-sub{font-size:13.5px; color:var(--ink-soft); margin-bottom:22px;}
+        .field{margin-bottom:16px;}
+        .field label{display:block; font-size:12px; font-weight:600; color:var(--ink); margin-bottom:6px;}
+        .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+        .field-row.three{grid-template-columns:1fr 1fr 1fr;}
+        .field input, .field select, .field textarea{width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter', sans-serif; font-size:14px; background:#fff; color:var(--ink); outline:none; transition:border-color .18s ease, box-shadow .18s ease;}
+        .field textarea{resize:vertical; min-height:64px;}
+        .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
+        .field select{appearance:none;}
+        .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none;}
+        .field.invalid input, .field.invalid select, .field.invalid textarea{border-color:var(--error);}
+        .field.invalid .field-err{display:block;}
+        .veg-toggle{display:flex; gap:8px;}
+        .veg-toggle label{flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px; border:1.5px solid var(--line); border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; transition:border-color .15s ease, background .15s ease;}
+        .veg-toggle input{width:auto; accent-color:var(--espresso);}
+        .veg-toggle input:checked + span{color:var(--espresso);}
+        .modal-actions{display:flex; gap:10px; margin-top:22px;}
+        .btn{flex:1; padding:12px; border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; border:1.5px solid transparent; transition:background .15s ease, border-color .15s ease;}
+        .btn-ghost{background:#fff; border-color:var(--line); color:var(--ink);}
+        .btn-ghost:hover{border-color:var(--espresso);}
+        .btn-dark{background:var(--espresso); color:var(--paper);}
+        .btn-dark:hover{background:#3a281a;}
+        .btn-danger{background:var(--error); color:#fff;}
+        .btn-danger:hover{background:#8f2e2e;}
+        .btn:disabled{opacity:0.55; cursor:not-allowed;}
+
+        .delete-modal p{font-size:14px; color:var(--ink-soft); line-height:1.55;}
+        .delete-modal .target-name{color:var(--ink); font-weight:600;}
+
+        @media (max-width: 760px){
+            .page{padding:28px 16px 60px;}
+            .table-card{overflow-x:auto;}
+            table{min-width:760px;}
+            .field-row, .field-row.three{grid-template-columns:1fr;}
+            .topbar{padding:0 16px;}
+            .nav-link{display:none;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="seal">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+        </div>
+        <div class="brand-name">Cafe912</div>
+        <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>Item Management</strong></div>
+    </div>
+    <div class="topbar-right">
+        <a class="nav-link" href="user_Management.html">Users</a>
+        <a class="nav-link" href="category_Management.html">Categories</a>
+        <a class="nav-link" href="item_Management.html">Items</a>
+        <button class="signout-btn" id="signOutBtn">Sign out</button>
+    </div>
+</div>
+
+<div class="page">
+    <div class="page-head">
+        <div>
+            <div class="eyebrow">Admin Portal</div>
+            <h1>Item Management</h1>
+            <p class="sub">Manage every menu item, its price, category, and availability.</p>
+        </div>
+        <div class="head-stat">
+            <div class="num" id="totalCount">0</div>
+            <div class="label">Total Items</div>
+        </div>
+    </div>
+
+    <div class="banner error-banner" id="errorBanner">
+        <span id="errorBannerText">Something went wrong.</span>
+        <button onclick="dismissBanner('errorBanner')">&times;</button>
+    </div>
+    <div class="banner success-banner" id="successBanner">
+        <span id="successBannerText">Done.</span>
+        <button onclick="dismissBanner('successBanner')">&times;</button>
+    </div>
+
+    <div class="toolbar">
+        <button class="refresh-btn" id="addItemBtn" onclick="openAddModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            Add item
+        </button>
+        <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="searchInput" placeholder="Search by item name…">
+        </div>
+        <div class="filter-select">
+            <select id="categoryFilter">
+                <option value="">All categories</option>
+            </select>
+        </div>
+        <div class="filter-select">
+            <select id="statusFilter">
+                <option value="">All statuses</option>
+                <option value="AVAILABLE">Available</option>
+                <option value="OUT_OF_STOCK">Out of stock</option>
+                <option value="DISCONTINUED">Discontinued</option>
+            </select>
+        </div>
+        <button class="clear-filters" id="clearFiltersBtn" onclick="clearFilters()">Clear filters</button>
+        <button class="refresh-btn ghost-btn" id="refreshBtn" onclick="loadItems()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            Refresh
+        </button>
+    </div>
+
+    <div class="table-card">
+        <table>
+            <thead>
+            <tr>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th style="text-align:right;">Actions</th>
+            </tr>
+            </thead>
+            <tbody id="itemTableBody">
+            <tr class="state-row">
+                <td colspan="5">
+                    <div class="state-box">
+                        <div class="spinner"></div>
+                        <div class="state-sub">Loading items…</div>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="table-foot">
+            <span id="tableFootCount">Showing 0 items</span>
+            <span id="tableFootFiltered" style="display:none;"></span>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div class="modal-overlay" id="editOverlay">
+    <div class="modal">
+        <h3>Edit item</h3>
+        <p class="modal-sub">Update the item details, then save your changes.</p>
+        <form id="editForm">
+            <input type="hidden" id="editItemId">
+            <div class="field">
+                <label for="editItemName">Item name</label>
+                <input type="text" id="editItemName" required>
+            </div>
+            <div class="field">
+                <label for="editDescription">Description</label>
+                <textarea id="editDescription" placeholder="Short description shown on the menu"></textarea>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label for="editCategory">Category</label>
+                    <select id="editCategory"></select>
+                </div>
+                <div class="field">
+                    <label for="editStatus">Status</label>
+                    <select id="editStatus">
+                        <option value="AVAILABLE">Available</option>
+                        <option value="OUT_OF_STOCK">Out of stock</option>
+                        <option value="DISCONTINUED">Discontinued</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field-row three">
+                <div class="field">
+                    <label for="editPrice">Price</label>
+                    <input type="number" id="editPrice" min="0" step="0.01" required>
+                </div>
+                <div class="field">
+                    <label for="editDiscountPrice">Discount price</label>
+                    <input type="number" id="editDiscountPrice" min="0" step="0.01" placeholder="Optional">
+                </div>
+                <div class="field">
+                    <label for="editPrepTime">Prep time (min)</label>
+                    <input type="number" id="editPrepTime" min="0" step="1" placeholder="e.g. 5">
+                </div>
+            </div>
+            <div class="field">
+                <label for="editImageUrl">Image URL</label>
+                <input type="text" id="editImageUrl" placeholder="https://…">
+            </div>
+            <div class="field">
+                <label>Type</label>
+                <div class="veg-toggle">
+                    <label><input type="radio" name="editIsVeg" value="true"> <span>🟢 Veg</span></label>
+                    <label><input type="radio" name="editIsVeg" value="false"> <span>🔴 Non-veg</span></label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn btn-dark" id="saveItemBtn">Save changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal-overlay" id="addOverlay">
+    <div class="modal">
+        <h3>Add item</h3>
+        <p class="modal-sub">Create a new menu item.</p>
+        <form id="addForm" novalidate>
+            <div class="field">
+                <label for="addItemName">Item name</label>
+                <input type="text" id="addItemName" placeholder="e.g. Cappuccino" required>
+                <div class="field-err" id="addItemNameErr">Please enter an item name (2+ characters).</div>
+            </div>
+            <div class="field">
+                <label for="addDescription">Description</label>
+                <textarea id="addDescription" placeholder="Short description shown on the menu"></textarea>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label for="addCategory">Category</label>
+                    <select id="addCategory" required></select>
+                    <div class="field-err" id="addCategoryErr">Please select a category.</div>
+                </div>
+                <div class="field">
+                    <label for="addStatus">Status</label>
+                    <select id="addStatus">
+                        <option value="AVAILABLE">Available</option>
+                        <option value="OUT_OF_STOCK">Out of stock</option>
+                        <option value="DISCONTINUED">Discontinued</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field-row three">
+                <div class="field">
+                    <label for="addPrice">Price</label>
+                    <input type="number" id="addPrice" min="0" step="0.01" placeholder="0.00" required>
+                    <div class="field-err" id="addPriceErr">Enter a valid price.</div>
+                </div>
+                <div class="field">
+                    <label for="addDiscountPrice">Discount price</label>
+                    <input type="number" id="addDiscountPrice" min="0" step="0.01" placeholder="Optional">
+                </div>
+                <div class="field">
+                    <label for="addPrepTime">Prep time (min)</label>
+                    <input type="number" id="addPrepTime" min="0" step="1" placeholder="e.g. 5">
+                </div>
+            </div>
+            <div class="field">
+                <label for="addImageUrl">Image URL</label>
+                <input type="text" id="addImageUrl" placeholder="https://…">
+            </div>
+            <div class="field">
+                <label>Type</label>
+                <div class="veg-toggle">
+                    <label><input type="radio" name="addIsVeg" value="true" checked> <span>🟢 Veg</span></label>
+                    <label><input type="radio" name="addIsVeg" value="false"> <span>🔴 Non-veg</span></label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+                <button type="submit" class="btn btn-dark" id="createItemBtn">Create item</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteOverlay">
+    <div class="modal delete-modal">
+        <h3>Delete item</h3>
+        <p style="margin-top:10px;">This will permanently remove <span class="target-name" id="deleteItemName">this item</span> from the menu. This can't be undone.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">Delete item</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+
+    // (All Api Assign the Variables and Handle Easy)
+    const API_BASE = 'http://localhost:8080/v1/items';         // Main Api
+    const CATEGORY_API_BASE = 'http://localhost:8080/v1/categories'; // Used to populate category dropdowns
+    const ENDPOINTS = {
+        list:   API_BASE,              // GET    -> all items get
+        categories: CATEGORY_API_BASE, // GET    -> all categories get (for select + filter)
+        create: API_BASE,              // POST   -> Save or create item
+        update: API_BASE,              // PUT    -> Update item
+        delete: id => API_BASE + '/' + id  // DELETE -> Remove item
+    };
+
+    let allItems = [];
+    let allCategories = [];
+
+    function authHeaders() {
+        let reqHeaders = {};
+        const token = localStorage.getItem('JWT');
+        if (token && token !== "null" && token !== "undefined") {
+            reqHeaders['Authorization'] = 'Bearer ' + token;
+        }
+        return reqHeaders;
+    }
+
+    $(document).ready(function(){
+        const token = localStorage.getItem('JWT');
+
+        if (!token || token === 'null' || token === 'undefined') {
+            renderSignInRequiredState();
+        } else {
+            loadCategories();
+            loadItems();
+        }
+
+        $('#searchInput').on('input', renderTable);
+        $('#categoryFilter, #statusFilter').on('change', renderTable);
+        $('#editForm').on('submit', function(e){ e.preventDefault(); saveItem(); });
+        $('#addForm').on('submit', function(e){ e.preventDefault(); createItem(); });
+    });
+
+    $('#signOutBtn').on('click', function(){
+        localStorage.removeItem('JWT');
+        localStorage.removeItem('userId');
+        window.location.href = 'login.html';
+    });
+
+    /* ---------- Banners ---------- */
+    function showError(msg){
+        $('#errorBannerText').text(msg);
+        $('#errorBanner').addClass('show');
+        $('#successBanner').removeClass('show');
+    }
+    function showSuccess(msg){
+        $('#successBannerText').text(msg);
+        $('#successBanner').addClass('show');
+        $('#errorBanner').removeClass('show');
+        setTimeout(() => $('#successBanner').removeClass('show'), 3500);
+    }
+    function dismissBanner(id){ $('#' + id).removeClass('show'); }
+
+    /* ---------- Load categories (for filter + add/edit modals) ---------- */
+    function loadCategories(){
+        $.ajax({
+            url: ENDPOINTS.categories,
+            type: 'GET',
+            contentType: 'application/json',
+            headers: authHeaders(),
+            success: function(categories){
+                allCategories = Array.isArray(categories) ? categories : (categories?.data || []);
+
+                const categoryFilter = $('#categoryFilter');
+                const editCategory = $('#editCategory');
+                const addCategory = $('#addCategory');
+
+                categoryFilter.find('option:not(:first)').remove();
+                editCategory.empty();
+                addCategory.empty().append('<option value="">Select category</option>');
+
+                allCategories.forEach(c => {
+                    const id = c.categoryId ?? c.id;
+                    const name = c.categoryName || 'Unnamed';
+                    categoryFilter.append(`<option value="${id}">${escapeHtml(name)}</option>`);
+                    editCategory.append(`<option value="${id}">${escapeHtml(name)}</option>`);
+                    addCategory.append(`<option value="${id}">${escapeHtml(name)}</option>`);
+                });
+
+                renderTable();
+            },
+            error: function(xhr){
+                console.error('Could not load categories. Status:', xhr.status, xhr.responseText);
+            }
+        });
+    }
+
+    /* ---------- Load items ---------- */
+    function loadItems(){
+        $('#refreshBtn').addClass('spinning');
+        renderLoadingState();
+
+        $.ajax({
+            url: ENDPOINTS.list,
+            type: 'GET',
+            contentType: 'application/json',
+            headers: authHeaders(),
+            success: function(items){
+                allItems = Array.isArray(items) ? items : (items?.data || []);
+                $('#totalCount').text(allItems.length);
+                renderTable();
+            },
+            error: function(xhr){
+                if (xhr.status === 401 || xhr.status === 403){
+                    renderSignInRequiredState();
+                    showError('Your session has expired or you don\'t have access. Please sign in again.');
+                } else {
+                    renderErrorState();
+                    showError('Couldn\'t load items. Please check the connection and try again.');
+                }
+            },
+            complete: function(){
+                $('#refreshBtn').removeClass('spinning');
+            }
+        });
+    }
+
+    /* ---------- Helpers ---------- */
+    function categoryIdOf(item){
+        return item.category?.categoryId ?? item.category?.id ?? item.categoryId ?? '';
+    }
+    function categoryNameOf(item){
+        if (item.category && item.category.categoryName) return item.category.categoryName;
+        const match = allCategories.find(c => (c.categoryId ?? c.id) == categoryIdOf(item));
+        return match ? match.categoryName : 'Uncategorized';
+    }
+    function formatMoney(n){
+        const num = Number(n);
+        if (isNaN(num)) return '—';
+        return 'LKR ' + num.toFixed(2);
+    }
+
+    /* ---------- Filtering + rendering ---------- */
+    function getFilteredItems(){
+        const q = $('#searchInput').val().trim().toLowerCase();
+        const catF = $('#categoryFilter').val();
+        const statusF = $('#statusFilter').val();
+
+        return allItems.filter(it => {
+            const name = (it.itemName || '').toLowerCase();
+            const matchesSearch = !q || name.includes(q);
+            const matchesCategory = !catF || String(categoryIdOf(it)) === String(catF);
+            const matchesStatus = !statusF || (it.itemStatus || '').toUpperCase() === statusF;
+            return matchesSearch && matchesCategory && matchesStatus;
+        });
+    }
+
+    function statusClass(status){
+        const s = (status || 'AVAILABLE').toLowerCase();
+        return 'status-' + s;
+    }
+
+    function renderTable(){
+        const hasAnyFilter = $('#searchInput').val().trim() || $('#categoryFilter').val() || $('#statusFilter').val();
+        $('#clearFiltersBtn').toggleClass('show', !!hasAnyFilter);
+
+        const items = getFilteredItems();
+        const body = $('#itemTableBody');
+        body.empty();
+
+        if (allItems.length === 0){
+            renderEmptyState('No items yet', 'Add your first menu item to get started.');
+            $('#tableFootCount').text('Showing 0 items');
+            return;
+        }
+
+        if (items.length === 0){
+            renderEmptyState('No matches', 'Try a different search term or clear your filters.');
+            $('#tableFootCount').text(`Showing 0 of ${allItems.length} items`);
+            return;
+        }
+
+        items.forEach(it => {
+            const id = it.itemId ?? it.id;
+            const name = it.itemName || '—';
+            const desc = it.description || 'No description';
+            const status = it.itemStatus || 'AVAILABLE';
+            const catName = categoryNameOf(it);
+            const isVeg = it.isVeg !== false;
+            const price = formatMoney(it.price);
+            const discount = it.discountPrice ? formatMoney(it.discountPrice) : null;
+            const img = it.imageUrl
+                ? `<img src="${escapeHtml(it.imageUrl)}" alt="">`
+                : (name.charAt(0) || '?').toUpperCase();
+
+            const row = $(`
+        <tr>
+          <td>
+            <div class="item-cell">
+              <div class="avatar">${img}</div>
+              <div>
+                <div class="item-name">
+                  <span class="veg-dot ${isVeg ? '' : 'nonveg'}" title="${isVeg ? 'Veg' : 'Non-veg'}"></span>
+                  ${escapeHtml(name)}
+                </div>
+                <div class="item-desc">${escapeHtml(desc)}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="pill cat">${escapeHtml(catName)}</span></td>
+          <td>
+            <div class="price-cell">
+              ${discount ? discount + `<span class="strike">${price}</span>` : price}
+            </div>
+          </td>
+          <td><span class="pill ${statusClass(status)}">${escapeHtml(status.toLowerCase().replace('_',' '))}</span></td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-btn edit-btn" title="Edit item" aria-label="Edit ${escapeHtml(name)}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+              </button>
+              <button class="icon-btn danger delete-btn" title="Delete item" aria-label="Delete ${escapeHtml(name)}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `);
+            row.find('.edit-btn').on('click', () => openEditModal(it));
+            row.find('.delete-btn').on('click', () => openDeleteModal(it));
+            body.append(row);
+        });
+
+        $('#tableFootCount').text(
+            hasAnyFilter ? `Showing ${items.length} of ${allItems.length} items` : `Showing ${items.length} items`
+        );
+    }
+
+    function renderLoadingState(){
+        $('#itemTableBody').html(`
+      <tr class="state-row"><td colspan="5">
+        <div class="state-box"><div class="spinner"></div><div class="state-sub">Loading items…</div></div>
+      </td></tr>
+    `);
+    }
+
+    function renderErrorState(){
+        $('#itemTableBody').html(`
+      <tr class="state-row"><td colspan="5">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/></svg>
+          <div class="state-title">Couldn't load items</div>
+          <div class="state-sub">Check your connection, then try refreshing.</div>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function renderEmptyState(title, sub){
+        $('#itemTableBody').html(`
+      <tr class="state-row"><td colspan="5">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <div class="state-title">${escapeHtml(title)}</div>
+          <div class="state-sub">${escapeHtml(sub)}</div>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function renderSignInRequiredState(){
+        $('#totalCount').text('—');
+        $('#tableFootCount').text('Showing 0 items');
+        $('#itemTableBody').html(`
+      <tr class="state-row"><td colspan="5">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div class="state-title">Please sign in</div>
+          <div class="state-sub">You need an admin session to view items.</div>
+          <button class="refresh-btn" style="margin-top:6px;" onclick="window.location.href='login.html'">Go to sign in</button>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function clearFilters(){
+        $('#searchInput').val('');
+        $('#categoryFilter').val('');
+        $('#statusFilter').val('');
+        renderTable();
+    }
+
+    function escapeHtml(str){
+        return String(str).replace(/[&<>"']/g, c => ({
+            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+        }[c]));
+    }
+
+    /* ---------- Add modal ---------- */
+    function openAddModal(){
+        resetAddForm();
+        $('#addOverlay').addClass('show');
+        $('#addItemName').trigger('focus');
+    }
+
+    function closeAddModal(){
+        $('#addOverlay').removeClass('show');
+    }
+
+    function resetAddForm(){
+        $('#addForm')[0].reset();
+        $('#addForm .field').removeClass('invalid');
+        $('#addStatus').val('AVAILABLE');
+        $('input[name="addIsVeg"][value="true"]').prop('checked', true);
+        $('#createItemBtn').prop('disabled', false).text('Create item');
+    }
+
+    function validateAddForm(){
+        $('#addForm .field').removeClass('invalid');
+        let valid = true;
+
+        const name = $('#addItemName').val().trim();
+        const category = $('#addCategory').val();
+        const price = $('#addPrice').val();
+
+        if (name.length < 2){
+            $('#addItemName').closest('.field').addClass('invalid'); valid = false;
+        }
+        if (!category){
+            $('#addCategory').closest('.field').addClass('invalid'); valid = false;
+        }
+        if (price === '' || isNaN(price) || Number(price) < 0){
+            $('#addPrice').closest('.field').addClass('invalid'); valid = false;
+        }
+
+        return valid;
+    }
+
+    function createItem(){
+        if (!validateAddForm()) return;
+
+        const discount = $('#addDiscountPrice').val();
+        const prepTime = $('#addPrepTime').val();
+
+        const payload = {
+            itemName: $('#addItemName').val().trim(),
+            description: $('#addDescription').val().trim(),
+            price: Number($('#addPrice').val()),
+            discountPrice: discount === '' ? null : Number(discount),
+            imageUrl: $('#addImageUrl').val().trim(),
+            itemStatus: $('#addStatus').val(),
+            isVeg: $('input[name="addIsVeg"]:checked').val() === 'true',
+            prepTimeMinutes: prepTime === '' ? null : Number(prepTime),
+            category: { categoryId: Number($('#addCategory').val()) }
+        };
+
+        const btn = $('#createItemBtn');
+        btn.prop('disabled', true).text('Creating…');
+
+        $.ajax({
+            url: ENDPOINTS.create,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            headers: authHeaders(),
+            success: function(){
+                showSuccess('Item created.');
+                closeAddModal();
+                loadItems();
+            },
+            error: function(xhr){
+                let msg = `Couldn't create this item (error ${xhr.status}).`;
+                if (xhr.status === 409){
+                    msg = 'An item with this name already exists.';
+                } else if (xhr.responseJSON && xhr.responseJSON.message){
+                    msg = xhr.responseJSON.message;
+                }
+                showError(msg);
+            },
+            complete: function(){
+                btn.prop('disabled', false).text('Create item');
+            }
+        });
+    }
+
+    /* ---------- Edit modal ---------- */
+    let editingItem = null;
+
+    function openEditModal(it){
+        editingItem = it;
+        $('#editItemId').val(it.itemId ?? it.id);
+        $('#editItemName').val(it.itemName || '');
+        $('#editDescription').val(it.description || '');
+        $('#editCategory').val(categoryIdOf(it));
+        $('#editStatus').val((it.itemStatus || 'AVAILABLE').toUpperCase());
+        $('#editPrice').val(it.price ?? '');
+        $('#editDiscountPrice').val(it.discountPrice ?? '');
+        $('#editPrepTime').val(it.prepTimeMinutes ?? '');
+        $('#editImageUrl').val(it.imageUrl || '');
+        $(`input[name="editIsVeg"][value="${it.isVeg !== false}"]`).prop('checked', true);
+
+        $('#saveItemBtn').prop('disabled', false).text('Save changes');
+        $('#editOverlay').addClass('show');
+    }
+
+    function closeEditModal(){
+        $('#editOverlay').removeClass('show');
+        $('#saveItemBtn').prop('disabled', false).text('Save changes');
+        editingItem = null;
+    }
+
+    function saveItem(){
+        const id = $('#editItemId').val();
+        const discount = $('#editDiscountPrice').val();
+        const prepTime = $('#editPrepTime').val();
+
+        const payload = {
+            itemId: Number(id),
+            itemName: $('#editItemName').val().trim(),
+            description: $('#editDescription').val().trim(),
+            price: Number($('#editPrice').val()),
+            discountPrice: discount === '' ? null : Number(discount),
+            imageUrl: $('#editImageUrl').val().trim(),
+            itemStatus: $('#editStatus').val(),
+            isVeg: $('input[name="editIsVeg"]:checked').val() === 'true',
+            prepTimeMinutes: prepTime === '' ? null : Number(prepTime),
+            category: { categoryId: Number($('#editCategory').val()) }
+        };
+
+        const btn = $('#saveItemBtn');
+        btn.prop('disabled', true).text('Saving…');
+
+        $.ajax({
+            url: ENDPOINTS.update,
+            type: 'PUT',
+            contentType: 'application/json',
+            headers: authHeaders(),
+            data: JSON.stringify(payload),
+            success: function(){
+                showSuccess('Item updated successfully!');
+                closeEditModal();
+                loadItems();
+            },
+            error: function(xhr){
+                console.error('Update error:', xhr.responseText);
+                showError('Failed to update item.');
+            },
+            complete: function(){
+                btn.prop('disabled', false).text('Save changes');
+            }
+        });
+    }
+
+    /* ---------- Delete modal ---------- */
+    let deletingItem = null;
+
+    function openDeleteModal(it){
+        deletingItem = it;
+        const name = it.itemName || 'this item';
+        $('#deleteItemName').text(name);
+        $('#deleteOverlay').addClass('show');
+    }
+
+    function closeDeleteModal(){
+        $('#deleteOverlay').removeClass('show');
+        deletingItem = null;
+    }
+
+    function confirmDelete(){
+        if (!deletingItem) return;
+        const id = deletingItem.itemId ?? deletingItem.id;
+        const btn = $('#confirmDeleteBtn');
+        btn.prop('disabled', true).text('Deleting…');
+
+        $.ajax({
+            url: ENDPOINTS.delete(id),
+            type: 'DELETE',
+            contentType: 'application/json',
+            headers: authHeaders(),
+            success: function(){
+                showSuccess('Item deleted.');
+                closeDeleteModal();
+                loadItems();
+            },
+            error: function(xhr){
+                showError(xhr.responseJSON?.message || `Couldn't delete this item (error ${xhr.status}).`);
+            },
+            complete: function(){
+                btn.prop('disabled', false).text('Delete item');
+            }
+        });
+    }
+
+    // Close modals on overlay click / Escape
+    $('.modal-overlay').on('click', function(e){
+        if (e.target === this){ closeEditModal(); closeAddModal(); closeDeleteModal(); }
+    });
+    $(document).on('keydown', function(e){
+        if (e.key === 'Escape'){ closeEditModal(); closeAddModal(); closeDeleteModal(); }
+    });
+</script>
+</body>
+</html>

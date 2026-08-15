@@ -91,7 +91,7 @@ public class UserServiceImpl implements UserService {
         User user = updateUser.get();
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
-        user.setPhone(userDTO.getPhone());
+        user.setPhone(Integer.parseInt(userDTO.getPhone()));
         user.setUserstatus(userDTO.getUserstatus());
         user.setUserRole(userDTO.getUserRole());
 
@@ -117,7 +117,7 @@ public class UserServiceImpl implements UserService {
 
         if (userDTO.getFirstName() != null) user.setFirstName(userDTO.getFirstName());
         if (userDTO.getLastName() != null) user.setLastName(userDTO.getLastName());
-        if (userDTO.getPhone() != null) user.setPhone(userDTO.getPhone());
+        if (userDTO.getPhone() != null) user.setPhone(Integer.parseInt(userDTO.getPhone()));
         if (userDTO.getUserstatus() != null) user.setUserstatus(userDTO.getUserstatus());
         if (userDTO.getUserRole() != null) user.setUserRole(userDTO.getUserRole());
         if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
@@ -154,7 +154,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
-        user.setPhone(userDTO.getPhone());
+        user.setPhone(Integer.parseInt(userDTO.getPhone()));
 
         user.setUserstatus(userDTO.getUserstatus() != null ? userDTO.getUserstatus() : UserStatus.ACTIVE);
         user.setUserRole(userDTO.getUserRole());
@@ -191,7 +191,7 @@ public class UserServiceImpl implements UserService {
                 .password(user.getPassword())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .phone(user.getPhone())
+                .phone(String.valueOf(user.getPhone()))
                 .userstatus(user.getUserstatus())
                 .userRole(user.getUserRole())
                 .build();

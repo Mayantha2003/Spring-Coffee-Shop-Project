@@ -38,46 +38,17 @@
         }
         a{color:inherit;}
 
-        /* ===== TOP BAR ===== */
-        .topbar{
-            position:sticky; top:0; z-index:20;
-            background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%);
-            color:var(--paper);
-            display:flex; align-items:center; justify-content:space-between;
-            padding:0 32px;
-            height:64px;
-        }
+        .topbar{position:sticky; top:0; z-index:20; background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%); color:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px;}
         .topbar-left{display:flex; align-items:center; gap:14px;}
-        .seal{
-            width:34px; height:34px;
-            border-radius:50%;
-            border:1.5px solid var(--amber);
-            display:flex; align-items:center; justify-content:center;
-            flex-shrink:0;
-        }
+        .seal{width:34px; height:34px; border-radius:50%; border:1.5px solid var(--amber); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
         .seal svg{width:16px; height:16px; stroke:var(--amber-light);}
-        .brand-name{
-            font-size:12.5px;
-            letter-spacing:0.16em;
-            text-transform:uppercase;
-            color:var(--amber-light);
-            font-weight:600;
-        }
-        .topbar-crumb{
-            font-size:13px;
-            color:rgba(247,241,230,0.5);
-            padding-left:14px;
-            margin-left:14px;
-            border-left:1px solid rgba(247,241,230,0.18);
-        }
+        .brand-name{font-size:12.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber-light); font-weight:600;}
+        .topbar-crumb{font-size:13px; color:rgba(247,241,230,0.5); padding-left:14px; margin-left:14px; border-left:1px solid rgba(247,241,230,0.18);}
         .topbar-crumb strong{color:rgba(247,241,230,0.92); font-weight:600;}
-        .topbar-right{display:flex; align-items:center; gap:18px;}
-        .signout-btn{
-            background:none; border:1px solid rgba(247,241,230,0.25);
-            color:var(--paper); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600;
-            padding:8px 14px; border-radius:var(--radius); cursor:pointer;
-            transition:border-color .18s ease, background .18s ease;
-        }
+        .topbar-right{display:flex; align-items:center; gap:10px;}
+        .nav-link{font-size:13px; color:rgba(247,241,230,0.65); padding:8px 12px; border-radius:var(--radius); text-decoration:none; font-weight:600; transition:background .15s ease, color .15s ease;}
+        .nav-link:hover{background:rgba(247,241,230,0.08); color:var(--paper);}
+        .signout-btn{background:none; border:1px solid rgba(247,241,230,0.25); color:var(--paper); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius); cursor:pointer; transition:border-color .18s ease, background .18s ease;}
         .signout-btn:hover{background:rgba(247,241,230,0.08); border-color:rgba(247,241,230,0.4);}
 
         /* ===== PAGE ===== */
@@ -312,12 +283,16 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
         </div>
         <div class="brand-name">Cafe912</div>
-        <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>User Management</strong></div>
+        <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>Item Management</strong></div>
     </div>
     <div class="topbar-right">
+        <a class="nav-link" href="user_Management.html">Users</a>
+        <a class="nav-link" href="category_Management.html">Categories</a>
+        <a class="nav-link" href="item_Management.html">Items</a>
         <button class="signout-btn" id="signOutBtn">Sign out</button>
     </div>
 </div>
+
 
 <div class="page">
     <div class="page-head">
