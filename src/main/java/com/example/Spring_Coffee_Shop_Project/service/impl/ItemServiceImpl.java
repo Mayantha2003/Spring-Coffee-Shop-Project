@@ -25,7 +25,7 @@ public class ItemServiceImpl implements ItemService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public ItemDTO saveItem(ItemDTO itemDto) {
+    public void saveItem(ItemDTO itemDto) {
 
         log.info("Executing Save Item method...");
 
@@ -38,11 +38,10 @@ public class ItemServiceImpl implements ItemService {
         Item savedItem = itemRepository.save(item);
 
         log.info("Item saved successfully with id: {}", savedItem.getItemId());
-        return mapToDTO(savedItem);
     }
 
     @Override
-    public ItemDTO updateItem(long id, ItemDTO itemDto) {
+    public void updateItem(long id, ItemDTO itemDto) {
 
         log.info("Executing Full Update for Item ID: {}", id);
 
@@ -69,7 +68,6 @@ public class ItemServiceImpl implements ItemService {
 
         Item updatedItem = itemRepository.save(item);
         log.info("Item updated successfully with id: {}", updatedItem.getItemId());
-        return mapToDTO(updatedItem);
     }
 
     @Override
@@ -99,7 +97,8 @@ public class ItemServiceImpl implements ItemService {
             throw new CustomerException(404, "Item not found with id: " + id);
         }
 
-        return mapToDTO(optionalItem.get());    }
+        return mapToDTO(optionalItem.get());
+    }
 
     @Override
     public List<ItemDTO> getAllItems() {

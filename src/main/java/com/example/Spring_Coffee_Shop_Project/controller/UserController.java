@@ -23,14 +23,14 @@ public class UserController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
-    //Register Endpoint (User Save)
+    // Register Endpoint (User Save)
     @PostMapping("/register")
     public ResponseEntity<CommonResponse> registerUser(@RequestBody UserDTO userDTO){
         userService.saveUser(userDTO);
         return ResponseEntity.ok(new CommonResponse(200,"User Registered Successfully"));
     }
 
-    //Login EndPoint
+    // Login EndPoint
     @PostMapping(value = "/login",produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CommonResponse> login(@RequestBody AuthDTO authDTO){
         UserDTO userDetails = userService.getUserDetails(authDTO.getUsername(),authDTO.getPassword());
@@ -38,58 +38,58 @@ public class UserController {
         return ResponseEntity.ok(new CommonResponse(200,token));
     }
 
-    // 3. Test Protected Endpoint
+    // Test Protected Endpoint
     @GetMapping("/me")
     public ResponseEntity<String> getProfile() {
         return ResponseEntity.ok("Access Granted: Valid Token!");
     }
 
-    // 4. Get All Users
+    // Get All Users
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers(){
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    //Get User By Username
+    // Get User By Username
     @GetMapping("/{username}")
     public ResponseEntity<UserDTO> getUserByUsername(@PathVariable String username){
         return ResponseEntity.ok(userService.getUserByUsername(username));
     }
 
-    //Full Update (PUT)
+    // Full Update (PUT)
     @PutMapping
     public ResponseEntity<CommonResponse> updateUser(@RequestBody UserDTO userDTO) {
         userService.updateUser(userDTO);
         return ResponseEntity.ok(new CommonResponse(200, "User updated successfully"));
     }
 
-    //Partial Update (PATCH)
+    // Partial Update (PATCH)
     @PatchMapping("/{id}")
     public ResponseEntity<CommonResponse> patchUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         userService.patchUser(id, userDTO);
         return ResponseEntity.ok(new CommonResponse(200, "User partially updated successfully"));
     }
 
-    //Soft Delete User
+    // Soft Delete User
     @DeleteMapping("/{id}")
     public ResponseEntity<CommonResponse> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(new CommonResponse(200, "User status updated to INACTIVE successfully"));
     }
 
-    //Only Using Pass the Frontend UserRoles
+    // Only Using Pass the Frontend UserRoles
     @GetMapping("/roles")
     public ResponseEntity<UserRole[]> getUserRoles() {
         return ResponseEntity.ok(UserRole.values());
     }
 
-    //Only Using Pass the Frontend UserStatus
+    // Only Using Pass the Frontend UserStatus
     @GetMapping("/statuses")
     public ResponseEntity<UserStatus[]> getUserStatuses() {
         return ResponseEntity.ok(UserStatus.values());
     }
 
-    //Verify Email
+    // Verify Email
     @GetMapping("/verify")
     public ResponseEntity<CommonResponse> verifyUser(@RequestParam("token") String token) {
         boolean isVerified = userService.verifyUser(token);
