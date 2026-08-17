@@ -146,6 +146,10 @@
         .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none;}
         .field.invalid input, .field.invalid select, .field.invalid textarea{border-color:var(--error);}
         .field.invalid .field-err{display:block;}
+        .field-hint{font-size:11.5px; color:var(--ink-soft); margin-top:6px;}
+        .image-preview{margin-top:10px; display:none; align-items:center; gap:10px;}
+        .image-preview.show{display:flex;}
+        .image-preview img{width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid var(--line);}
         .veg-toggle{display:flex; gap:8px;}
         .veg-toggle label{flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px; border:1.5px solid var(--line); border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; transition:border-color .15s ease, background .15s ease;}
         .veg-toggle input{width:auto; accent-color:var(--espresso);}
@@ -230,9 +234,6 @@
         <div class="filter-select">
             <select id="statusFilter">
                 <option value="">All statuses</option>
-                <option value="AVAILABLE">Available</option>
-                <option value="OUT_OF_STOCK">Out of stock</option>
-                <option value="DISCONTINUED">Discontinued</option>
             </select>
         </div>
         <button class="clear-filters" id="clearFiltersBtn" onclick="clearFilters()">Clear filters</button>
@@ -294,9 +295,7 @@
                 <div class="field">
                     <label for="editStatus">Status</label>
                     <select id="editStatus">
-                        <option value="AVAILABLE">Available</option>
-                        <option value="OUT_OF_STOCK">Out of stock</option>
-                        <option value="DISCONTINUED">Discontinued</option>
+                        <option value="">All statuses</option>
                     </select>
                 </div>
             </div>
@@ -315,8 +314,13 @@
                 </div>
             </div>
             <div class="field">
-                <label for="editImageUrl">Image URL</label>
-                <input type="text" id="editImageUrl" placeholder="https://…">
+                <label for="editImageFile">Item image</label>
+                <input type="file" id="editImageFile" accept="image/*">
+                <div class="field-hint" id="currentImageHint">No image set</div>
+                <div class="image-preview" id="editImagePreview">
+                    <img id="editImagePreviewImg" src="" alt="preview">
+                    <span style="font-size:12px; color:var(--ink-soft);">New image selected</span>
+                </div>
             </div>
             <div class="field">
                 <label>Type</label>
@@ -357,9 +361,7 @@
                 <div class="field">
                     <label for="addStatus">Status</label>
                     <select id="addStatus">
-                        <option value="AVAILABLE">Available</option>
-                        <option value="OUT_OF_STOCK">Out of stock</option>
-                        <option value="DISCONTINUED">Discontinued</option>
+                        <option value="">All statuses</option>
                     </select>
                 </div>
             </div>
@@ -379,8 +381,12 @@
                 </div>
             </div>
             <div class="field">
-                <label for="addImageUrl">Image URL</label>
-                <input type="text" id="addImageUrl" placeholder="https://…">
+                <label for="addImageFile">Item image</label>
+                <input type="file" id="addImageFile" accept="image/*">
+                <div class="image-preview" id="addImagePreview">
+                    <img id="addImagePreviewImg" src="" alt="preview">
+                    <span style="font-size:12px; color:var(--ink-soft);">Image selected</span>
+                </div>
             </div>
             <div class="field">
                 <label>Type</label>
@@ -413,18 +419,23 @@
 <script>
 
     // (All Api Assign the Variables and Handle Easy)
-    const API_BASE = 'http://localhost:8080/v1/items';         // Main Api
-    const CATEGORY_API_BASE = 'http://localhost:8080/v1/categories'; // Used to populate category dropdowns
+    const ITEM_API_BASE = 'http://localhost:8080/v1/items';         // Main Api
+    const CATEGORY_API_BASE = 'http://localhost:8080/v1/categories'; // Used to category dropdowns
+    const SERVER_BASE = 'http://localhost:8080';                     // Used to build full image URLs
     const ENDPOINTS = {
-        list:   API_BASE,              // GET    -> all items get
+        list:   ITEM_API_BASE,              // GET    -> all items get
         categories: CATEGORY_API_BASE, // GET    -> all categories get (for select + filter)
-        create: API_BASE,              // POST   -> Save or create item
-        update: API_BASE,              // PUT    -> Update item
-        delete: id => API_BASE + '/' + id  // DELETE -> Remove item
+        create: ITEM_API_BASE,              // POST   -> Save or create item
+        update: ITEM_API_BASE,              // PUT    -> Update item
+        delete: id => ITEM_API_BASE + '/' + id,// DELETE -> Remove item
+        statuses: ITEM_API_BASE + '/statuses',   // GET -> Get ItemStatus Enum Values
+        uploadImage: ITEM_API_BASE + '/upload-image' // POST -> Upload an image file, returns imageUrl
     };
 
     let allItems = [];
     let allCategories = [];
+    let availableItemStatuses = [];
+
 
     function authHeaders() {
         let reqHeaders = {};
@@ -443,12 +454,17 @@
         } else {
             loadCategories();
             loadItems();
+            loadItemStatuses();
         }
 
         $('#searchInput').on('input', renderTable);
         $('#categoryFilter, #statusFilter').on('change', renderTable);
         $('#editForm').on('submit', function(e){ e.preventDefault(); saveItem(); });
         $('#addForm').on('submit', function(e){ e.preventDefault(); createItem(); });
+
+        // Live preview when a file is selected
+        $('#addImageFile').on('change', function(){ previewImage(this, '#addImagePreview', '#addImagePreviewImg'); });
+        $('#editImageFile').on('change', function(){ previewImage(this, '#editImagePreview', '#editImagePreviewImg'); });
     });
 
     $('#signOutBtn').on('click', function(){
@@ -471,6 +487,110 @@
     }
     function dismissBanner(id){ $('#' + id).removeClass('show'); }
 
+    /* ---------- Image helpers ---------- */
+    function previewImage(inputEl, previewWrapSelector, previewImgSelector){
+        const file = inputEl.files && inputEl.files[0];
+        if (!file) {
+            $(previewWrapSelector).removeClass('show');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e){
+            $(previewImgSelector).attr('src', e.target.result);
+            $(previewWrapSelector).addClass('show');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function fullImageUrl(imageUrl){
+        if (!imageUrl) return '';
+        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+        return SERVER_BASE + imageUrl;
+    }
+
+    // Uploads the selected file (if any) and resolves to the new imageUrl, or null if no file was selected.
+    function uploadImage(fileInputId){
+        return new Promise((resolve) => {
+            const fileInput = document.getElementById(fileInputId);
+            const file = fileInput && fileInput.files && fileInput.files[0];
+            if (!file) { resolve(null); return; }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                url: ENDPOINTS.uploadImage,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: authHeaders(),
+                success: function(res){
+                    // Backend returns CommonResponse{code, message} where message holds the imageUrl
+                    const imageUrl = (res && res.message) ? res.message : null;
+                    resolve(imageUrl);
+                },
+                error: function(xhr){
+                    console.error('Image upload failed:', xhr.status, xhr.responseText);
+                    showError('Image upload failed. The item will be saved without the new image.');
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    /* ---------- Load item status(for filter + add/edit modals) ---------- */
+    function loadItemStatuses(){
+        $.ajax({
+            url: ENDPOINTS.statuses,
+            type: 'GET',
+            contentType: 'application/json',
+            headers: authHeaders(),
+            success: function(statuses){
+                const rawStatuses = Array.isArray(statuses) ? statuses : (statuses?.data || []);
+                availableItemStatuses = rawStatuses.map(s => (typeof s === 'object' && s !== null) ? (s.statusName || s.name || String(s)) : String(s)).filter(Boolean);
+
+                const statusFilter = $('#statusFilter');
+                const editStatus = $('#editStatus');
+                const addStatus = $('#addStatus');
+
+                statusFilter.find('option:not(:first)').remove();
+                editStatus.empty();
+                addStatus.empty();
+
+                availableItemStatuses.forEach(status => {
+                    const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_',' ');
+                    statusFilter.append(`<option value="${status}">${formatted}</option>`);
+                    editStatus.append(`<option value="${status}">${formatted}</option>`);
+                    addStatus.append(`<option value="${status}">${formatted}</option>`);
+                });
+
+                if (availableItemStatuses.includes('AVAILABLE')) {
+                    addStatus.val('AVAILABLE');
+                }
+            },
+            error: function(xhr){
+                console.error('Could not load item statuses. Status:', xhr.status, xhr.responseText);
+                availableItemStatuses = ['AVAILABLE', 'OUT_OF_STOCK', 'DISCONTINUED'];
+
+                const statusFilter = $('#statusFilter');
+                const editStatus = $('#editStatus');
+                const addStatus = $('#addStatus');
+
+                statusFilter.find('option:not(:first)').remove();
+                editStatus.empty();
+
+                addStatus.empty();
+                availableItemStatuses.forEach(status => {
+                    const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_',' ');
+                    statusFilter.append(`<option value="${status}">${formatted}</option>`);
+                    editStatus.append(`<option value="${status}">${formatted}</option>`);
+                    addStatus.append(`<option value="${status}">${formatted}</option>`);
+                });
+                addStatus.val('AVAILABLE');
+            }
+        });
+    }
     /* ---------- Load categories (for filter + add/edit modals) ---------- */
     function loadCategories(){
         $.ajax({
@@ -600,7 +720,7 @@
             const price = formatMoney(it.price);
             const discount = it.discountPrice ? formatMoney(it.discountPrice) : null;
             const img = it.imageUrl
-                ? `<img src="${escapeHtml(it.imageUrl)}" alt="">`
+                ? `<img src="${escapeHtml(fullImageUrl(it.imageUrl))}" alt="">`
                 : (name.charAt(0) || '?').toUpperCase();
 
             const row = $(`
@@ -722,6 +842,8 @@
         $('#addForm .field').removeClass('invalid');
         $('#addStatus').val('AVAILABLE');
         $('input[name="addIsVeg"][value="true"]').prop('checked', true);
+        $('#addImagePreview').removeClass('show');
+        $('#addImagePreviewImg').attr('src', '');
         $('#createItemBtn').prop('disabled', false).text('Create item');
     }
 
@@ -746,8 +868,14 @@
         return valid;
     }
 
-    function createItem(){
+    async function createItem(){
         if (!validateAddForm()) return;
+
+        const btn = $('#createItemBtn');
+        btn.prop('disabled', true).text('Creating…');
+
+        // Upload image first (if one was selected), then create the item with the returned URL
+        const imageUrl = await uploadImage('addImageFile');
 
         const discount = $('#addDiscountPrice').val();
         const prepTime = $('#addPrepTime').val();
@@ -757,15 +885,12 @@
             description: $('#addDescription').val().trim(),
             price: Number($('#addPrice').val()),
             discountPrice: discount === '' ? null : Number(discount),
-            imageUrl: $('#addImageUrl').val().trim(),
+            imageUrl: imageUrl || '',
             itemStatus: $('#addStatus').val(),
             isVeg: $('input[name="addIsVeg"]:checked').val() === 'true',
             prepTimeMinutes: prepTime === '' ? null : Number(prepTime),
-            category: { categoryId: Number($('#addCategory').val()) }
+            categoryId: Number($('#addCategory').val())
         };
-
-        const btn = $('#createItemBtn');
-        btn.prop('disabled', true).text('Creating…');
 
         $.ajax({
             url: ENDPOINTS.create,
@@ -806,7 +931,10 @@
         $('#editPrice').val(it.price ?? '');
         $('#editDiscountPrice').val(it.discountPrice ?? '');
         $('#editPrepTime').val(it.prepTimeMinutes ?? '');
-        $('#editImageUrl').val(it.imageUrl || '');
+        $('#editImageFile').val('');
+        $('#editImagePreview').removeClass('show');
+        $('#editImagePreviewImg').attr('src', '');
+        $('#currentImageHint').text(it.imageUrl ? 'Current image: ' + it.imageUrl.split('/').pop() : 'No image set');
         $(`input[name="editIsVeg"][value="${it.isVeg !== false}"]`).prop('checked', true);
 
         $('#saveItemBtn').prop('disabled', false).text('Save changes');
@@ -819,8 +947,15 @@
         editingItem = null;
     }
 
-    function saveItem(){
+    async function saveItem(){
         const id = $('#editItemId').val();
+        const btn = $('#saveItemBtn');
+        btn.prop('disabled', true).text('Saving…');
+
+        // Only upload if the admin picked a new file; otherwise keep the existing imageUrl
+        const newImageUrl = await uploadImage('editImageFile');
+        const finalImageUrl = newImageUrl || (editingItem ? editingItem.imageUrl : '') || '';
+
         const discount = $('#editDiscountPrice').val();
         const prepTime = $('#editPrepTime').val();
 
@@ -830,15 +965,12 @@
             description: $('#editDescription').val().trim(),
             price: Number($('#editPrice').val()),
             discountPrice: discount === '' ? null : Number(discount),
-            imageUrl: $('#editImageUrl').val().trim(),
+            imageUrl: finalImageUrl,
             itemStatus: $('#editStatus').val(),
             isVeg: $('input[name="editIsVeg"]:checked').val() === 'true',
             prepTimeMinutes: prepTime === '' ? null : Number(prepTime),
-            category: { categoryId: Number($('#editCategory').val()) }
+            categoryId: Number($('#editCategory').val())
         };
-
-        const btn = $('#saveItemBtn');
-        btn.prop('disabled', true).text('Saving…');
 
         $.ajax({
             url: ENDPOINTS.update,

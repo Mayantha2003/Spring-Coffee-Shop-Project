@@ -7,6 +7,7 @@ import com.example.Spring_Coffee_Shop_Project.service.ItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,9 +25,9 @@ public class ItemController {
         return ResponseEntity.ok(new CommonResponse(200,"Item Saved Successfully"));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<CommonResponse> updateItem(@PathVariable Long id,@RequestBody ItemDTO itemDTO){
-        itemService.updateItem(id,itemDTO);
+    @PutMapping
+    public ResponseEntity<CommonResponse> updateItem(@RequestBody ItemDTO itemDTO){
+        itemService.updateItem(itemDTO);
         return ResponseEntity.ok(new CommonResponse(200,"Item Updated Successfully"));
     }
 
@@ -62,5 +63,12 @@ public class ItemController {
     @GetMapping("/statuses")
     public ResponseEntity<ItemStatus[]> getItemStatuses() {
         return ResponseEntity.ok(ItemStatus.values());
+    }
+
+    // Upload image
+    @PostMapping("/upload-image")
+    public ResponseEntity<CommonResponse> uploadImage(@RequestParam("file") MultipartFile file){
+        String imageUrl = itemService.saveImage(file);
+        return ResponseEntity.ok(new CommonResponse(200, imageUrl));
     }
 }

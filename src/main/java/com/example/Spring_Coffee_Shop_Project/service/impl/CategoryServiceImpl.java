@@ -5,10 +5,12 @@ import com.example.Spring_Coffee_Shop_Project.entity.Category;
 import com.example.Spring_Coffee_Shop_Project.enumeration.CategoryStatus;
 import com.example.Spring_Coffee_Shop_Project.exception.CustomerException;
 import com.example.Spring_Coffee_Shop_Project.repository.CategoryRepository;
+import com.example.Spring_Coffee_Shop_Project.repository.ItemRepository;
 import com.example.Spring_Coffee_Shop_Project.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +23,10 @@ import java.util.Optional;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ItemRepository itemRepository;
 
     @Override
-    public CategoryDTO saveCategory(CategoryDTO categoryDto) {
+    public void saveCategory(CategoryDTO categoryDto) {
 
         log.info("Executing Save Category method...");
 
@@ -35,17 +38,16 @@ public class CategoryServiceImpl implements CategoryService {
         Category savedCategory = categoryRepository.save(category);
 
         log.info("Category saved successfully with id: {}", savedCategory.getCategoryId());
-        return mapToDTO(savedCategory);
     }
 
     @Override
-    public CategoryDTO updateCategory(long id, CategoryDTO categoryDto) {
+    public void updateCategory(CategoryDTO categoryDto) {
 
-        log.info("Executing Full Update for Category ID: {}", id);
+        log.info("Executing Full Update for Category ID: {}", categoryDto.getCategoryId());
 
-        Optional<Category> optionalCategory = categoryRepository.findById(id);
+        Optional<Category> optionalCategory = categoryRepository.findById(categoryDto.getCategoryId());
         if (optionalCategory.isEmpty()) {
-            throw new CustomerException(404, "Category not found with id: " + id);
+            throw new CustomerException(404, "Category not found with id: " + categoryDto.getCategoryId());
         }
 
         Category category = optionalCategory.get();
@@ -57,7 +59,6 @@ public class CategoryServiceImpl implements CategoryService {
 
         Category updatedCategory = categoryRepository.save(category);
         log.info("Category updated successfully with id: {}", updatedCategory.getCategoryId());
-        return mapToDTO(updatedCategory);
     }
 
     @Override
@@ -91,6 +92,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CategoryDTO> getAllCategories() {
 
         log.info("Fetching all categories...");
@@ -105,6 +107,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private CategoryDTO mapToDTO(Category category) {
+        long count = itemRepository.countByCategoryCategoryId(category.getCategoryId());
         return CategoryDTO.builder()
                 .categoryId(category.getCategoryId())
                 .categoryName(category.getCategoryName())
@@ -112,6 +115,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .icon(category.getIcon())
                 .categoryStatus(category.getCategoryStatus())
                 .displayOrder(category.getDisplayOrder())
+                .itemCount((int) count)
                 .build();
     }
 

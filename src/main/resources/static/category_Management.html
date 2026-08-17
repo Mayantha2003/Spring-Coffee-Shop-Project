@@ -212,8 +212,6 @@
     <div class="filter-select">
       <select id="statusFilter">
         <option value="">All statuses</option>
-        <option value="ACTIVE">Active</option>
-        <option value="INACTIVE">Inactive</option>
       </select>
     </div>
     <button class="clear-filters" id="clearFiltersBtn" onclick="clearFilters()">Clear filters</button>
@@ -354,10 +352,13 @@
     list:   API_BASE,              // GET    -> all categories get
     create: API_BASE,              // POST   -> Save or create category
     update: API_BASE,              // PUT    -> Update category
-    delete: id => API_BASE + '/' + id  // DELETE -> Remove category
+    delete: id => API_BASE + '/' + id, // DELETE -> Remove category
+    statuses: API_BASE + '/statuses'    // GET -> Get CategoryStatus Enum Values
   };
 
   let allCategories = [];
+  let availableStatuses = [];
+
 
   function authHeaders() {
     let reqHeaders = {};
@@ -375,6 +376,7 @@
       renderSignInRequiredState();
     } else {
       loadCategories();
+      loadStatuses();
     }
 
     $('#searchInput').on('input', renderTable);
@@ -403,6 +405,63 @@
   }
   function dismissBanner(id){ $('#' + id).removeClass('show'); }
 
+  /* ---------- Load statuses (for filter + edit/add modals) ---------- */
+  function loadStatuses(){
+    $.ajax({
+      url: ENDPOINTS.statuses,
+      type: 'GET',
+      contentType: 'application/json',
+      headers: authHeaders(),
+      success: function (statuses){
+        console.log("Statuses from backend:", statuses);
+
+        const rawStatuses = Array.isArray(statuses) ? statuses : (statuses?.data || []);
+        availableStatuses = rawStatuses.map(s => (typeof s === 'object' && s !== null) ? (s.statusName || s.name || String(s)) : String(s)).filter(Boolean);
+
+        const statusFilter = $('#statusFilter');
+        const editStatus = $('#editStatus');
+        const addStatus = $('#addStatus');
+
+        statusFilter.find('option:not(:first)').remove();
+        editStatus.empty();
+        addStatus.empty();
+
+        availableStatuses.forEach(status => {
+          const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+
+          statusFilter.append(`<option value="${status}">${formatted}</option>`);
+          editStatus.append(`<option value="${status}">${formatted}</option>`);
+          addStatus.append(`<option value="${status}">${formatted}</option>`);
+        });
+
+        if (availableStatuses.includes('ACTIVE')) {
+          addStatus.val('ACTIVE');
+        }
+      },
+      error: function(xhr){
+        console.error('Could not load statuses. Status:', xhr.status, xhr.responseText);
+
+        availableStatuses = ['ACTIVE', 'INACTIVE'];
+
+        const statusFilter = $('#statusFilter');
+        const editStatus = $('#editStatus');
+        const addStatus = $('#addStatus');
+
+        statusFilter.find('option:not(:first)').remove();
+        editStatus.empty();
+        addStatus.empty();
+
+        availableStatuses.forEach(status => {
+          const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+          statusFilter.append(`<option value="${status}">${formatted}</option>`);
+          editStatus.append(`<option value="${status}">${formatted}</option>`);
+          addStatus.append(`<option value="${status}">${formatted}</option>`);
+        });
+
+        addStatus.val('ACTIVE');
+      }
+    });
+  }
   /* ---------- Load categories ---------- */
   function loadCategories(){
     $('#refreshBtn').addClass('spinning');

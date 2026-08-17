@@ -40,10 +40,13 @@ public class SecurityConfig {
                                 "/v1/users/register/**",
                                 "/v1/users/login/**",
                                 "/v1/users/statuses/**",
+                                "/v1/categories/statuses/**",
                                 "/v1/users/verify/**",
                                 "/verify-email.html",
                                 "/login.html",
-                                "/user_Management.html"
+                                "/user_Management.html",
+                                "/uploads/**"
+
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()

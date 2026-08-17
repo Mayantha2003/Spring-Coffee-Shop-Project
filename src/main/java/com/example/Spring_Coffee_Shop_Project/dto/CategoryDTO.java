@@ -16,4 +16,6 @@ public class CategoryDTO{
     private String icon;
     private CategoryStatus categoryStatus;
     private int displayOrder;
+    private int itemCount;
+
 }

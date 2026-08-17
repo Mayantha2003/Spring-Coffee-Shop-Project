@@ -579,7 +579,7 @@
 
                 statusFilter.find('option:not(:first)').remove();
                 editStatus.empty();
-                addStatus.empty().append('<option value="">Select status</option>');
+                addStatus.empty();
 
                 availableStatuses.forEach(status => {
                     const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
@@ -588,20 +588,35 @@
                     editStatus.append(`<option value="${status}">${formatted}</option>`);
                     addStatus.append(`<option value="${status}">${formatted}</option>`);
                 });
+
+                if (availableStatuses.includes('ACTIVE')) {
+                    addStatus.val('ACTIVE');
+                }
             },
             error: function(xhr){
                 console.error('Could not load statuses. Status:', xhr.status, xhr.responseText);
-                if (availableStatuses.length === 0){
-                    availableStatuses = ['ACTIVE', 'INACTIVE', 'PENDING'];
-                    const addStatus = $('#addStatus');
-                    if (addStatus.children().length <= 1){
-                        addStatus.append('<option value="ACTIVE">Active</option>');
-                    }
-                }
+
+                availableStatuses = ['ACTIVE', 'INACTIVE', 'PENDING'];
+
+                const statusFilter = $('#statusFilter');
+                const editStatus = $('#editStatus');
+                const addStatus = $('#addStatus');
+
+                statusFilter.find('option:not(:first)').remove();
+                editStatus.empty();
+                addStatus.empty();
+
+                availableStatuses.forEach(status => {
+                    const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+                    statusFilter.append(`<option value="${status}">${formatted}</option>`);
+                    editStatus.append(`<option value="${status}">${formatted}</option>`);
+                    addStatus.append(`<option value="${status}">${formatted}</option>`);
+                });
+
+                addStatus.val('ACTIVE');
             }
         });
     }
-
     /* ---------- Load roles (for filter + edit/add modals) ---------- */
     function loadRoles(){
         $.ajax({

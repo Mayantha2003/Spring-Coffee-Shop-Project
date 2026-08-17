@@ -24,7 +24,7 @@ public class User {
 
     private String firstName;
     private String lastName;
-    private int phone;
+    private String  phone;
 
     @Enumerated(EnumType.STRING)
     private UserStatus userstatus;

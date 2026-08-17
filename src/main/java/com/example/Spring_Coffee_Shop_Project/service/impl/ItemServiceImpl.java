@@ -11,10 +11,17 @@ import com.example.Spring_Coffee_Shop_Project.service.ItemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -41,13 +48,13 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public void updateItem(long id, ItemDTO itemDto) {
+    public void updateItem(ItemDTO itemDto) {
 
-        log.info("Executing Full Update for Item ID: {}", id);
+        log.info("Executing Full Update for Item ID: {}", itemDto.getItemId());
 
-        Optional<Item> optionalItem = itemRepository.findById(id);
+        Optional<Item> optionalItem = itemRepository.findById(itemDto.getItemId());
         if (optionalItem.isEmpty()) {
-            throw new CustomerException(404, "Item not found with id: " + id);
+            throw new CustomerException(404, "Item not found with id: " + itemDto.getItemId());
         }
 
         Optional<Category> optionalCategory = categoryRepository.findById(itemDto.getCategoryId());
@@ -143,6 +150,26 @@ public class ItemServiceImpl implements ItemService {
         }
 
         return itemDTOList;
+    }
+
+    // Save Image
+    @Override
+    public String saveImage(MultipartFile file) {
+        try {
+            String uploadDir = "uploads/images/";
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            return "/uploads/images/" + fileName;
+        } catch (IOException e) {
+            throw new CustomerException(500, "Failed to save image: " + e.getMessage());
+        }
     }
 
     private ItemDTO mapToDTO(Item item) {

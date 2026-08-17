@@ -24,9 +24,9 @@ public class CategoryController {
         return ResponseEntity.ok(new CommonResponse(200,"Category Saved Successfully"));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<CommonResponse> updateCategory (@PathVariable Long id,@RequestBody CategoryDTO categoryDTO){
-        categoryService.updateCategory(id,categoryDTO);
+    @PutMapping
+    public ResponseEntity<CommonResponse> updateCategory (@RequestBody CategoryDTO categoryDTO){
+        categoryService.updateCategory(categoryDTO);
         return ResponseEntity.ok(new CommonResponse(200,"Category Updated Successfully"));
     }
 
