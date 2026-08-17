@@ -5,6 +5,9 @@ import com.example.Spring_Coffee_Shop_Project.enumeration.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -34,4 +37,7 @@ public class User {
 
     private boolean isVerified = false;
     private String verificationToken;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<LoginHistory> loginHistories = new ArrayList<>();
 }

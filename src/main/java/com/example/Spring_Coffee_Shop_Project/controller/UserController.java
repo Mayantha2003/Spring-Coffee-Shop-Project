@@ -3,10 +3,13 @@ package com.example.Spring_Coffee_Shop_Project.controller;
 import com.example.Spring_Coffee_Shop_Project.constant.CommonResponse;
 import com.example.Spring_Coffee_Shop_Project.dto.AuthDTO;
 import com.example.Spring_Coffee_Shop_Project.dto.UserDTO;
+import com.example.Spring_Coffee_Shop_Project.entity.User;
 import com.example.Spring_Coffee_Shop_Project.enumeration.UserRole;
 import com.example.Spring_Coffee_Shop_Project.enumeration.UserStatus;
 import com.example.Spring_Coffee_Shop_Project.security.JwtUtil;
+import com.example.Spring_Coffee_Shop_Project.service.LoginHistoryService;
 import com.example.Spring_Coffee_Shop_Project.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,7 @@ public class UserController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final LoginHistoryService loginHistoryService;
 
     // Register Endpoint (User Save)
     @PostMapping("/register")
@@ -30,12 +34,15 @@ public class UserController {
         return ResponseEntity.ok(new CommonResponse(200,"User Registered Successfully"));
     }
 
-    // Login EndPoint
-    @PostMapping(value = "/login",produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CommonResponse> login(@RequestBody AuthDTO authDTO){
-        UserDTO userDetails = userService.getUserDetails(authDTO.getUsername(),authDTO.getPassword());
+    // Login Endpoint
+    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CommonResponse> login(@RequestBody AuthDTO authDTO, HttpServletRequest request){
+        UserDTO userDetails = userService.getUserDetails(authDTO.getUsername(), authDTO.getPassword());
+
+        loginHistoryService.recordLogin(userDetails, request);
+
         String token = jwtUtil.generateToken(userDetails);
-        return ResponseEntity.ok(new CommonResponse(200,token));
+        return ResponseEntity.ok(new CommonResponse(200, token));
     }
 
     // Test Protected Endpoint
