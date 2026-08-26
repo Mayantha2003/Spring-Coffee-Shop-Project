@@ -289,6 +289,8 @@
         <a class="nav-link" href="user_Management.html">Users</a>
         <a class="nav-link" href="category_Management.html">Categories</a>
         <a class="nav-link" href="item_Management.html">Items</a>
+        <a class="nav-link" href="batch_Management.html">Batches</a>
+        <a class="nav-link" href="customer_Management.html">Customers</a>
         <button class="signout-btn" id="signOutBtn">Sign out</button>
     </div>
 </div>
@@ -332,10 +334,6 @@
         </div>
         <div class="filter-select">
             <select id="statusFilter">
-                <option value="">All statuses</option>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-                <option value="PENDING">Pending</option>
             </select>
         </div>
         <button class="clear-filters" id="clearFiltersBtn" onclick="clearFilters()">Clear filters</button>
@@ -407,9 +405,6 @@
                 <div class="field">
                     <label for="editStatus">Status</label>
                     <select id="editStatus">
-                        <option value="ACTIVE">Active</option>
-                        <option value="INACTIVE">Inactive</option>
-                        <option value="PENDING">Pending</option>
                     </select>
                 </div>
             </div>
@@ -469,9 +464,6 @@
                 <div class="field">
                     <label for="addStatus">Status</label>
                     <select id="addStatus">
-                        <option value="ACTIVE">Active</option>
-                        <option value="INACTIVE">Inactive</option>
-                        <option value="PENDING">Pending</option>
                     </select>
                 </div>
             </div>
@@ -498,196 +490,63 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 
-    //(All Api Assign  the Variables and Handle Easy)
-    const API_BASE = 'http://localhost:8080/v1/users'; //Main Api
-    const ENDPOINTS = {
-        list:   API_BASE,              // GET    -> all users get
-        roles:  API_BASE + '/roles',   // GET    -> all roles get
-        statuses: API_BASE + '/statuses', // GET    -> all status get
-        create: API_BASE + '/register',// POST   -> Save or create users
-        update: API_BASE ,             // PUT    -> Update users
-        delete: id => API_BASE + '/' + id  // DELETE -> Change the status
-    };
-
+    // STATE VARIABLES
     let allUsers = [];
     let availableRoles = [];
     let availableStatuses = [];
+    let editingUser = null;
+    let deletingUser = null;
 
+
+    // HELPERS
     function authHeaders() {
-        let reqHeaders = {};
+        const h = {};
         const token = localStorage.getItem('JWT');
-        if (token && token !== "null" && token !== "undefined") {
-            reqHeaders['Authorization'] = 'Bearer ' + token;
+        if (token && token !== 'null' && token !== 'undefined') {
+            h['Authorization'] = 'Bearer ' + token;
         }
-        return reqHeaders;
+        return h;
     }
 
-    $(document).ready(function(){
-        const token = localStorage.getItem('JWT');
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
 
-        if (!token || token === 'null' || token === 'undefined') {
-            renderSignInRequiredState();
-        } else {
-            loadRoles();
-            loadUsers();
-            loadStatuses();
-        }
-
-        $('#searchInput').on('input', renderTable);
-        $('#roleFilter, #statusFilter').on('change', renderTable);
-        $('#editForm').on('submit', function(e){ e.preventDefault(); saveUser(); });
-        $('#addForm').on('submit', function(e){ e.preventDefault(); createUser(); });
-    });
-
-    $('#signOutBtn').on('click', function(){
-        localStorage.removeItem('JWT');
-        localStorage.removeItem('userId');
-        window.location.href = 'login.html';
-    });
-
-    /* ---------- Banners ---------- */
-    function showError(msg){
+    function showError(msg) {
         $('#errorBannerText').text(msg);
         $('#errorBanner').addClass('show');
         $('#successBanner').removeClass('show');
     }
-    function showSuccess(msg){
+
+    function showSuccess(msg) {
         $('#successBannerText').text(msg);
         $('#successBanner').addClass('show');
         $('#errorBanner').removeClass('show');
         setTimeout(() => $('#successBanner').removeClass('show'), 3500);
     }
-    function dismissBanner(id){ $('#' + id).removeClass('show'); }
 
-
-    /* ---------- Load statuses (for filter + edit/add modals) ---------- */
-    function loadStatuses(){
-        $.ajax({
-            url: ENDPOINTS.statuses,
-            type: 'GET',
-            contentType: 'application/json',
-            headers: authHeaders(),
-            success: function(statuses){
-                console.log("Statuses from backend:", statuses);
-
-                const rawStatuses = Array.isArray(statuses) ? statuses : (statuses?.data || []);
-                availableStatuses = rawStatuses.map(s => (typeof s === 'object' && s !== null) ? (s.statusName || s.name || String(s)) : String(s)).filter(Boolean);
-
-                const statusFilter = $('#statusFilter');
-                const editStatus = $('#editStatus');
-                const addStatus = $('#addStatus');
-
-                statusFilter.find('option:not(:first)').remove();
-                editStatus.empty();
-                addStatus.empty();
-
-                availableStatuses.forEach(status => {
-                    const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-
-                    statusFilter.append(`<option value="${status}">${formatted}</option>`);
-                    editStatus.append(`<option value="${status}">${formatted}</option>`);
-                    addStatus.append(`<option value="${status}">${formatted}</option>`);
-                });
-
-                if (availableStatuses.includes('ACTIVE')) {
-                    addStatus.val('ACTIVE');
-                }
-            },
-            error: function(xhr){
-                console.error('Could not load statuses. Status:', xhr.status, xhr.responseText);
-
-                availableStatuses = ['ACTIVE', 'INACTIVE', 'PENDING'];
-
-                const statusFilter = $('#statusFilter');
-                const editStatus = $('#editStatus');
-                const addStatus = $('#addStatus');
-
-                statusFilter.find('option:not(:first)').remove();
-                editStatus.empty();
-                addStatus.empty();
-
-                availableStatuses.forEach(status => {
-                    const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-                    statusFilter.append(`<option value="${status}">${formatted}</option>`);
-                    editStatus.append(`<option value="${status}">${formatted}</option>`);
-                    addStatus.append(`<option value="${status}">${formatted}</option>`);
-                });
-
-                addStatus.val('ACTIVE');
-            }
-        });
-    }
-    /* ---------- Load roles (for filter + edit/add modals) ---------- */
-    function loadRoles(){
-        $.ajax({
-            url: ENDPOINTS.roles,
-            type: 'GET',
-            contentType: 'application/json',
-            headers: authHeaders(),
-            success: function(roles){
-                console.log("Roles from backend:", roles);
-
-                const rawRoles = Array.isArray(roles) ? roles : (roles?.data || []);
-                availableRoles = rawRoles.map(r => (typeof r === 'object' && r !== null) ? (r.roleName || r.name || String(r)) : String(r)).filter(Boolean);
-                const roleFilter = $('#roleFilter');
-                const editRole = $('#editRole');
-                const addRole = $('#addRole');
-
-                roleFilter.find('option:not(:first)').remove();
-                editRole.empty();
-                addRole.empty().append('<option value="">Select role</option>');
-
-                availableRoles.forEach(role => {
-                    roleFilter.append(`<option value="${role}">${role}</option>`);
-                    editRole.append(`<option value="${role}">${role}</option>`);
-                    addRole.append(`<option value="${role}">${role}</option>`);
-                });
-            },
-            error: function(xhr){
-                console.error('Could not load roles. Status:', xhr.status, xhr.responseText);
-                if (availableRoles.length === 0){
-                    availableRoles = ['ADMIN'];
-                    const addRole = $('#addRole');
-                    if (addRole.children().length <= 1){
-                        addRole.append('<option value="ADMIN">ADMIN</option>');
-                    }
-                }
-            }
-        });
+    function dismissBanner(id) {
+        $('#' + id).removeClass('show');
     }
 
-    /* ---------- Load users ---------- */
-    function loadUsers(){
-        $('#refreshBtn').addClass('spinning');
-        renderLoadingState();
-
-        $.ajax({
-            url: ENDPOINTS.list,
-            type: 'GET',
-            contentType: 'application/json',
-            headers: authHeaders(),
-            success: function(users){
-                allUsers = Array.isArray(users) ? users : (users?.data || []);
-                $('#totalCount').text(allUsers.length);
-                renderTable();
-            },
-            error: function(xhr){
-                if (xhr.status === 401 || xhr.status === 403){
-                    renderSignInRequiredState();
-                    showError('Your session has expired or you don\'t have access. Please sign in again.');
-                } else {
-                    renderErrorState();
-                    showError('Couldn\'t load users. Please check the connection and try again.');
-                }
-            },
-            complete: function(){
-                $('#refreshBtn').removeClass('spinning');
-            }
-        });
+    function initials(u) {
+        const f = (u.firstName || '?').charAt(0);
+        const l = (u.lastName || '').charAt(0);
+        return (f + l).toUpperCase();
     }
 
-    /* ---------- Filtering + rendering ---------- */
-    function getFilteredUsers(){
+    function statusClass(status) {
+        const s = (status || '').toUpperCase();
+        if (s === 'ACTIVE') return 'status-active';
+        if (s === 'INACTIVE' || s === 'SUSPENDED' || s === 'DISABLED') return 'status-inactive';
+        return 'status-pending';
+    }
+
+
+    // UI – TABLE / FILTER / RENDER
+    function getFilteredUsers() {
         const q = $('#searchInput').val().trim().toLowerCase();
         const roleF = $('#roleFilter').val();
         const statusF = $('#statusFilter').val();
@@ -702,20 +561,7 @@
         });
     }
 
-    function initials(u){
-        const f = (u.firstName || '?').charAt(0);
-        const l = (u.lastName || '').charAt(0);
-        return (f + l).toUpperCase();
-    }
-
-    function statusClass(status){
-        const s = (status || '').toUpperCase();
-        if (s === 'ACTIVE') return 'status-active';
-        if (s === 'INACTIVE' || s === 'SUSPENDED' || s === 'DISABLED') return 'status-inactive';
-        return 'status-pending';
-    }
-
-    function renderTable(){
+    function renderTable() {
         const hasAnyFilter = $('#searchInput').val().trim() || $('#roleFilter').val() || $('#statusFilter').val();
         $('#clearFiltersBtn').toggleClass('show', !!hasAnyFilter);
 
@@ -723,13 +569,13 @@
         const body = $('#userTableBody');
         body.empty();
 
-        if (allUsers.length === 0){
+        if (allUsers.length === 0) {
             renderEmptyState('No users yet', 'When admin or staff accounts are created, they\'ll show up here.');
             $('#tableFootCount').text('Showing 0 users');
             return;
         }
 
-        if (users.length === 0){
+        if (users.length === 0) {
             renderEmptyState('No matches', 'Try a different search term or clear your filters.');
             $('#tableFootCount').text(`Showing 0 of ${allUsers.length} users`);
             return;
@@ -756,13 +602,13 @@
           </td>
           <td>${escapeHtml(phone)}</td>
           <td><span class="pill role">${escapeHtml(role)}</span></td>
-          <td><span class="pill ${statusClass(status)}">${escapeHtml(status.toLowerCase())}</span></td>
+          <td><span class="pill ${statusClass(status)}">${escapeHtml(String(status).toLowerCase())}</span></td>
           <td>
             <div class="row-actions">
-              <button class="icon-btn edit-btn" title="Edit user" aria-label="Edit ${escapeHtml(name)}">
+              <button class="icon-btn edit-btn" title="Edit user">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
               </button>
-              <button class="icon-btn danger delete-btn" title="Delete user" aria-label="Delete ${escapeHtml(name)}">
+              <button class="icon-btn danger delete-btn" title="Delete user">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
               </button>
             </div>
@@ -775,11 +621,13 @@
         });
 
         $('#tableFootCount').text(
-            hasAnyFilter ? `Showing ${users.length} of ${allUsers.length} users` : `Showing ${users.length} users`
+            hasAnyFilter
+                ? `Showing ${users.length} of ${allUsers.length} users`
+                : `Showing ${users.length} users`
         );
     }
 
-    function renderLoadingState(){
+    function renderLoadingState() {
         $('#userTableBody').html(`
       <tr class="state-row"><td colspan="5">
         <div class="state-box"><div class="spinner"></div><div class="state-sub">Loading users…</div></div>
@@ -787,7 +635,7 @@
     `);
     }
 
-    function renderErrorState(){
+    function renderErrorState() {
         $('#userTableBody').html(`
       <tr class="state-row"><td colspan="5">
         <div class="state-box">
@@ -799,7 +647,7 @@
     `);
     }
 
-    function renderEmptyState(title, sub){
+    function renderEmptyState(title, sub) {
         $('#userTableBody').html(`
       <tr class="state-row"><td colspan="5">
         <div class="state-box">
@@ -811,7 +659,7 @@
     `);
     }
 
-    function renderSignInRequiredState(){
+    function renderSignInRequiredState() {
         $('#totalCount').text('—');
         $('#tableFootCount').text('Showing 0 users');
         $('#userTableBody').html(`
@@ -826,71 +674,255 @@
     `);
     }
 
-    function clearFilters(){
+    function clearFilters() {
         $('#searchInput').val('');
         $('#roleFilter').val('');
         $('#statusFilter').val('');
         renderTable();
     }
 
-    function escapeHtml(str){
-        return String(str).replace(/[&<>"']/g, c => ({
-            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-        }[c]));
-    }
 
-    /* ---------- Add modal ---------- */
-    function openAddModal(){
+    //UI – MODALS (Add / Edit / Delete)
+    function openAddModal() {
         resetAddForm();
         $('#addOverlay').addClass('show');
         $('#addFirstName').trigger('focus');
     }
 
-    function closeAddModal(){
+    function closeAddModal() {
         $('#addOverlay').removeClass('show');
     }
 
-    function resetAddForm(){
+    function resetAddForm() {
         $('#addForm')[0].reset();
         $('#addForm .field').removeClass('invalid');
         $('#addStatus').val('ACTIVE');
         $('#createUserBtn').prop('disabled', false).text('Create user');
     }
 
-    function validateAddForm(){
+    function validateAddForm() {
         $('#addForm .field').removeClass('invalid');
         let valid = true;
 
-        const firstName = $('#addFirstName').val().trim();
-        const lastName = $('#addLastName').val().trim();
-        const email = $('#addEmail').val().trim();
-        const password = $('#addPassword').val();
-        const confirmPassword = $('#addConfirmPassword').val();
-        const role = $('#addRole').val();
-
-        if (firstName.length < 2){
+        if ($('#addFirstName').val().trim().length < 2) {
             $('#addFirstName').closest('.field').addClass('invalid'); valid = false;
         }
-        if (lastName.length < 2){
+        if ($('#addLastName').val().trim().length < 2) {
             $('#addLastName').closest('.field').addClass('invalid'); valid = false;
         }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('#addEmail').val().trim())) {
             $('#addEmail').closest('.field').addClass('invalid'); valid = false;
         }
-        if (password.length < 8){
+        if ($('#addPassword').val().length < 8) {
             $('#addPassword').closest('.field').addClass('invalid'); valid = false;
         }
-        if (confirmPassword !== password || confirmPassword === ''){
+        if ($('#addConfirmPassword').val() !== $('#addPassword').val() || !$('#addConfirmPassword').val()) {
             $('#addConfirmPassword').closest('.field').addClass('invalid'); valid = false;
         }
-        if (!role){
+        if (!$('#addRole').val()) {
             $('#addRole').closest('.field').addClass('invalid'); valid = false;
         }
-
         return valid;
     }
 
-    function createUser(){
+    function openEditModal(u) {
+        editingUser = u;
+        $('#editUserId').val(u.userId ?? u.id);
+        $('#editFirstName').val(u.firstName || '');
+        $('#editLastName').val(u.lastName || '');
+        $('#editEmail').val(u.username || u.email || '');
+        $('#editPhone').val(u.phone || '');
+        $('#editRole').val(u.userRole || '');
+        $('#editStatus').val((u.userstatus || u.status || 'ACTIVE').toUpperCase());
+        $('#saveUserBtn').prop('disabled', false).text('Save changes');
+        $('#editOverlay').addClass('show');
+    }
+
+    function closeEditModal() {
+        $('#editOverlay').removeClass('show');
+        $('#saveUserBtn').prop('disabled', false).text('Save changes');
+        editingUser = null;
+    }
+
+    function openDeleteModal(u) {
+        deletingUser = u;
+        const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || (u.username || 'this user');
+        $('#deleteUserName').text(name);
+        $('#deleteOverlay').addClass('show');
+    }
+
+    function closeDeleteModal() {
+        $('#deleteOverlay').removeClass('show');
+        deletingUser = null;
+    }
+
+
+    // EVENT LISTENERS
+    $(document).ready(function () {
+        const token = localStorage.getItem('JWT');
+        if (!token || token === 'null' || token === 'undefined') {
+            renderSignInRequiredState();
+        } else {
+            loadRoles();
+            loadStatuses();
+            loadUsers();
+        }
+
+        $('#searchInput').on('input', renderTable);
+        $('#roleFilter, #statusFilter').on('change', renderTable);
+        $('#editForm').on('submit', function (e) { e.preventDefault(); saveUser(); });
+        $('#addForm').on('submit', function (e) { e.preventDefault(); createUser(); });
+
+        $('#signOutBtn').on('click', function () {
+            localStorage.removeItem('JWT');
+            localStorage.removeItem('userId');
+            window.location.href = 'login.html';
+        });
+
+        $('.modal-overlay').on('click', function (e) {
+            if (e.target === this) {
+                closeEditModal();
+                closeAddModal();
+                closeDeleteModal();
+            }
+        });
+
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeEditModal();
+                closeAddModal();
+                closeDeleteModal();
+            }
+        });
+    });
+
+    // API ENDPOINTS + AJAX CALLS
+
+    const API_BASE = 'http://localhost:8080/v1/users';
+
+    const ENDPOINTS = {
+        list:     API_BASE,                    // GET  – all users
+        roles:    API_BASE + '/roles',         // GET  – UserRole enum
+        statuses: API_BASE + '/statuses',      // GET  – UserStatus enum
+        create:   API_BASE + '/register',      // POST – create user
+        update:   API_BASE,                    // PUT  – update user
+        delete:   id => API_BASE + '/' + id    // DELETE
+    };
+
+    // GET roles → fill role dropdowns
+    function loadRoles() {
+        $.ajax({
+            url: ENDPOINTS.roles,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (roles) {
+                const raw = Array.isArray(roles) ? roles : (roles?.data || []);
+                availableRoles = raw.map(r =>
+                    (typeof r === 'object' && r !== null) ? (r.roleName || r.name || String(r)) : String(r)
+                ).filter(Boolean);
+
+                const $filter = $('#roleFilter');
+                const $edit = $('#editRole');
+                const $add = $('#addRole');
+
+                $filter.find('option:not(:first)').remove();
+                $edit.empty();
+                $add.empty().append('<option value="">Select role</option>');
+
+                availableRoles.forEach(role => {
+                    $filter.append(`<option value="${role}">${role}</option>`);
+                    $edit.append(`<option value="${role}">${role}</option>`);
+                    $add.append(`<option value="${role}">${role}</option>`);
+                });
+            },
+            error: function () {
+                if (availableRoles.length === 0) {
+                    availableRoles = ['ADMIN'];
+                    $('#addRole').append('<option value="ADMIN">ADMIN</option>');
+                }
+            }
+        });
+    }
+
+    // GET statuses → fill status dropdowns
+    function loadStatuses() {
+        $.ajax({
+            url: ENDPOINTS.statuses,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (statuses) {
+                const raw = Array.isArray(statuses) ? statuses : (statuses?.data || []);
+                availableStatuses = raw.map(s =>
+                    (typeof s === 'object' && s !== null) ? (s.statusName || s.name || String(s)) : String(s)
+                ).filter(Boolean);
+
+                const $filter = $('#statusFilter');
+                const $edit = $('#editStatus');
+                const $add = $('#addStatus');
+
+                $filter.find('option:not(:first)').remove();
+                $edit.empty();
+                $add.empty();
+
+                availableStatuses.forEach(status => {
+                    const label = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+                    $filter.append(`<option value="${status}">${label}</option>`);
+                    $edit.append(`<option value="${status}">${label}</option>`);
+                    $add.append(`<option value="${status}">${label}</option>`);
+                });
+
+                if (availableStatuses.includes('ACTIVE')) $add.val('ACTIVE');
+            },
+            error: function () {
+                availableStatuses = ['ACTIVE', 'INACTIVE', 'PENDING'];
+                const $filter = $('#statusFilter');
+                const $edit = $('#editStatus');
+                const $add = $('#addStatus');
+                $filter.find('option:not(:first)').remove();
+                $edit.empty();
+                $add.empty();
+                availableStatuses.forEach(status => {
+                    const label = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+                    $filter.append(`<option value="${status}">${label}</option>`);
+                    $edit.append(`<option value="${status}">${label}</option>`);
+                    $add.append(`<option value="${status}">${label}</option>`);
+                });
+                $add.val('ACTIVE');
+            }
+        });
+    }
+
+    // GET all users
+    function loadUsers() {
+        $('#refreshBtn').addClass('spinning');
+        renderLoadingState();
+
+        $.ajax({
+            url: ENDPOINTS.list,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (users) {
+                allUsers = Array.isArray(users) ? users : (users?.data || []);
+                $('#totalCount').text(allUsers.length);
+                renderTable();
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    renderSignInRequiredState();
+                    showError('Your session has expired or you don\'t have access. Please sign in again.');
+                } else {
+                    renderErrorState();
+                    showError('Couldn\'t load users. Please check the connection and try again.');
+                }
+            },
+            complete: function () {
+                $('#refreshBtn').removeClass('spinning');
+            }
+        });
+    }
+
+    // POST create user
+    function createUser() {
         if (!validateAddForm()) return;
 
         const payload = {
@@ -913,55 +945,27 @@
             contentType: 'application/json',
             data: JSON.stringify(payload),
             headers: authHeaders(),
-            success: function(){
+            success: function () {
                 showSuccess('User created.');
                 closeAddModal();
                 loadUsers();
             },
-            error: function(xhr){
+            error: function (xhr) {
                 let msg = `Couldn't create this user (error ${xhr.status}).`;
-                if (xhr.status === 409){
-                    msg = 'A user with this email already exists.';
-                } else if (xhr.responseJSON && xhr.responseJSON.message){
-                    msg = xhr.responseJSON.message;
-                }
+                if (xhr.status === 409) msg = 'A user with this email already exists.';
+                else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
                 showError(msg);
             },
-            complete: function(){
+            complete: function () {
                 btn.prop('disabled', false).text('Create user');
             }
         });
     }
 
-    /* ---------- Edit modal ---------- */
-    let editingUser = null;
-
-    function openEditModal(u){
-        editingUser = u;
-        $('#editUserId').val(u.userId ?? u.id);
-        $('#editFirstName').val(u.firstName || '');
-        $('#editLastName').val(u.lastName || '');
-        $('#editEmail').val(u.username || u.email || '');
-        $('#editPhone').val(u.phone || '');
-        $('#editRole').val(u.userRole || '');
-
-        const userStatusVal = (u.userstatus || u.status || 'ACTIVE').toUpperCase();
-        $('#editStatus').val(userStatusVal);
-
-        $('#saveUserBtn').prop('disabled', false).text('Save changes');
-        $('#editOverlay').addClass('show');
-    }
-
-    function closeEditModal(){
-        $('#editOverlay').removeClass('show');
-        $('#saveUserBtn').prop('disabled', false).text('Save changes');
-        editingUser = null;
-    }
-
-    function saveUser(){
-        const id = $('#editUserId').val();
+    // PUT update user
+    function saveUser() {
         const payload = {
-            userId: Number(id),
+            userId: Number($('#editUserId').val()),
             username: $('#editEmail').val().trim(),
             firstName: $('#editFirstName').val().trim(),
             lastName: $('#editLastName').val().trim(),
@@ -979,37 +983,22 @@
             contentType: 'application/json',
             headers: authHeaders(),
             data: JSON.stringify(payload),
-            success: function(res){
+            success: function () {
                 showSuccess('User updated successfully!');
                 closeEditModal();
                 loadUsers();
             },
-            error: function(xhr){
-                console.error('Update error:', xhr.responseText);
+            error: function () {
                 showError('Failed to update user.');
             },
-            complete: function(){
+            complete: function () {
                 btn.prop('disabled', false).text('Save changes');
             }
         });
     }
 
-    /* ---------- Delete modal ---------- */
-    let deletingUser = null;
-
-    function openDeleteModal(u){
-        deletingUser = u;
-        const name = `${u.firstName || ''} ${u.lastName || ''}`.trim() || (u.username || 'this user');
-        $('#deleteUserName').text(name);
-        $('#deleteOverlay').addClass('show');
-    }
-
-    function closeDeleteModal(){
-        $('#deleteOverlay').removeClass('show');
-        deletingUser = null;
-    }
-
-    function confirmDelete(){
+    // DELETE user
+    function confirmDelete() {
         if (!deletingUser) return;
         const id = deletingUser.userId ?? deletingUser.id;
         const btn = $('#confirmDeleteBtn');
@@ -1018,29 +1007,20 @@
         $.ajax({
             url: ENDPOINTS.delete(id),
             type: 'DELETE',
-            contentType: 'application/json',
             headers: authHeaders(),
-            success: function(){
+            success: function () {
                 showSuccess('User deleted.');
                 closeDeleteModal();
                 loadUsers();
             },
-            error: function(xhr){
+            error: function (xhr) {
                 showError(xhr.responseJSON?.message || `Couldn't delete this user (error ${xhr.status}).`);
             },
-            complete: function(){
+            complete: function () {
                 btn.prop('disabled', false).text('Delete user');
             }
         });
     }
-
-    // Close modals on overlay click / Escape
-    $('.modal-overlay').on('click', function(e){
-        if (e.target === this){ closeEditModal(); closeAddModal(); closeDeleteModal(); }
-    });
-    $(document).on('keydown', function(e){
-        if (e.key === 'Escape'){ closeEditModal(); closeAddModal(); closeDeleteModal(); }
-    });
 </script>
 </body>
 </html>

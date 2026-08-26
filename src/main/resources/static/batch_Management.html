@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batch / Shift Management · Cafe912</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--espresso:#241811;--espresso-deep:#150e09;--paper:#f7f1e6;--paper-dim:#efe4d0;--amber:#c17a34;--amber-light:#e3a668;--sage:#748a6a;--sage-bg:#eaf0e6;--ink:#26190f;--ink-soft:#6b5c4c;--line:rgba(38,25,15,0.14);--error:#b23b3b;--error-bg:rgba(178,59,59,0.08);--success:#4c6b41;--success-bg:#eaf0e6;--radius:4px;}
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+    @media (prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+    a{color:inherit}
+    .topbar{position:sticky;top:0;z-index:20;background:linear-gradient(160deg,var(--espresso) 0%,var(--espresso-deep) 100%);color:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:64px}
+    .topbar-left{display:flex;align-items:center;gap:14px}
+    .seal{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .seal svg{width:16px;height:16px;stroke:var(--amber-light)}
+    .brand-name{font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--amber-light);font-weight:600}
+    .topbar-crumb{font-size:13px;color:rgba(247,241,230,0.5);padding-left:14px;margin-left:14px;border-left:1px solid rgba(247,241,230,0.18)}
+    .topbar-crumb strong{color:rgba(247,241,230,0.92);font-weight:600}
+    .topbar-right{display:flex;align-items:center;gap:10px}
+    .nav-link{font-size:13px;color:rgba(247,241,230,0.65);padding:8px 12px;border-radius:var(--radius);text-decoration:none;font-weight:600;transition:background .15s ease,color .15s ease}
+    .nav-link:hover{background:rgba(247,241,230,0.08);color:var(--paper)}
+    .signout-btn{background:none;border:1px solid rgba(247,241,230,0.25);color:var(--paper);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:var(--radius);cursor:pointer;transition:border-color .18s ease,background .18s ease}
+    .signout-btn:hover{background:rgba(247,241,230,0.08);border-color:rgba(247,241,230,0.4)}
+    .page{max-width:1180px;margin:0 auto;padding:44px 32px 80px}
+    .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:28px;flex-wrap:wrap}
+    .eyebrow{font-size:11.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--amber);font-weight:700;margin-bottom:10px}
+    .page-head h1{font-family:'Newsreader',serif;font-weight:500;font-size:32px;color:var(--espresso);margin-bottom:6px}
+    .page-head .sub{color:var(--ink-soft);font-size:14.5px;max-width:560px}
+    .stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:26px}
+    .stat-card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:16px 18px}
+    .stat-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-soft);font-weight:700;margin-bottom:8px}
+    .stat-value{font-family:'Newsreader',serif;font-size:22px;color:var(--espresso);font-weight:600;line-height:1.2}
+    .stat-value.small{font-size:16px}
+    .stat-value .unit{font-size:13px;color:var(--ink-soft);font-weight:500;margin-left:2px}
+    .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+    .toolbar-heading{font-family:'Newsreader',serif;font-size:19px;color:var(--espresso);font-weight:500;margin-right:auto}
+    .search-wrap{position:relative;min-width:220px}
+    .search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--ink-soft);pointer-events:none}
+    .search-wrap input{width:100%;padding:11px 14px 11px 40px;border:1.5px solid var(--line);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:14px;background:#fff;color:var(--ink);outline:none;transition:border-color .18s ease,box-shadow .18s ease}
+    .search-wrap input:focus{border-color:var(--espresso);box-shadow:0 0 0 3px rgba(193,122,52,0.14)}
+    .search-wrap input::placeholder{color:#b5a996}
+    .filter-select{position:relative}
+    .filter-select select{appearance:none;padding:11px 34px 11px 14px;border:1.5px solid var(--line);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13.5px;background:#fff;color:var(--ink);outline:none;cursor:pointer;min-width:140px;transition:border-color .18s ease}
+    .filter-select select:focus{border-color:var(--espresso)}
+    .filter-select::after{content:"";position:absolute;right:13px;top:50%;width:8px;height:8px;margin-top:-5px;border-right:1.5px solid var(--ink-soft);border-bottom:1.5px solid var(--ink-soft);rotate:45deg;pointer-events:none}
+    .clear-filters{font-size:13px;color:var(--ink-soft);background:none;border:none;cursor:pointer;font-weight:600;padding:8px 4px;text-decoration:underline;text-underline-offset:2px;display:none}
+    .clear-filters.show{display:inline-block}
+    .refresh-btn{display:flex;align-items:center;gap:7px;padding:11px 16px;background:var(--espresso);color:var(--paper);border:none;border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;transition:background .18s ease;flex-shrink:0}
+    .refresh-btn:hover{background:#3a281a}
+    .refresh-btn svg{width:14px;height:14px}
+    .refresh-btn.spinning svg{animation:spin 0.8s linear infinite}
+    .refresh-btn.ghost-btn{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+    .refresh-btn.ghost-btn:hover{background:var(--paper-dim);border-color:var(--espresso)}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .table-card{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-soft);font-weight:700;padding:14px 18px;background:var(--paper-dim);border-bottom:1px solid var(--line);white-space:nowrap}
+    tbody td{padding:15px 18px;font-size:14px;color:var(--ink);border-bottom:1px solid var(--line);vertical-align:middle}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr{transition:background .12s ease}
+    tbody tr:hover{background:rgba(193,122,52,0.045)}
+    .batch-code-cell{font-family:'Newsreader',serif;font-weight:600;font-size:14.5px;color:var(--espresso)}
+    .datetime-cell{font-size:13px;line-height:1.5}
+    .datetime-cell .d-date{color:var(--ink);font-weight:500}
+    .datetime-cell .d-time{color:var(--ink-soft);font-size:12px}
+    .duration-cell{font-variant-numeric:tabular-nums;font-size:13.5px;font-weight:600;color:var(--ink)}
+    .cash-cell{font-size:13.5px;font-variant-numeric:tabular-nums}
+    .cash-cell .c-sub{color:var(--ink-soft);font-size:11.5px}
+    .money-cell{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+    .money-cell.profit{color:var(--success)}
+    .pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:11.5px;font-weight:600;text-transform:capitalize;white-space:nowrap}
+    .pill::before{content:"";width:6px;height:6px;border-radius:50%;flex-shrink:0}
+    .pill.status-active{background:var(--success-bg);color:var(--success)}
+    .pill.status-active::before{background:var(--success);box-shadow:0 0 0 3px rgba(76,107,65,0.16)}
+    .pill.status-inactive{background:var(--paper-dim);color:var(--ink-soft)}
+    .pill.status-inactive::before{background:var(--ink-soft)}
+    .row-actions{display:flex;gap:6px;justify-content:flex-end}
+    .icon-btn{width:32px;height:32px;border-radius:var(--radius);border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s ease,border-color .15s ease}
+    .icon-btn svg{width:15px;height:15px;stroke:var(--ink-soft)}
+    .icon-btn:hover{border-color:var(--espresso);background:var(--paper-dim)}
+    .state-row td{padding:56px 18px;text-align:center}
+    .state-box{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--ink-soft)}
+    .state-box svg{width:30px;height:30px;stroke:var(--ink-soft);opacity:0.5}
+    .state-box .state-title{font-family:'Newsreader',serif;font-size:17px;color:var(--espresso);font-weight:500}
+    .state-box .state-sub{font-size:13px;max-width:320px}
+    .spinner{width:22px;height:22px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--amber);animation:spin 0.7s linear infinite}
+    .table-foot{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;font-size:12.5px;color:var(--ink-soft);border-top:1px solid var(--line);background:var(--paper-dim)}
+    .banner{font-size:13px;padding:11px 14px;border-radius:var(--radius);margin-bottom:16px;display:none;align-items:center;justify-content:space-between;gap:10px}
+    .banner.show{display:flex}
+    .banner.error-banner{background:var(--error-bg);border:1px solid rgba(178,59,59,0.25);color:var(--error)}
+    .banner.success-banner{background:var(--success-bg);border:1px solid rgba(76,107,65,0.25);color:var(--success)}
+    .banner button{background:none;border:none;cursor:pointer;color:inherit;font-weight:700;font-size:14px}
+    .modal-overlay{position:fixed;inset:0;background:rgba(21,14,9,0.55);display:none;align-items:center;justify-content:center;z-index:50;padding:24px}
+    .modal-overlay.show{display:flex}
+    .modal{background:var(--paper);border-radius:6px;width:100%;max-width:440px;padding:30px 30px 26px;animation:modal-in .22s cubic-bezier(.2,.8,.2,1) both;max-height:90vh;overflow-y:auto}
+    .modal.modal-wide{max-width:560px}
+    @keyframes modal-in{from{opacity:0;transform:translateY(10px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .modal h3{font-family:'Newsreader',serif;font-weight:500;font-size:22px;color:var(--espresso);margin-bottom:4px}
+    .modal .modal-sub{font-size:13.5px;color:var(--ink-soft);margin-bottom:22px}
+    .btn{flex:1;padding:12px;border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:background .15s ease,border-color .15s ease}
+    .btn-dark{background:var(--espresso);color:var(--paper)}
+    .btn-dark:hover{background:#3a281a}
+    .btn:disabled{opacity:0.55;cursor:not-allowed}
+    .modal-actions{display:flex;gap:10px;margin-top:22px}
+    .detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px}
+    .detail-item{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px}
+    .detail-item .di-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);font-weight:700;margin-bottom:5px}
+    .detail-item .di-value{font-family:'Newsreader',serif;font-size:17px;color:var(--espresso);font-weight:600}
+    .detail-item.span-2{grid-column:1 / -1}
+    .detail-note{font-size:12px;color:var(--ink-soft);margin-top:16px;line-height:1.5;border-top:1px solid var(--line);padding-top:14px}
+    @media (max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:760px){.page{padding:28px 16px 60px}.table-card{overflow-x:auto}table{min-width:760px}.detail-grid{grid-template-columns:1fr}.topbar{padding:0 16px}}
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="seal">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+    </div>
+    <div class="brand-name">Cafe912</div>
+    <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>Batch Management</strong></div>
+  </div>
+  <div class="topbar-right">
+    <a class="nav-link" href="user_Management.html">Users</a>
+    <a class="nav-link" href="category_Management.html">Categories</a>
+    <a class="nav-link" href="item_Management.html">Items</a>
+    <a class="nav-link" href="batch_Management.html">Batches</a>
+    <a class="nav-link" href="customer_Management.html">Customers</a>
+    <button class="signout-btn" id="signOutBtn">Sign out</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Admin Portal</div>
+      <h1>Daily Batch &amp; Shift Management</h1>
+      <p class="sub">Monitor live sales/profits, track shift durations, and view closed batch reports.</p>
+    </div>
+  </div>
+
+  <div class="banner error-banner" id="errorBanner">
+    <span id="errorBannerText">Something went wrong.</span>
+    <button onclick="dismissBanner('errorBanner')">&times;</button>
+  </div>
+  <div class="banner success-banner" id="successBanner">
+    <span id="successBannerText">Done.</span>
+    <button onclick="dismissBanner('successBanner')">&times;</button>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Sales Revenue</div>
+      <div class="stat-value" id="statSales">Rs. 0.00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Net Profit</div>
+      <div class="stat-value" id="statProfit">Rs. 0.00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Duration</div>
+      <div class="stat-value small" id="statDuration">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Opened Date &amp; Time</div>
+      <div class="stat-value small" id="statOpened">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Status</div>
+      <div class="stat-value small" id="statStatus">—</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-heading">Batch History</div>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search by batch code…" autocomplete="off">
+    </div>
+    <div class="filter-select">
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+      </select>
+    </div>
+    <button class="clear-filters" id="clearFiltersBtn" onclick="clearFilters()">Clear filters</button>
+    <button class="refresh-btn ghost-btn" id="refreshBtn" onclick="refreshAll()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+      <tr>
+        <th>Batch</th>
+        <th>Opened</th>
+        <th>Closed</th>
+        <th>Duration</th>
+        <th>Starting / Ending Cash</th>
+        <th>Sales</th>
+        <th>Profit</th>
+        <th>Status</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+      </thead>
+      <tbody id="batchTableBody">
+      <tr class="state-row">
+        <td colspan="9">
+          <div class="state-box">
+            <div class="spinner"></div>
+            <div class="state-sub">Loading batches…</div>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <div class="table-foot">
+      <span id="tableFootCount">Showing 0 batches</span>
+    </div>
+  </div>
+</div>
+
+<!-- View Details Modal (read-only) -->
+<div class="modal-overlay" id="detailOverlay">
+  <div class="modal modal-wide">
+    <div class="detail-head">
+      <div>
+        <h3 id="detailBatchCode">Batch details</h3>
+        <p class="modal-sub" style="margin-bottom:0;">Read-only summary. Closed batches cannot be edited.</p>
+      </div>
+      <span class="pill" id="detailStatusPill">—</span>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-item"><div class="di-label">Opened</div><div class="di-value" id="detailOpened">—</div></div>
+      <div class="detail-item"><div class="di-label">Closed</div><div class="di-value" id="detailClosed">—</div></div>
+      <div class="detail-item"><div class="di-label">Duration</div><div class="di-value" id="detailDuration">—</div></div>
+      <div class="detail-item"><div class="di-label">Total Orders</div><div class="di-value" id="detailOrders">—</div></div>
+      <div class="detail-item"><div class="di-label">Starting Cash</div><div class="di-value" id="detailStartCash">—</div></div>
+      <div class="detail-item"><div class="di-label">Ending Cash</div><div class="di-value" id="detailEndCash">—</div></div>
+      <div class="detail-item"><div class="di-label">Total Sales</div><div class="di-value" id="detailSales">—</div></div>
+      <div class="detail-item"><div class="di-label">Total Profit</div><div class="di-value" id="detailProfit">—</div></div>
+    </div>
+    <div class="detail-note">Batch records are immutable once closed to preserve audit integrity. This view is read-only.</div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-dark" onclick="closeDetailModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+
+  // STATE VARIABLES
+  let allBatches = [];
+  let activeBatch = null;
+  let durationTimer = null;
+  let isLoadingBatches = false;
+  let isLoadingActive = false;
+  let availableStatuses = [];
+
+
+  // HELPERS
+  function authHeaders() {
+    const headers = {};
+    const token = localStorage.getItem('JWT');
+    if (token && token !== 'null' && token !== 'undefined') {
+      headers['Authorization'] = 'Bearer ' + token;
+    }
+    return headers;
+  }
+
+  function money(v) {
+    const n = Number(v || 0);
+    return 'Rs. ' + n.toLocaleString('en-GB', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function fmtDateTime(v) {
+    if (!v) return '—';
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);
+    return d.toLocaleString('en-GB', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+
+  function fmtDurationMs(ms) {
+    if (ms < 0) ms = 0;
+    const totalMins = Math.floor(ms / 60000);
+    const h = Math.floor(totalMins / 60);
+    const m = totalMins % 60;
+    return h + 'h ' + m + 'm';
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function showError(msg) {
+    $('#errorBannerText').text(msg);
+    $('#errorBanner').addClass('show');
+    $('#successBanner').removeClass('show');
+  }
+
+  function showSuccess(msg) {
+    $('#successBannerText').text(msg);
+    $('#successBanner').addClass('show');
+    $('#errorBanner').removeClass('show');
+    setTimeout(() => $('#successBanner').removeClass('show'), 3500);
+  }
+
+  function dismissBanner(id) {
+    $('#' + id).removeClass('show');
+  }
+
+  function statusClass(status) {
+    return (status || '').toUpperCase() === 'OPEN' ? 'status-active' : 'status-inactive';
+  }
+
+  function extractBatch(res) {
+    if (!res) return null;
+    if (res.data && (res.data.batchId || res.data.id)) return res.data;
+    if (res.batchId || res.id) return res;
+    return null;
+  }
+
+  function batchDuration(b) {
+    const openedAt = new Date(b.openedAt || b.openTimestamp).getTime();
+    if (isNaN(openedAt)) return '—';
+    const closedRaw = b.closedAt || b.closeTimestamp;
+    const endMs = closedRaw ? new Date(closedRaw).getTime() : Date.now();
+    return fmtDurationMs(endMs - openedAt);
+  }
+
+
+  // UI – STAT CARDS / TABLE / FILTER / RENDER
+  function renderStatCards() {
+    clearInterval(durationTimer);
+    durationTimer = null;
+
+    if (activeBatch) {
+      $('#statSales').text(money(activeBatch.totalSales || activeBatch.totalRevenue || 0));
+      $('#statProfit').text(money(activeBatch.totalProfit || activeBatch.netProfit || 0));
+      $('#statOpened').text(fmtDateTime(activeBatch.openedAt || activeBatch.openTimestamp));
+      $('#statStatus').html('<span class="pill status-active">Open</span>');
+
+      const openedAt = new Date(activeBatch.openedAt || activeBatch.openTimestamp).getTime();
+      function tick() {
+        if (!isNaN(openedAt)) {
+          $('#statDuration').text(fmtDurationMs(Date.now() - openedAt));
+        } else {
+          $('#statDuration').text('—');
+        }
+      }
+      tick();
+      durationTimer = setInterval(tick, 60000);
+    } else {
+      $('#statSales').text(money(0));
+      $('#statProfit').text(money(0));
+      $('#statDuration').text('—');
+      $('#statOpened').text('—');
+      $('#statStatus').html('<span class="pill status-inactive">Closed</span>');
+    }
+  }
+
+  function getFilteredBatches() {
+    const q = $('#searchInput').val().trim().toLowerCase();
+    const statusF = $('#statusFilter').val();
+
+    return allBatches.filter(b => {
+      const code = (b.batchCode || b.code || '').toLowerCase();
+      const status = (b.batchStatus || b.status || (b.closedAt || b.closeTimestamp ? 'CLOSED' : 'OPEN')).toUpperCase();
+      const matchesSearch = !q || code.indexOf(q) !== -1;
+      const matchesStatus = !statusF || status === statusF;
+      return matchesSearch && matchesStatus;
+    });
+  }
+
+  function renderTable() {
+    const hasAnyFilter = $('#searchInput').val().trim() || $('#statusFilter').val();
+    $('#clearFiltersBtn').toggleClass('show', !!hasAnyFilter);
+
+    if (isLoadingBatches && allBatches.length === 0) {
+      renderLoadingState();
+      $('#tableFootCount').text('Loading…');
+      return;
+    }
+
+    const batches = getFilteredBatches();
+    const body = $('#batchTableBody');
+    body.empty();
+
+    if (allBatches.length === 0) {
+      renderEmptyState('No batches yet', 'When a shift is opened, it will show up here.');
+      $('#tableFootCount').text('Showing 0 batches');
+      return;
+    }
+
+    if (batches.length === 0) {
+      renderEmptyState('No matches', 'Try a different search term or clear your filters.');
+      $('#tableFootCount').text('Showing 0 of ' + allBatches.length + ' batches');
+      return;
+    }
+
+    const sorted = batches.slice().sort((a, b) => {
+      const da = new Date(a.openedAt || a.openTimestamp).getTime() || 0;
+      const db = new Date(b.openedAt || b.openTimestamp).getTime() || 0;
+      return db - da;
+    });
+
+    sorted.forEach(b => {
+      const code = b.batchCode || b.code || ('#' + (b.batchId || b.id));
+      const closedRaw = b.closedAt || b.closeTimestamp;
+      const status = (b.batchStatus || b.status || (closedRaw ? 'CLOSED' : 'OPEN')).toUpperCase();
+      const startCash = b.startingCash !== undefined ? b.startingCash : b.openingCash;
+      const endCash = b.endingCash !== undefined ? b.endingCash : b.closingCash;
+
+      const row = $('<tr></tr>');
+      row.append('<td><div class="batch-code-cell">' + escapeHtml(code) + '</div></td>');
+      row.append('<td><div class="datetime-cell"><div class="d-date">' + fmtDateTime(b.openedAt || b.openTimestamp) + '</div></div></td>');
+      row.append('<td><div class="datetime-cell"><div class="d-date">' + (closedRaw ? fmtDateTime(closedRaw) : 'In progress') + '</div></div></td>');
+      row.append('<td><div class="duration-cell">' + batchDuration(b) + '</div></td>');
+      row.append(
+              '<td><div class="cash-cell">' + money(startCash) +
+              '<div class="c-sub">' + (endCash != null ? money(endCash) : 'Not closed yet') + '</div></div></td>'
+      );
+      row.append('<td><div class="money-cell">' + money(b.totalSales || b.totalRevenue || 0) + '</div></td>');
+      row.append('<td><div class="money-cell profit">' + money(b.totalProfit || b.netProfit || 0) + '</div></td>');
+      row.append('<td><span class="pill ' + statusClass(status) + '">' + escapeHtml(status.toLowerCase()) + '</span></td>');
+
+      const actions = $('<td></td>');
+      const btn = $(
+              '<button class="icon-btn view-btn" title="View details">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+              '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg></button>'
+      );
+      btn.on('click', () => openDetailModal(b));
+      actions.append($('<div class="row-actions"></div>').append(btn));
+      row.append(actions);
+
+      body.append(row);
+    });
+
+    $('#tableFootCount').text(
+            hasAnyFilter
+                    ? 'Showing ' + batches.length + ' of ' + allBatches.length + ' batches'
+                    : 'Showing ' + batches.length + ' batches'
+    );
+  }
+
+  function renderLoadingState() {
+    $('#batchTableBody').html(`
+      <tr class="state-row"><td colspan="9">
+        <div class="state-box"><div class="spinner"></div><div class="state-sub">Loading batches…</div></div>
+      </td></tr>
+    `);
+  }
+
+  function renderErrorState() {
+    $('#batchTableBody').html(`
+      <tr class="state-row"><td colspan="9">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/></svg>
+          <div class="state-title">Couldn't load batches</div>
+          <div class="state-sub">Check your connection, then try refreshing.</div>
+        </div>
+      </td></tr>
+    `);
+  }
+
+  function renderEmptyState(title, sub) {
+    $('#batchTableBody').html(`
+      <tr class="state-row"><td colspan="9">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <div class="state-title">${escapeHtml(title)}</div>
+          <div class="state-sub">${escapeHtml(sub)}</div>
+        </div>
+      </td></tr>
+    `);
+  }
+
+  function renderSignInRequiredState() {
+    clearInterval(durationTimer);
+    durationTimer = null;
+    activeBatch = null;
+    allBatches = [];
+    isLoadingBatches = false;
+    isLoadingActive = false;
+
+    $('#statSales').text(money(0));
+    $('#statProfit').text(money(0));
+    $('#statDuration').text('—');
+    $('#statOpened').text('—');
+    $('#statStatus').html('<span class="pill status-inactive">Closed</span>');
+    $('#tableFootCount').text('Showing 0 batches');
+
+    $('#batchTableBody').html(`
+      <tr class="state-row"><td colspan="9">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div class="state-title">Please sign in</div>
+          <div class="state-sub">You need an admin session to view batches.</div>
+          <button class="refresh-btn" style="margin-top:6px;" onclick="window.location.href='login.html'">Go to sign in</button>
+        </div>
+      </td></tr>
+    `);
+  }
+
+  function handleAuthError(msg) {
+    showError(msg);
+    renderSignInRequiredState();
+  }
+
+  function clearFilters() {
+    $('#searchInput').val('');
+    $('#statusFilter').val('');
+    renderTable();
+  }
+
+
+  // UI – DETAIL MODAL
+  function openDetailModal(b) {
+    const closedRaw = b.closedAt || b.closeTimestamp;
+    const status = (b.batchStatus || b.status || (closedRaw ? 'CLOSED' : 'OPEN')).toUpperCase();
+
+    $('#detailBatchCode').text(b.batchCode || b.code || ('#' + (b.batchId || b.id)));
+    $('#detailStatusPill').attr('class', 'pill ' + statusClass(status)).text(status.toLowerCase());
+    $('#detailOpened').text(fmtDateTime(b.openedAt || b.openTimestamp));
+    $('#detailClosed').text(closedRaw ? fmtDateTime(closedRaw) : 'In progress');
+    $('#detailDuration').text(batchDuration(b));
+    $('#detailOrders').text(
+            b.totalOrders !== undefined ? b.totalOrders :
+                    (b.ordersCount !== undefined ? b.ordersCount : '—')
+    );
+    $('#detailStartCash').text(money(b.startingCash !== undefined ? b.startingCash : b.openingCash));
+    $('#detailEndCash').text(
+            b.endingCash != null || b.closingCash != null
+                    ? money(b.endingCash !== undefined ? b.endingCash : b.closingCash)
+                    : '—'
+    );
+    $('#detailSales').text(money(b.totalSales || b.totalRevenue || 0));
+    $('#detailProfit').text(money(b.totalProfit || b.netProfit || 0));
+
+    $('#detailOverlay').addClass('show');
+  }
+
+  function closeDetailModal() {
+    $('#detailOverlay').removeClass('show');
+  }
+
+
+  // EVENT LISTENERS
+  $(document).ready(function () {
+    const token = localStorage.getItem('JWT');
+    if (!token || token === 'null' || token === 'undefined') {
+      renderSignInRequiredState();
+    } else {
+      refreshAll();
+    }
+
+    $('#searchInput').on('input', function () {
+      if (!isLoadingBatches) renderTable();
+    });
+
+    $('#statusFilter').on('change', function () {
+      if (!isLoadingBatches) renderTable();
+    });
+
+    $('#signOutBtn').on('click', function () {
+      localStorage.removeItem('JWT');
+      localStorage.removeItem('userId');
+      window.location.href = 'login.html';
+    });
+
+    $('.modal-overlay').on('click', function (e) {
+      if (e.target === this) closeDetailModal();
+    });
+
+    $(document).on('keydown', function (e) {
+      if (e.key === 'Escape') closeDetailModal();
+    });
+  });
+
+
+  // API ENDPOINTS + AJAX CALLS
+  const API_BASE = 'http://localhost:8080/v1/batches';
+
+  const ENDPOINTS = {
+    list:     API_BASE,              // GET – all batches
+    active:   API_BASE + '/active',  // GET – current open batch
+    statuses: API_BASE + '/statuses' // GET – BatchStatus enum
+  };
+
+  // Refresh active + list + statuses together
+  function refreshAll() {
+    loadActiveBatch();
+    loadBatches();
+    loadStatuses();
+  }
+
+  // GET BatchStatus enum → fill status filter
+  function loadStatuses() {
+    $.ajax({
+      url: ENDPOINTS.statuses,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (statuses) {
+        availableStatuses = Array.isArray(statuses) ? statuses : [];
+        const $select = $('#statusFilter');
+        $select.find('option:not(:first)').remove();
+
+        availableStatuses.forEach(status => {
+          $select.append(
+                  $('<option></option>')
+                          .val(status)
+                          .text(status.charAt(0) + status.slice(1).toLowerCase())
+          );
+        });
+      },
+      error: function () {
+        const $select = $('#statusFilter');
+        $select.find('option:not(:first)').remove();
+        $select.append('<option value="OPEN">Open</option>');
+        $select.append('<option value="CLOSED">Closed</option>');
+      }
+    });
+  }
+
+  // GET currently open batch → update stat cards
+  function loadActiveBatch() {
+    if (isLoadingActive) return;
+    isLoadingActive = true;
+
+    $.ajax({
+      url: ENDPOINTS.active,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (res) {
+        activeBatch = extractBatch(res);
+        renderStatCards();
+      },
+      error: function (xhr) {
+        if (xhr.status === 401 || xhr.status === 403) {
+          handleAuthError('Your session has expired or you don\'t have access. Please sign in again.');
+          return;
+        }
+        activeBatch = null;
+        renderStatCards();
+      },
+      complete: function () {
+        isLoadingActive = false;
+      }
+    });
+  }
+
+  // GET all batches → history table
+  function loadBatches() {
+    if (isLoadingBatches) return;
+    isLoadingBatches = true;
+    $('#refreshBtn').addClass('spinning');
+    renderLoadingState();
+
+    $.ajax({
+      url: ENDPOINTS.list,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (batches) {
+        allBatches = Array.isArray(batches)
+                ? batches
+                : (batches && batches.data ? batches.data : []);
+        renderTable();
+      },
+      error: function (xhr) {
+        if (xhr.status === 401 || xhr.status === 403) {
+          handleAuthError('Your session has expired or you don\'t have access. Please sign in again.');
+        } else {
+          renderErrorState();
+          showError('Couldn\'t load batches. Please check the connection and try again.');
+        }
+      },
+      complete: function () {
+        isLoadingBatches = false;
+        $('#refreshBtn').removeClass('spinning');
+      }
+    });
+  }
+</script>
+</body>
+</html>

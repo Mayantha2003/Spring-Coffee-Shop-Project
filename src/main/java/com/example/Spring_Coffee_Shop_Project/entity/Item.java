@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -37,7 +39,19 @@ public class Item {
     private boolean isVeg = true;
     private int prepTimeMinutes;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @OneToOne(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Stock stock;
+
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
+    private List<StockTransaction> stockTransactions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
+    private List<SaleItem> saleItems = new ArrayList<>();
+
+    @OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
+    private List<HeldSaleItem> heldSaleItems = new ArrayList<>();
 }

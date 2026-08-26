@@ -92,7 +92,7 @@ public class UserServiceImpl implements UserService {
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
         user.setPhone(userDTO.getPhone());
-        user.setUserstatus(userDTO.getUserstatus());
+        user.setUserStatus(userDTO.getUserstatus());
         user.setUserRole(userDTO.getUserRole());
 
         if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
@@ -118,7 +118,7 @@ public class UserServiceImpl implements UserService {
         if (userDTO.getFirstName() != null) user.setFirstName(userDTO.getFirstName());
         if (userDTO.getLastName() != null) user.setLastName(userDTO.getLastName());
         if (userDTO.getPhone() != null) user.setPhone(userDTO.getPhone());
-        if (userDTO.getUserstatus() != null) user.setUserstatus(userDTO.getUserstatus());
+        if (userDTO.getUserstatus() != null) user.setUserStatus(userDTO.getUserstatus());
         if (userDTO.getUserRole() != null) user.setUserRole(userDTO.getUserRole());
         if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
@@ -138,7 +138,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = optionalUser.get();
-        user.setUserstatus(UserStatus.INACTIVE);
+        user.setUserStatus(UserStatus.INACTIVE);
 
         userRepository.save(user);
     }
@@ -156,7 +156,7 @@ public class UserServiceImpl implements UserService {
         user.setLastName(userDTO.getLastName());
         user.setPhone(userDTO.getPhone());
 
-        user.setUserstatus(userDTO.getUserstatus() != null ? userDTO.getUserstatus() : UserStatus.ACTIVE);
+        user.setUserStatus(userDTO.getUserstatus() != null ? userDTO.getUserstatus() : UserStatus.ACTIVE);
         user.setUserRole(userDTO.getUserRole());
 
         String token = UUID.randomUUID().toString();
@@ -192,7 +192,7 @@ public class UserServiceImpl implements UserService {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .phone(String.valueOf(user.getPhone()))
-                .userstatus(user.getUserstatus())
+                .userstatus(user.getUserStatus())
                 .userRole(user.getUserRole())
                 .build();
     }

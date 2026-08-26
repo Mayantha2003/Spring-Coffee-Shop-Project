@@ -4,6 +4,7 @@ import com.example.Spring_Coffee_Shop_Project.enumeration.CategoryStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -28,6 +29,6 @@ public class Category {
 
     private int displayOrder = 0;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
-    private List<Item> items;
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Item> items = new ArrayList<>();
 }

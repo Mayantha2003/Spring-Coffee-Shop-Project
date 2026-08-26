@@ -191,6 +191,8 @@
         <a class="nav-link" href="user_Management.html">Users</a>
         <a class="nav-link" href="category_Management.html">Categories</a>
         <a class="nav-link" href="item_Management.html">Items</a>
+        <a class="nav-link" href="batch_Management.html">Batches</a>
+        <a class="nav-link" href="customer_Management.html">Customers</a>
         <button class="signout-btn" id="signOutBtn">Sign out</button>
     </div>
 </div>
@@ -418,260 +420,77 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 
-    // (All Api Assign the Variables and Handle Easy)
-    const ITEM_API_BASE = 'http://localhost:8080/v1/items';         // Main Api
-    const CATEGORY_API_BASE = 'http://localhost:8080/v1/categories'; // Used to category dropdowns
-    const SERVER_BASE = 'http://localhost:8080';                     // Used to build full image URLs
-    const ENDPOINTS = {
-        list:   ITEM_API_BASE,              // GET    -> all items get
-        categories: CATEGORY_API_BASE, // GET    -> all categories get (for select + filter)
-        create: ITEM_API_BASE,              // POST   -> Save or create item
-        update: ITEM_API_BASE,              // PUT    -> Update item
-        delete: id => ITEM_API_BASE + '/' + id,// DELETE -> Remove item
-        statuses: ITEM_API_BASE + '/statuses',   // GET -> Get ItemStatus Enum Values
-        uploadImage: ITEM_API_BASE + '/upload-image' // POST -> Upload an image file, returns imageUrl
-    };
-
+    // STATE VARIABLES
     let allItems = [];
     let allCategories = [];
     let availableItemStatuses = [];
+    let editingItem = null;
+    let deletingItem = null;
 
 
+    // HELPERS
     function authHeaders() {
-        let reqHeaders = {};
+        const h = {};
         const token = localStorage.getItem('JWT');
-        if (token && token !== "null" && token !== "undefined") {
-            reqHeaders['Authorization'] = 'Bearer ' + token;
+        if (token && token !== 'null' && token !== 'undefined') {
+            h['Authorization'] = 'Bearer ' + token;
         }
-        return reqHeaders;
+        return h;
     }
 
-    $(document).ready(function(){
-        const token = localStorage.getItem('JWT');
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
 
-        if (!token || token === 'null' || token === 'undefined') {
-            renderSignInRequiredState();
-        } else {
-            loadCategories();
-            loadItems();
-            loadItemStatuses();
-        }
-
-        $('#searchInput').on('input', renderTable);
-        $('#categoryFilter, #statusFilter').on('change', renderTable);
-        $('#editForm').on('submit', function(e){ e.preventDefault(); saveItem(); });
-        $('#addForm').on('submit', function(e){ e.preventDefault(); createItem(); });
-
-        // Live preview when a file is selected
-        $('#addImageFile').on('change', function(){ previewImage(this, '#addImagePreview', '#addImagePreviewImg'); });
-        $('#editImageFile').on('change', function(){ previewImage(this, '#editImagePreview', '#editImagePreviewImg'); });
-    });
-
-    $('#signOutBtn').on('click', function(){
-        localStorage.removeItem('JWT');
-        localStorage.removeItem('userId');
-        window.location.href = 'login.html';
-    });
-
-    /* ---------- Banners ---------- */
-    function showError(msg){
+    function showError(msg) {
         $('#errorBannerText').text(msg);
         $('#errorBanner').addClass('show');
         $('#successBanner').removeClass('show');
     }
-    function showSuccess(msg){
+
+    function showSuccess(msg) {
         $('#successBannerText').text(msg);
         $('#successBanner').addClass('show');
         $('#errorBanner').removeClass('show');
         setTimeout(() => $('#successBanner').removeClass('show'), 3500);
     }
-    function dismissBanner(id){ $('#' + id).removeClass('show'); }
 
-    /* ---------- Image helpers ---------- */
-    function previewImage(inputEl, previewWrapSelector, previewImgSelector){
-        const file = inputEl.files && inputEl.files[0];
-        if (!file) {
-            $(previewWrapSelector).removeClass('show');
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e){
-            $(previewImgSelector).attr('src', e.target.result);
-            $(previewWrapSelector).addClass('show');
-        };
-        reader.readAsDataURL(file);
+    function dismissBanner(id) {
+        $('#' + id).removeClass('show');
     }
 
-    function fullImageUrl(imageUrl){
-        if (!imageUrl) return '';
-        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
-        return SERVER_BASE + imageUrl;
-    }
-
-    // Uploads the selected file (if any) and resolves to the new imageUrl, or null if no file was selected.
-    function uploadImage(fileInputId){
-        return new Promise((resolve) => {
-            const fileInput = document.getElementById(fileInputId);
-            const file = fileInput && fileInput.files && fileInput.files[0];
-            if (!file) { resolve(null); return; }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            $.ajax({
-                url: ENDPOINTS.uploadImage,
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                headers: authHeaders(),
-                success: function(res){
-                    // Backend returns CommonResponse{code, message} where message holds the imageUrl
-                    const imageUrl = (res && res.message) ? res.message : null;
-                    resolve(imageUrl);
-                },
-                error: function(xhr){
-                    console.error('Image upload failed:', xhr.status, xhr.responseText);
-                    showError('Image upload failed. The item will be saved without the new image.');
-                    resolve(null);
-                }
-            });
-        });
-    }
-
-    /* ---------- Load item status(for filter + add/edit modals) ---------- */
-    function loadItemStatuses(){
-        $.ajax({
-            url: ENDPOINTS.statuses,
-            type: 'GET',
-            contentType: 'application/json',
-            headers: authHeaders(),
-            success: function(statuses){
-                const rawStatuses = Array.isArray(statuses) ? statuses : (statuses?.data || []);
-                availableItemStatuses = rawStatuses.map(s => (typeof s === 'object' && s !== null) ? (s.statusName || s.name || String(s)) : String(s)).filter(Boolean);
-
-                const statusFilter = $('#statusFilter');
-                const editStatus = $('#editStatus');
-                const addStatus = $('#addStatus');
-
-                statusFilter.find('option:not(:first)').remove();
-                editStatus.empty();
-                addStatus.empty();
-
-                availableItemStatuses.forEach(status => {
-                    const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_',' ');
-                    statusFilter.append(`<option value="${status}">${formatted}</option>`);
-                    editStatus.append(`<option value="${status}">${formatted}</option>`);
-                    addStatus.append(`<option value="${status}">${formatted}</option>`);
-                });
-
-                if (availableItemStatuses.includes('AVAILABLE')) {
-                    addStatus.val('AVAILABLE');
-                }
-            },
-            error: function(xhr){
-                console.error('Could not load item statuses. Status:', xhr.status, xhr.responseText);
-                availableItemStatuses = ['AVAILABLE', 'OUT_OF_STOCK', 'DISCONTINUED'];
-
-                const statusFilter = $('#statusFilter');
-                const editStatus = $('#editStatus');
-                const addStatus = $('#addStatus');
-
-                statusFilter.find('option:not(:first)').remove();
-                editStatus.empty();
-
-                addStatus.empty();
-                availableItemStatuses.forEach(status => {
-                    const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_',' ');
-                    statusFilter.append(`<option value="${status}">${formatted}</option>`);
-                    editStatus.append(`<option value="${status}">${formatted}</option>`);
-                    addStatus.append(`<option value="${status}">${formatted}</option>`);
-                });
-                addStatus.val('AVAILABLE');
-            }
-        });
-    }
-    /* ---------- Load categories (for filter + add/edit modals) ---------- */
-    function loadCategories(){
-        $.ajax({
-            url: ENDPOINTS.categories,
-            type: 'GET',
-            contentType: 'application/json',
-            headers: authHeaders(),
-            success: function(categories){
-                allCategories = Array.isArray(categories) ? categories : (categories?.data || []);
-
-                const categoryFilter = $('#categoryFilter');
-                const editCategory = $('#editCategory');
-                const addCategory = $('#addCategory');
-
-                categoryFilter.find('option:not(:first)').remove();
-                editCategory.empty();
-                addCategory.empty().append('<option value="">Select category</option>');
-
-                allCategories.forEach(c => {
-                    const id = c.categoryId ?? c.id;
-                    const name = c.categoryName || 'Unnamed';
-                    categoryFilter.append(`<option value="${id}">${escapeHtml(name)}</option>`);
-                    editCategory.append(`<option value="${id}">${escapeHtml(name)}</option>`);
-                    addCategory.append(`<option value="${id}">${escapeHtml(name)}</option>`);
-                });
-
-                renderTable();
-            },
-            error: function(xhr){
-                console.error('Could not load categories. Status:', xhr.status, xhr.responseText);
-            }
-        });
-    }
-
-    /* ---------- Load items ---------- */
-    function loadItems(){
-        $('#refreshBtn').addClass('spinning');
-        renderLoadingState();
-
-        $.ajax({
-            url: ENDPOINTS.list,
-            type: 'GET',
-            contentType: 'application/json',
-            headers: authHeaders(),
-            success: function(items){
-                allItems = Array.isArray(items) ? items : (items?.data || []);
-                $('#totalCount').text(allItems.length);
-                renderTable();
-            },
-            error: function(xhr){
-                if (xhr.status === 401 || xhr.status === 403){
-                    renderSignInRequiredState();
-                    showError('Your session has expired or you don\'t have access. Please sign in again.');
-                } else {
-                    renderErrorState();
-                    showError('Couldn\'t load items. Please check the connection and try again.');
-                }
-            },
-            complete: function(){
-                $('#refreshBtn').removeClass('spinning');
-            }
-        });
-    }
-
-    /* ---------- Helpers ---------- */
-    function categoryIdOf(item){
+    function categoryIdOf(item) {
         return item.category?.categoryId ?? item.category?.id ?? item.categoryId ?? '';
     }
-    function categoryNameOf(item){
+
+    function categoryNameOf(item) {
         if (item.category && item.category.categoryName) return item.category.categoryName;
-        const match = allCategories.find(c => (c.categoryId ?? c.id) == categoryIdOf(item));
+        const match = allCategories.find(c => (c.categoryId ?? c.id) === categoryIdOf(item));
         return match ? match.categoryName : 'Uncategorized';
     }
-    function formatMoney(n){
+
+    function formatMoney(n) {
         const num = Number(n);
         if (isNaN(num)) return '—';
         return 'LKR ' + num.toFixed(2);
     }
 
-    /* ---------- Filtering + rendering ---------- */
-    function getFilteredItems(){
+    function fullImageUrl(url) {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        return 'http://localhost:8080' + (url.startsWith('/') ? url : '/' + url);
+    }
+
+    function statusClass(status) {
+        const s = (status || 'AVAILABLE').toLowerCase();
+        return 'status-' + s;
+    }
+
+
+    // UI – TABLE / FILTER / RENDER
+    function getFilteredItems() {
         const q = $('#searchInput').val().trim().toLowerCase();
         const catF = $('#categoryFilter').val();
         const statusF = $('#statusFilter').val();
@@ -685,12 +504,7 @@
         });
     }
 
-    function statusClass(status){
-        const s = (status || 'AVAILABLE').toLowerCase();
-        return 'status-' + s;
-    }
-
-    function renderTable(){
+    function renderTable() {
         const hasAnyFilter = $('#searchInput').val().trim() || $('#categoryFilter').val() || $('#statusFilter').val();
         $('#clearFiltersBtn').toggleClass('show', !!hasAnyFilter);
 
@@ -698,13 +512,13 @@
         const body = $('#itemTableBody');
         body.empty();
 
-        if (allItems.length === 0){
+        if (allItems.length === 0) {
             renderEmptyState('No items yet', 'Add your first menu item to get started.');
             $('#tableFootCount').text('Showing 0 items');
             return;
         }
 
-        if (items.length === 0){
+        if (items.length === 0) {
             renderEmptyState('No matches', 'Try a different search term or clear your filters.');
             $('#tableFootCount').text(`Showing 0 of ${allItems.length} items`);
             return;
@@ -743,13 +557,13 @@
               ${discount ? discount + `<span class="strike">${price}</span>` : price}
             </div>
           </td>
-          <td><span class="pill ${statusClass(status)}">${escapeHtml(status.toLowerCase().replace('_',' '))}</span></td>
+          <td><span class="pill ${statusClass(status)}">${escapeHtml(status.toLowerCase().replace('_', ' '))}</span></td>
           <td>
             <div class="row-actions">
-              <button class="icon-btn edit-btn" title="Edit item" aria-label="Edit ${escapeHtml(name)}">
+              <button class="icon-btn edit-btn" title="Edit item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
               </button>
-              <button class="icon-btn danger delete-btn" title="Delete item" aria-label="Delete ${escapeHtml(name)}">
+              <button class="icon-btn danger delete-btn" title="Delete item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
               </button>
             </div>
@@ -762,11 +576,13 @@
         });
 
         $('#tableFootCount').text(
-            hasAnyFilter ? `Showing ${items.length} of ${allItems.length} items` : `Showing ${items.length} items`
+            hasAnyFilter
+                ? `Showing ${items.length} of ${allItems.length} items`
+                : `Showing ${items.length} items`
         );
     }
 
-    function renderLoadingState(){
+    function renderLoadingState() {
         $('#itemTableBody').html(`
       <tr class="state-row"><td colspan="5">
         <div class="state-box"><div class="spinner"></div><div class="state-sub">Loading items…</div></div>
@@ -774,7 +590,7 @@
     `);
     }
 
-    function renderErrorState(){
+    function renderErrorState() {
         $('#itemTableBody').html(`
       <tr class="state-row"><td colspan="5">
         <div class="state-box">
@@ -786,7 +602,7 @@
     `);
     }
 
-    function renderEmptyState(title, sub){
+    function renderEmptyState(title, sub) {
         $('#itemTableBody').html(`
       <tr class="state-row"><td colspan="5">
         <div class="state-box">
@@ -798,7 +614,7 @@
     `);
     }
 
-    function renderSignInRequiredState(){
+    function renderSignInRequiredState() {
         $('#totalCount').text('—');
         $('#tableFootCount').text('Showing 0 items');
         $('#itemTableBody').html(`
@@ -813,31 +629,26 @@
     `);
     }
 
-    function clearFilters(){
+    function clearFilters() {
         $('#searchInput').val('');
         $('#categoryFilter').val('');
         $('#statusFilter').val('');
         renderTable();
     }
 
-    function escapeHtml(str){
-        return String(str).replace(/[&<>"']/g, c => ({
-            '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-        }[c]));
-    }
 
-    /* ---------- Add modal ---------- */
-    function openAddModal(){
+    // UI – MODALS (Add / Edit / Delete)
+    function openAddModal() {
         resetAddForm();
         $('#addOverlay').addClass('show');
         $('#addItemName').trigger('focus');
     }
 
-    function closeAddModal(){
+    function closeAddModal() {
         $('#addOverlay').removeClass('show');
     }
 
-    function resetAddForm(){
+    function resetAddForm() {
         $('#addForm')[0].reset();
         $('#addForm .field').removeClass('invalid');
         $('#addStatus').val('AVAILABLE');
@@ -847,36 +658,287 @@
         $('#createItemBtn').prop('disabled', false).text('Create item');
     }
 
-    function validateAddForm(){
+    function validateAddForm() {
         $('#addForm .field').removeClass('invalid');
         let valid = true;
-
-        const name = $('#addItemName').val().trim();
-        const category = $('#addCategory').val();
-        const price = $('#addPrice').val();
-
-        if (name.length < 2){
+        if ($('#addItemName').val().trim().length < 2) {
             $('#addItemName').closest('.field').addClass('invalid'); valid = false;
         }
-        if (!category){
+        if (!$('#addCategory').val()) {
             $('#addCategory').closest('.field').addClass('invalid'); valid = false;
         }
-        if (price === '' || isNaN(price) || Number(price) < 0){
+        const price = $('#addPrice').val();
+        if (price === '' || isNaN(price) || Number(price) < 0) {
             $('#addPrice').closest('.field').addClass('invalid'); valid = false;
         }
-
         return valid;
     }
 
-    async function createItem(){
+    function openEditModal(it) {
+        editingItem = it;
+        $('#editItemId').val(it.itemId ?? it.id);
+        $('#editItemName').val(it.itemName || '');
+        $('#editDescription').val(it.description || '');
+        $('#editCategory').val(categoryIdOf(it));
+        $('#editStatus').val((it.itemStatus || 'AVAILABLE').toUpperCase());
+        $('#editPrice').val(it.price ?? '');
+        $('#editDiscountPrice').val(it.discountPrice ?? '');
+        $('#editPrepTime').val(it.prepTimeMinutes ?? '');
+        $('#editImageFile').val('');
+        $('#editImagePreview').removeClass('show');
+        $('#editImagePreviewImg').attr('src', '');
+        $('#currentImageHint').text(it.imageUrl ? 'Current image: ' + it.imageUrl.split('/').pop() : 'No image set');
+        $(`input[name="editIsVeg"][value="${it.isVeg !== false}"]`).prop('checked', true);
+        $('#saveItemBtn').prop('disabled', false).text('Save changes');
+        $('#editOverlay').addClass('show');
+    }
+
+    function closeEditModal() {
+        $('#editOverlay').removeClass('show');
+        $('#saveItemBtn').prop('disabled', false).text('Save changes');
+        editingItem = null;
+    }
+
+    function openDeleteModal(it) {
+        deletingItem = it;
+        $('#deleteItemName').text(it.itemName || 'this item');
+        $('#deleteOverlay').addClass('show');
+    }
+
+    function closeDeleteModal() {
+        $('#deleteOverlay').removeClass('show');
+        deletingItem = null;
+    }
+
+
+    // EVENT LISTENERS
+    $(document).ready(function () {
+        const token = localStorage.getItem('JWT');
+        if (!token || token === 'null' || token === 'undefined') {
+            renderSignInRequiredState();
+        } else {
+            loadItemStatuses();
+            loadCategories();
+            loadItems();
+        }
+
+        $('#searchInput').on('input', renderTable);
+        $('#categoryFilter, #statusFilter').on('change', renderTable);
+        $('#editForm').on('submit', function (e) { e.preventDefault(); saveItem(); });
+        $('#addForm').on('submit', function (e) { e.preventDefault(); createItem(); });
+
+        $('#signOutBtn').on('click', function () {
+            localStorage.removeItem('JWT');
+            localStorage.removeItem('userId');
+            window.location.href = 'login.html';
+        });
+
+        // Image preview – Add
+        $('#addImageFile').on('change', function () {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    $('#addImagePreviewImg').attr('src', e.target.result);
+                    $('#addImagePreview').addClass('show');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Image preview – Edit
+        $('#editImageFile').on('change', function () {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    $('#editImagePreviewImg').attr('src', e.target.result);
+                    $('#editImagePreview').addClass('show');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        $('.modal-overlay').on('click', function (e) {
+            if (e.target === this) {
+                closeEditModal();
+                closeAddModal();
+                closeDeleteModal();
+            }
+        });
+
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeEditModal();
+                closeAddModal();
+                closeDeleteModal();
+            }
+        });
+    });
+
+    // API ENDPOINTS + AJAX CALLS
+
+    const API_BASE = 'http://localhost:8080/v1/items';
+
+    const ENDPOINTS = {
+        list:       API_BASE,                                    // GET  – all items
+        create:     API_BASE,                                    // POST – create item
+        update:     API_BASE,                                    // PUT  – update item
+        delete:     id => API_BASE + '/' + id,                   // DELETE
+        statuses:   API_BASE + '/statuses',                      // GET  – ItemStatus enum
+        categories: 'http://localhost:8080/v1/categories',       // GET  – for dropdowns
+        upload:     'http://localhost:8080/v1/items/upload'      // POST – image upload
+    };
+
+    // Upload image → returns URL or null
+    function uploadImage(inputId) {
+        return new Promise(resolve => {
+            const fileInput = document.getElementById(inputId);
+            if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                resolve(null);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            $.ajax({
+                url: ENDPOINTS.upload,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: authHeaders(),
+                success: function (res) {
+                    const url = (typeof res === 'string') ? res : (res?.url || res?.imageUrl || res?.data || null);
+                    resolve(url);
+                },
+                error: function () {
+                    showError('Image upload failed. The item will be saved without the new image.');
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    // GET ItemStatus enum → fill status dropdowns
+    function loadItemStatuses() {
+        $.ajax({
+            url: ENDPOINTS.statuses,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (statuses) {
+                const raw = Array.isArray(statuses) ? statuses : (statuses?.data || []);
+                availableItemStatuses = raw.map(s =>
+                    (typeof s === 'object' && s !== null) ? (s.statusName || s.name || String(s)) : String(s)
+                ).filter(Boolean);
+
+                const $filter = $('#statusFilter');
+                const $edit = $('#editStatus');
+                const $add = $('#addStatus');
+
+                $filter.find('option:not(:first)').remove();
+                $edit.empty();
+                $add.empty();
+
+                availableItemStatuses.forEach(status => {
+                    const label = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_', ' ');
+                    $filter.append(`<option value="${status}">${label}</option>`);
+                    $edit.append(`<option value="${status}">${label}</option>`);
+                    $add.append(`<option value="${status}">${label}</option>`);
+                });
+
+                if (availableItemStatuses.includes('AVAILABLE')) $add.val('AVAILABLE');
+            },
+            error: function () {
+                availableItemStatuses = ['AVAILABLE', 'OUT_OF_STOCK', 'DISCONTINUED'];
+                const $filter = $('#statusFilter');
+                const $edit = $('#editStatus');
+                const $add = $('#addStatus');
+                $filter.find('option:not(:first)').remove();
+                $edit.empty();
+                $add.empty();
+                availableItemStatuses.forEach(status => {
+                    const label = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_', ' ');
+                    $filter.append(`<option value="${status}">${label}</option>`);
+                    $edit.append(`<option value="${status}">${label}</option>`);
+                    $add.append(`<option value="${status}">${label}</option>`);
+                });
+                $add.val('AVAILABLE');
+            }
+        });
+    }
+
+    // GET categories → fill category dropdowns
+    function loadCategories() {
+        $.ajax({
+            url: ENDPOINTS.categories,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (categories) {
+                allCategories = Array.isArray(categories) ? categories : (categories?.data || []);
+
+                const $filter = $('#categoryFilter');
+                const $edit = $('#editCategory');
+                const $add = $('#addCategory');
+
+                $filter.find('option:not(:first)').remove();
+                $edit.empty();
+                $add.empty().append('<option value="">Select category</option>');
+
+                allCategories.forEach(c => {
+                    const id = c.categoryId ?? c.id;
+                    const name = c.categoryName || 'Unnamed';
+                    $filter.append(`<option value="${id}">${escapeHtml(name)}</option>`);
+                    $edit.append(`<option value="${id}">${escapeHtml(name)}</option>`);
+                    $add.append(`<option value="${id}">${escapeHtml(name)}</option>`);
+                });
+
+                renderTable();
+            },
+            error: function (xhr) {
+                console.error('Could not load categories', xhr.status);
+            }
+        });
+    }
+
+    // GET all items
+    function loadItems() {
+        $('#refreshBtn').addClass('spinning');
+        renderLoadingState();
+
+        $.ajax({
+            url: ENDPOINTS.list,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (items) {
+                allItems = Array.isArray(items) ? items : (items?.data || []);
+                $('#totalCount').text(allItems.length);
+                renderTable();
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    renderSignInRequiredState();
+                    showError('Your session has expired or you don\'t have access. Please sign in again.');
+                } else {
+                    renderErrorState();
+                    showError('Couldn\'t load items. Please check the connection and try again.');
+                }
+            },
+            complete: function () {
+                $('#refreshBtn').removeClass('spinning');
+            }
+        });
+    }
+
+    // POST create item
+    async function createItem() {
         if (!validateAddForm()) return;
 
         const btn = $('#createItemBtn');
         btn.prop('disabled', true).text('Creating…');
 
-        // Upload image first (if one was selected), then create the item with the returned URL
         const imageUrl = await uploadImage('addImageFile');
-
         const discount = $('#addDiscountPrice').val();
         const prepTime = $('#addPrepTime').val();
 
@@ -898,64 +960,31 @@
             contentType: 'application/json',
             data: JSON.stringify(payload),
             headers: authHeaders(),
-            success: function(){
+            success: function () {
                 showSuccess('Item created.');
                 closeAddModal();
                 loadItems();
             },
-            error: function(xhr){
+            error: function (xhr) {
                 let msg = `Couldn't create this item (error ${xhr.status}).`;
-                if (xhr.status === 409){
-                    msg = 'An item with this name already exists.';
-                } else if (xhr.responseJSON && xhr.responseJSON.message){
-                    msg = xhr.responseJSON.message;
-                }
+                if (xhr.status === 409) msg = 'An item with this name already exists.';
+                else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
                 showError(msg);
             },
-            complete: function(){
+            complete: function () {
                 btn.prop('disabled', false).text('Create item');
             }
         });
     }
 
-    /* ---------- Edit modal ---------- */
-    let editingItem = null;
-
-    function openEditModal(it){
-        editingItem = it;
-        $('#editItemId').val(it.itemId ?? it.id);
-        $('#editItemName').val(it.itemName || '');
-        $('#editDescription').val(it.description || '');
-        $('#editCategory').val(categoryIdOf(it));
-        $('#editStatus').val((it.itemStatus || 'AVAILABLE').toUpperCase());
-        $('#editPrice').val(it.price ?? '');
-        $('#editDiscountPrice').val(it.discountPrice ?? '');
-        $('#editPrepTime').val(it.prepTimeMinutes ?? '');
-        $('#editImageFile').val('');
-        $('#editImagePreview').removeClass('show');
-        $('#editImagePreviewImg').attr('src', '');
-        $('#currentImageHint').text(it.imageUrl ? 'Current image: ' + it.imageUrl.split('/').pop() : 'No image set');
-        $(`input[name="editIsVeg"][value="${it.isVeg !== false}"]`).prop('checked', true);
-
-        $('#saveItemBtn').prop('disabled', false).text('Save changes');
-        $('#editOverlay').addClass('show');
-    }
-
-    function closeEditModal(){
-        $('#editOverlay').removeClass('show');
-        $('#saveItemBtn').prop('disabled', false).text('Save changes');
-        editingItem = null;
-    }
-
-    async function saveItem(){
+    // PUT update item
+    async function saveItem() {
         const id = $('#editItemId').val();
         const btn = $('#saveItemBtn');
         btn.prop('disabled', true).text('Saving…');
 
-        // Only upload if the admin picked a new file; otherwise keep the existing imageUrl
         const newImageUrl = await uploadImage('editImageFile');
         const finalImageUrl = newImageUrl || (editingItem ? editingItem.imageUrl : '') || '';
-
         const discount = $('#editDiscountPrice').val();
         const prepTime = $('#editPrepTime').val();
 
@@ -978,37 +1007,22 @@
             contentType: 'application/json',
             headers: authHeaders(),
             data: JSON.stringify(payload),
-            success: function(){
+            success: function () {
                 showSuccess('Item updated successfully!');
                 closeEditModal();
                 loadItems();
             },
-            error: function(xhr){
-                console.error('Update error:', xhr.responseText);
+            error: function () {
                 showError('Failed to update item.');
             },
-            complete: function(){
+            complete: function () {
                 btn.prop('disabled', false).text('Save changes');
             }
         });
     }
 
-    /* ---------- Delete modal ---------- */
-    let deletingItem = null;
-
-    function openDeleteModal(it){
-        deletingItem = it;
-        const name = it.itemName || 'this item';
-        $('#deleteItemName').text(name);
-        $('#deleteOverlay').addClass('show');
-    }
-
-    function closeDeleteModal(){
-        $('#deleteOverlay').removeClass('show');
-        deletingItem = null;
-    }
-
-    function confirmDelete(){
+    // DELETE item
+    function confirmDelete() {
         if (!deletingItem) return;
         const id = deletingItem.itemId ?? deletingItem.id;
         const btn = $('#confirmDeleteBtn');
@@ -1017,29 +1031,20 @@
         $.ajax({
             url: ENDPOINTS.delete(id),
             type: 'DELETE',
-            contentType: 'application/json',
             headers: authHeaders(),
-            success: function(){
+            success: function () {
                 showSuccess('Item deleted.');
                 closeDeleteModal();
                 loadItems();
             },
-            error: function(xhr){
+            error: function (xhr) {
                 showError(xhr.responseJSON?.message || `Couldn't delete this item (error ${xhr.status}).`);
             },
-            complete: function(){
+            complete: function () {
                 btn.prop('disabled', false).text('Delete item');
             }
         });
     }
-
-    // Close modals on overlay click / Escape
-    $('.modal-overlay').on('click', function(e){
-        if (e.target === this){ closeEditModal(); closeAddModal(); closeDeleteModal(); }
-    });
-    $(document).on('keydown', function(e){
-        if (e.key === 'Escape'){ closeEditModal(); closeAddModal(); closeDeleteModal(); }
-    });
 </script>
 </body>
 </html>

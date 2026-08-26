@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Management · Cafe912</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --espresso:#241811;
+      --espresso-deep:#150e09;
+      --paper:#f7f1e6;
+      --paper-dim:#efe4d0;
+      --amber:#c17a34;
+      --amber-light:#e3a668;
+      --sage:#748a6a;
+      --sage-bg:#eaf0e6;
+      --ink:#26190f;
+      --ink-soft:#6b5c4c;
+      --line:rgba(38,25,15,0.14);
+      --error:#b23b3b;
+      --error-bg:rgba(178,59,59,0.08);
+      --success:#4c6b41;
+      --success-bg:#eaf0e6;
+      --radius:4px;
+    }
+    *{box-sizing:border-box; margin:0; padding:0;}
+    html,body{height:100%;}
+    body{
+      font-family:'Inter', sans-serif;
+      background:var(--paper);
+      color:var(--ink);
+      min-height:100vh;
+    }
+    @media (prefers-reduced-motion: reduce){
+      *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+    }
+    a{color:inherit;}
+
+    .topbar{position:sticky; top:0; z-index:20; background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%); color:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px;}
+    .topbar-left{display:flex; align-items:center; gap:14px;}
+    .seal{width:34px; height:34px; border-radius:50%; border:1.5px solid var(--amber); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+    .seal svg{width:16px; height:16px; stroke:var(--amber-light);}
+    .brand-name{font-size:12.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber-light); font-weight:600;}
+    .topbar-crumb{font-size:13px; color:rgba(247,241,230,0.5); padding-left:14px; margin-left:14px; border-left:1px solid rgba(247,241,230,0.18);}
+    .topbar-crumb strong{color:rgba(247,241,230,0.92); font-weight:600;}
+    .topbar-right{display:flex; align-items:center; gap:10px;}
+    .nav-link{font-size:13px; color:rgba(247,241,230,0.65); padding:8px 12px; border-radius:var(--radius); text-decoration:none; font-weight:600; transition:background .15s ease, color .15s ease;}
+    .nav-link:hover{background:rgba(247,241,230,0.08); color:var(--paper);}
+    .signout-btn{background:none; border:1px solid rgba(247,241,230,0.25); color:var(--paper); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius); cursor:pointer; transition:border-color .18s ease, background .18s ease;}
+    .signout-btn:hover{background:rgba(247,241,230,0.08); border-color:rgba(247,241,230,0.4);}
+
+    .page{max-width:1280px; margin:0 auto; padding:44px 32px 80px;}
+    .page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:32px; flex-wrap:wrap;}
+    .eyebrow{font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); font-weight:700; margin-bottom:10px;}
+    .page-head h1{font-family:'Newsreader', serif; font-weight:500; font-size:32px; color:var(--espresso); margin-bottom:6px;}
+    .page-head .sub{color:var(--ink-soft); font-size:14.5px;}
+    .head-stats{display:flex; gap:28px;}
+    .head-stat{text-align:right;}
+    .head-stat .num{font-family:'Newsreader', serif; font-size:26px; color:var(--espresso); font-weight:500;}
+    .head-stat .label{font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-top:2px;}
+
+    .toolbar{display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap;}
+    .search-wrap{position:relative; flex:1; min-width:220px;}
+    .search-wrap svg{position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; stroke:var(--ink-soft); pointer-events:none;}
+    .search-wrap input{width:100%; padding:11px 14px 11px 40px; border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter', sans-serif; font-size:14px; background:#fff; color:var(--ink); outline:none; transition:border-color .18s ease, box-shadow .18s ease;}
+    .search-wrap input:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
+    .search-wrap input::placeholder{color:#b5a996;}
+
+    .filter-select{position:relative;}
+    .filter-select select{appearance:none; padding:11px 34px 11px 14px; border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter', sans-serif; font-size:13.5px; background:#fff; color:var(--ink); outline:none; cursor:pointer; min-width:150px; transition:border-color .18s ease;}
+    .filter-select select:focus{border-color:var(--espresso);}
+    .filter-select::after{content:""; position:absolute; right:13px; top:50%; width:8px; height:8px; margin-top:-5px; border-right:1.5px solid var(--ink-soft); border-bottom:1.5px solid var(--ink-soft); rotate:45deg; pointer-events:none;}
+    .clear-filters{font-size:13px; color:var(--ink-soft); background:none; border:none; cursor:pointer; font-weight:600; padding:8px 4px; text-decoration:underline; text-underline-offset:2px; display:none;}
+    .clear-filters.show{display:inline-block;}
+
+    .refresh-btn{display:flex; align-items:center; gap:7px; padding:11px 16px; background:var(--espresso); color:var(--paper); border:none; border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; transition:background .18s ease; flex-shrink:0;}
+    .refresh-btn:hover{background:#3a281a;}
+    .refresh-btn svg{width:14px; height:14px;}
+    .refresh-btn.spinning svg{animation:spin 0.8s linear infinite;}
+    .refresh-btn.ghost-btn{background:#fff; color:var(--ink); border:1.5px solid var(--line);}
+    .refresh-btn.ghost-btn:hover{background:var(--paper-dim); border-color:var(--espresso);}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    .table-card{background:#fff; border:1px solid var(--line); border-radius:6px; overflow:hidden;}
+    table{width:100%; border-collapse:collapse;}
+    thead th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.07em; color:var(--ink-soft); font-weight:700; padding:14px 16px; background:var(--paper-dim); border-bottom:1px solid var(--line); white-space:nowrap;}
+    tbody td{padding:14px 16px; font-size:13.5px; color:var(--ink); border-bottom:1px solid var(--line); vertical-align:middle;}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr{transition:background .12s ease;}
+    tbody tr:hover{background:rgba(193,122,52,0.045);}
+
+    .user-cell{display:flex; align-items:center; gap:11px;}
+    .avatar{width:34px; height:34px; border-radius:50%; background:var(--paper-dim); color:var(--espresso); display:flex; align-items:center; justify-content:center; font-family:'Newsreader', serif; font-weight:600; font-size:13.5px; flex-shrink:0; border:1px solid var(--line);}
+    .user-name{font-weight:600; color:var(--ink); line-height:1.3;}
+    .user-email{color:var(--ink-soft); font-size:12px; margin-top:1px;}
+
+    .pill{display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:100px; font-size:11.5px; font-weight:600; text-transform:capitalize; white-space:nowrap;}
+    .pill::before{content:""; width:6px; height:6px; border-radius:50%; flex-shrink:0;}
+    .pill.status-active{background:var(--success-bg); color:var(--success);}
+    .pill.status-active::before{background:var(--success);}
+    .pill.status-inactive{background:var(--error-bg); color:var(--error);}
+    .pill.status-inactive::before{background:var(--error);}
+    .pill.status-pending{background:rgba(193,122,52,0.1); color:var(--amber);}
+    .pill.status-pending::before{background:var(--amber);}
+
+    .verified-badge{display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:600; color:var(--sage);}
+    .verified-badge svg{width:14px; height:14px; stroke:var(--sage);}
+
+    .loyalty-mini{display:flex; flex-direction:column; gap:2px;}
+    .loyalty-mini .pts{font-weight:700; color:var(--espresso); font-size:13px;}
+    .loyalty-mini .meta{font-size:11px; color:var(--ink-soft);}
+
+    .row-actions{display:flex; gap:6px; justify-content:flex-end;}
+    .icon-btn{width:32px; height:32px; border-radius:var(--radius); border:1px solid var(--line); background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s ease, border-color .15s ease;}
+    .icon-btn svg{width:15px; height:15px; stroke:var(--ink-soft);}
+    .icon-btn:hover{border-color:var(--espresso); background:var(--paper-dim);}
+    .icon-btn.danger:hover{border-color:var(--error); background:var(--error-bg);}
+    .icon-btn.danger:hover svg{stroke:var(--error);}
+
+    .state-row td{padding:56px 18px; text-align:center;}
+    .state-box{display:flex; flex-direction:column; align-items:center; gap:10px; color:var(--ink-soft);}
+    .state-box svg{width:30px; height:30px; stroke:var(--ink-soft); opacity:0.5;}
+    .state-box .state-title{font-family:'Newsreader', serif; font-size:17px; color:var(--espresso); font-weight:500;}
+    .state-box .state-sub{font-size:13px; max-width:320px;}
+    .spinner{width:22px; height:22px; border-radius:50%; border:2.5px solid var(--line); border-top-color:var(--amber); animation:spin 0.7s linear infinite;}
+
+    .table-foot{display:flex; align-items:center; justify-content:space-between; padding:13px 18px; font-size:12.5px; color:var(--ink-soft); border-top:1px solid var(--line); background:var(--paper-dim);}
+
+    .banner{font-size:13px; padding:11px 14px; border-radius:var(--radius); margin-bottom:16px; display:none; align-items:center; justify-content:space-between; gap:10px;}
+    .banner.show{display:flex;}
+    .banner.error-banner{background:var(--error-bg); border:1px solid rgba(178,59,59,0.25); color:var(--error);}
+    .banner.success-banner{background:var(--success-bg); border:1px solid rgba(76,107,65,0.25); color:var(--success);}
+    .banner button{background:none; border:none; cursor:pointer; color:inherit; font-weight:700; font-size:14px;}
+
+    .modal-overlay{position:fixed; inset:0; background:rgba(21,14,9,0.55); display:none; align-items:center; justify-content:center; z-index:50; padding:24px;}
+    .modal-overlay.show{display:flex;}
+    .modal{background:var(--paper); border-radius:6px; width:100%; max-width:480px; padding:30px 30px 26px; animation:modal-in .22s cubic-bezier(.2,.8,.2,1) both; max-height:90vh; overflow-y:auto;}
+    @keyframes modal-in{from{opacity:0; transform:translateY(10px) scale(0.98);} to{opacity:1; transform:translateY(0) scale(1);}}
+    .modal h3{font-family:'Newsreader', serif; font-weight:500; font-size:22px; color:var(--espresso); margin-bottom:4px;}
+    .modal .modal-sub{font-size:13.5px; color:var(--ink-soft); margin-bottom:22px;}
+    .field{margin-bottom:16px;}
+    .field label{display:block; font-size:12px; font-weight:600; color:var(--ink); margin-bottom:6px;}
+    .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .field input, .field select, .field textarea{width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter', sans-serif; font-size:14px; background:#fff; color:var(--ink); outline:none; transition:border-color .18s ease, box-shadow .18s ease;}
+    .field textarea{resize:vertical; min-height:72px;}
+    .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
+    .field select{appearance:none;}
+    .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none;}
+    .field.invalid input, .field.invalid select, .field.invalid textarea{border-color:var(--error);}
+    .field.invalid .field-err{display:block;}
+    .modal-actions{display:flex; gap:10px; margin-top:22px;}
+    .btn{flex:1; padding:12px; border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; border:1.5px solid transparent; transition:background .15s ease, border-color .15s ease;}
+    .btn-ghost{background:#fff; border-color:var(--line); color:var(--ink);}
+    .btn-ghost:hover{border-color:var(--espresso);}
+    .btn-dark{background:var(--espresso); color:var(--paper);}
+    .btn-dark:hover{background:#3a281a;}
+    .btn-danger{background:var(--error); color:#fff;}
+    .btn-danger:hover{background:#8f2e2e;}
+    .btn:disabled{opacity:0.55; cursor:not-allowed;}
+
+    .delete-modal p{font-size:14px; color:var(--ink-soft); line-height:1.55;}
+    .delete-modal .target-name{color:var(--ink); font-weight:600;}
+
+    .loyalty-detail-row{background:var(--paper);}
+    .loyalty-detail-row td{padding:0; border-bottom:1px solid var(--line);}
+    .loyalty-panel{padding:16px 20px; display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;}
+    .loyalty-stat{text-align:center;}
+    .loyalty-stat .val{font-family:'Newsreader', serif; font-size:22px; font-weight:600; color:var(--espresso);}
+    .loyalty-stat .lbl{font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-top:4px;}
+    .loyalty-stat.available .val{color:var(--sage);}
+    .loyalty-stat.earned .val{color:var(--amber);}
+    .loyalty-stat.redeemed .val{color:var(--error);}
+
+    .expand-btn{background:none; border:none; cursor:pointer; color:var(--ink-soft); display:flex; align-items:center; gap:4px; font-size:12px; font-weight:600; padding:2px 6px; border-radius:var(--radius); transition:background .15s;}
+    .expand-btn:hover{background:var(--paper-dim); color:var(--espresso);}
+    .expand-btn svg{width:14px; height:14px; stroke:currentColor; transition:transform .2s;}
+    .expand-btn.open svg{transform:rotate(180deg);}
+
+    @media (max-width: 900px){
+      .loyalty-panel{grid-template-columns:1fr;}
+      .loyalty-stat{display:flex; align-items:center; justify-content:space-between; text-align:left;}
+    }
+    @media (max-width: 760px){
+      .page{padding:28px 16px 60px;}
+      .table-card{overflow-x:auto;}
+      table{min-width:900px;}
+      .field-row{grid-template-columns:1fr;}
+      .topbar{padding:0 16px;}
+      .head-stats{gap:16px;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="seal">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+    </div>
+    <div class="brand-name">Cafe912</div>
+    <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>Customer Management</strong></div>
+  </div>
+  <div class="topbar-right">
+    <a class="nav-link" href="user_Management.html">Users</a>
+    <a class="nav-link" href="category_Management.html">Categories</a>
+    <a class="nav-link" href="item_Management.html">Items</a>
+    <a class="nav-link" href="batch_Management.html">Batches</a>
+    <a class="nav-link" href="customer_Management.html">Customers</a>
+    <button class="signout-btn" id="signOutBtn">Sign out</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Admin Portal</div>
+      <h1>Customer Management</h1>
+      <p class="sub">Manage registered customers, view loyalty points, and update account details.</p>
+    </div>
+    <div class="head-stats">
+      <div class="head-stat">
+        <div class="num" id="totalCount">0</div>
+        <div class="label">Total Customers</div>
+      </div>
+      <div class="head-stat">
+        <div class="num" id="totalPoints">0</div>
+        <div class="label">Total Points</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner error-banner" id="errorBanner">
+    <span id="errorBannerText">Something went wrong.</span>
+    <button onclick="dismissBanner('errorBanner')">&times;</button>
+  </div>
+  <div class="banner success-banner" id="successBanner">
+    <span id="successBannerText">Done.</span>
+    <button onclick="dismissBanner('successBanner')">&times;</button>
+  </div>
+
+  <div class="toolbar">
+    <button class="refresh-btn" id="addCustomerBtn" onclick="openAddModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      Add customer
+    </button>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search by name, phone or email…">
+    </div>
+    <div class="filter-select">
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+      </select>
+    </div>
+    <div class="filter-select">
+      <select id="verifiedFilter">
+        <option value="">All verification</option>
+        <option value="true">Verified</option>
+        <option value="false">Not verified</option>
+      </select>
+    </div>
+    <button class="clear-filters" id="clearFiltersBtn" onclick="clearFilters()">Clear filters</button>
+    <button class="refresh-btn ghost-btn" id="refreshBtn" onclick="loadCustomers()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Address</th>
+        <th>Status</th>
+        <th>Verified</th>
+        <th>Loyalty Points</th>
+        <th>Registered</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+      </thead>
+      <tbody id="customerTableBody">
+      <tr class="state-row">
+        <td colspan="8">
+          <div class="state-box">
+            <div class="spinner"></div>
+            <div class="state-sub">Loading customers…</div>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <div class="table-foot">
+      <span id="tableFootCount">Showing 0 customers</span>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editOverlay">
+  <div class="modal">
+    <h3>Edit customer</h3>
+    <p class="modal-sub">Update customer details and loyalty status.</p>
+    <form id="editForm">
+      <input type="hidden" id="editCustomerId">
+      <div class="field-row">
+        <div class="field">
+          <label for="editFirstName">First name</label>
+          <input type="text" id="editFirstName" required>
+        </div>
+        <div class="field">
+          <label for="editLastName">Last name</label>
+          <input type="text" id="editLastName" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="editPhone">Phone number</label>
+        <input type="tel" id="editPhone" required>
+      </div>
+      <div class="field">
+        <label for="editEmail">Email</label>
+        <input type="email" id="editEmail">
+      </div>
+      <div class="field">
+        <label for="editAddress">Address</label>
+        <textarea id="editAddress" placeholder="Street, city…"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="editStatus">Status</label>
+          <select id="editStatus">
+          </select>
+        </div>
+        <div class="field">
+          <label for="editVerified">Verified</label>
+          <select id="editVerified">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-dark" id="saveCustomerBtn">Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Modal -->
+<div class="modal-overlay" id="addOverlay">
+  <div class="modal">
+    <h3>Add customer</h3>
+    <p class="modal-sub">Register a new customer and initialize loyalty account.</p>
+    <form id="addForm" novalidate>
+      <div class="field-row">
+        <div class="field">
+          <label for="addFirstName">First name</label>
+          <input type="text" id="addFirstName" placeholder="e.g. Nadia" required>
+          <div class="field-err">Please enter a first name.</div>
+        </div>
+        <div class="field">
+          <label for="addLastName">Last name</label>
+          <input type="text" id="addLastName" placeholder="e.g. Fernando" required>
+          <div class="field-err">Please enter a last name.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="addPhone">Phone number</label>
+        <input type="tel" id="addPhone" placeholder="e.g. +94 77 123 4567" required>
+        <div class="field-err">Please enter a phone number.</div>
+      </div>
+      <div class="field">
+        <label for="addEmail">Email</label>
+        <input type="email" id="addEmail" placeholder="customer@cafe912.com">
+      </div>
+      <div class="field">
+        <label for="addAddress">Address</label>
+        <textarea id="addAddress" placeholder="Street, city…"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="addStatus">Status</label>
+          <select id="addStatus">
+          </select>
+        </div>
+        <div class="field">
+          <label for="addVerified">Verified</label>
+          <select id="addVerified">
+            <option value="true">Yes</option>
+            <option value="false" selected>No</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+        <button type="submit" class="btn btn-dark" id="createCustomerBtn">Create customer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Soft delete modal -->
+<div class="modal-overlay" id="deleteOverlay">
+  <div class="modal delete-modal">
+    <h3>Deactivate customer</h3>
+    <p style="margin-top:10px;">
+      This will set <span class="target-name" id="deleteCustomerName">this customer</span> to
+      <strong>INACTIVE</strong>. Their loyalty record will be kept. You can reactivate them later by editing status.
+    </p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">Deactivate</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+
+    // STATE VARIABLES
+    let allCustomers = [];
+    let expandedCustomerId = null;
+    let deletingCustomer = null;
+
+
+    // HELPERS (money, date, escape, banners, etc.)
+
+    function authHeaders() {
+        const h = {};
+        const token = localStorage.getItem('JWT');
+        if (token && token !== 'null' && token !== 'undefined') {
+            h['Authorization'] = 'Bearer ' + token;
+        }
+        return h;
+    }
+
+    function isApiSuccess(res) {
+        if (res == null) return true;
+        if (typeof res.status === 'number') return res.status === 200;
+        return true;
+    }
+
+    function apiErrorMessage(res, xhr, fallback) {
+        if (res && res.message) return res.message;
+        if (xhr && xhr.responseJSON && xhr.responseJSON.message) return xhr.responseJSON.message;
+        return fallback;
+    }
+
+    function initials(c) {
+        const f = (c.firstName || '?').charAt(0);
+        const l = (c.lastName || '').charAt(0);
+        return (f + l).toUpperCase();
+    }
+
+    function statusClass(status) {
+        const s = (status || '').toUpperCase();
+        if (s === 'ACTIVE') return 'status-active';
+        if (s === 'INACTIVE') return 'status-inactive';
+        return 'status-pending';
+    }
+
+    function formatDate(dt) {
+        if (!dt) return '—';
+        const d = new Date(dt);
+        if (isNaN(d)) return dt;
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    function showError(msg) {
+        $('#errorBannerText').text(msg);
+        $('#errorBanner').addClass('show');
+        $('#successBanner').removeClass('show');
+    }
+
+    function showSuccess(msg) {
+        $('#successBannerText').text(msg);
+        $('#successBanner').addClass('show');
+        $('#errorBanner').removeClass('show');
+        setTimeout(() => $('#successBanner').removeClass('show'), 3500);
+    }
+
+    function dismissBanner(id) {
+        $('#' + id).removeClass('show');
+    }
+
+    // UI – TABLE / FILTER / RENDER
+    function getFilteredCustomers() {
+        const q = $('#searchInput').val().trim().toLowerCase();
+        const statusF = $('#statusFilter').val();
+        const verifiedF = $('#verifiedFilter').val();
+
+        return allCustomers.filter(c => {
+            const name = `${c.firstName || ''} ${c.lastName || ''}`.toLowerCase();
+            const phone = (c.phone || '').toLowerCase();
+            const email = (c.email || '').toLowerCase();
+            const matchesSearch = !q || name.includes(q) || phone.includes(q) || email.includes(q);
+            const matchesStatus = !statusF || (c.customerStatus || '').toUpperCase() === statusF;
+            const verified = c.verified === undefined ? c.isVerified : c.verified;
+            const matchesVerified = !verifiedF || String(verified) === verifiedF;
+            return matchesSearch && matchesStatus && matchesVerified;
+        });
+    }
+
+    function renderTable() {
+        const hasAnyFilter = $('#searchInput').val().trim() || $('#statusFilter').val() || $('#verifiedFilter').val();
+        $('#clearFiltersBtn').toggleClass('show', !!hasAnyFilter);
+
+        const customers = getFilteredCustomers();
+        const body = $('#customerTableBody');
+        body.empty();
+
+        if (allCustomers.length === 0) {
+            renderEmptyState('No customers yet', 'When customers register, they\'ll show up here.');
+            $('#tableFootCount').text('Showing 0 customers');
+            return;
+        }
+        if (customers.length === 0) {
+            renderEmptyState('No matches', 'Try a different search term or clear your filters.');
+            $('#tableFootCount').text(`Showing 0 of ${allCustomers.length} customers`);
+            return;
+        }
+
+        customers.forEach(c => {
+            const id = c.customerId ?? c.id;
+            const name = `${c.firstName || ''} ${c.lastName || ''}`.trim() || '—';
+            const phone = c.phone || '—';
+            const email = c.email || '';
+            const address = c.address || '—';
+            const status = c.customerStatus || 'PENDING';
+            const verified = c.verified === undefined ? c.isVerified : c.verified;
+            const registered = formatDate(c.registeredAt);
+            const lp = c.loyaltyPoint || {};
+            const avail = lp.availablePoints || 0;
+            const earned = lp.totalEarned || 0;
+            const redeemed = lp.totalRedeemed || 0;
+            const isExpanded = expandedCustomerId === id;
+
+            const row = $(`
+        <tr data-id="${id}">
+          <td>
+            <div class="user-cell">
+              <div class="avatar">${initials(c)}</div>
+              <div>
+                <div class="user-name">${escapeHtml(name)}</div>
+                ${email ? `<div class="user-email">${escapeHtml(email)}</div>` : ''}
+              </div>
+            </div>
+          </td>
+          <td>${escapeHtml(phone)}</td>
+          <td>${escapeHtml(address)}</td>
+          <td><span class="pill ${statusClass(status)}">${escapeHtml(String(status).toLowerCase())}</span></td>
+          <td>
+            ${verified
+                ? `<span class="verified-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Verified</span>`
+                : `<span style="color:var(--ink-soft); font-size:12px;">—</span>`}
+          </td>
+          <td>
+            <div class="loyalty-mini">
+              <div class="pts">${avail.toLocaleString()} pts</div>
+              <div class="meta">
+                <button class="expand-btn ${isExpanded ? 'open' : ''}" onclick="toggleLoyalty(${id})">
+                  ${isExpanded ? 'Hide' : 'Details'}
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+              </div>
+            </div>
+          </td>
+          <td>${escapeHtml(registered)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-btn edit-btn" title="Edit customer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+              </button>
+              <button class="icon-btn danger delete-btn" title="Deactivate customer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `);
+            row.find('.edit-btn').on('click', () => openEditModal(c));
+            row.find('.delete-btn').on('click', () => openDeleteModal(c));
+            body.append(row);
+
+            if (isExpanded) {
+                body.append(`
+          <tr class="loyalty-detail-row">
+            <td colspan="8">
+              <div class="loyalty-panel">
+                <div class="loyalty-stat available"><div class="val">${avail.toLocaleString()}</div><div class="lbl">Available Points</div></div>
+                <div class="loyalty-stat earned"><div class="val">${earned.toLocaleString()}</div><div class="lbl">Total Earned</div></div>
+                <div class="loyalty-stat redeemed"><div class="val">${redeemed.toLocaleString()}</div><div class="lbl">Total Redeemed</div></div>
+              </div>
+            </td>
+          </tr>
+        `);
+            }
+        });
+
+        $('#tableFootCount').text(
+            hasAnyFilter
+                ? `Showing ${customers.length} of ${allCustomers.length} customers`
+                : `Showing ${customers.length} customers`
+        );
+    }
+
+    function toggleLoyalty(id) {
+        expandedCustomerId = expandedCustomerId === id ? null : id;
+        renderTable();
+    }
+
+    function renderLoadingState() {
+        $('#customerTableBody').html(`
+      <tr class="state-row"><td colspan="8">
+        <div class="state-box"><div class="spinner"></div><div class="state-sub">Loading customers…</div></div>
+      </td></tr>
+    `);
+    }
+
+    function renderErrorState() {
+        $('#customerTableBody').html(`
+      <tr class="state-row"><td colspan="8">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/></svg>
+          <div class="state-title">Couldn't load customers</div>
+          <div class="state-sub">Check your connection, then try refreshing.</div>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function renderEmptyState(title, sub) {
+        $('#customerTableBody').html(`
+      <tr class="state-row"><td colspan="8">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <div class="state-title">${escapeHtml(title)}</div>
+          <div class="state-sub">${escapeHtml(sub)}</div>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function renderSignInRequiredState() {
+        $('#totalCount').text('—');
+        $('#totalPoints').text('—');
+        $('#tableFootCount').text('Showing 0 customers');
+        $('#customerTableBody').html(`
+      <tr class="state-row"><td colspan="8">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div class="state-title">Please sign in</div>
+          <div class="state-sub">You need an admin session to view customers.</div>
+          <button class="refresh-btn" style="margin-top:6px;" onclick="window.location.href='login.html'">Go to sign in</button>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function clearFilters() {
+        $('#searchInput').val('');
+        $('#statusFilter').val('');
+        $('#verifiedFilter').val('');
+        expandedCustomerId = null;
+        renderTable();
+    }
+
+
+       // UI – MODALS (Add / Edit / Delete)
+
+    function openAddModal() {
+        resetAddForm();
+        $('#addOverlay').addClass('show');
+        $('#addFirstName').trigger('focus');
+    }
+
+    function closeAddModal() {
+        $('#addOverlay').removeClass('show');
+    }
+
+    function resetAddForm() {
+        $('#addForm')[0].reset();
+        $('#addForm .field').removeClass('invalid');
+        $('#addStatus').val('ACTIVE');
+        $('#addVerified').val('false');
+        $('#createCustomerBtn').prop('disabled', false).text('Create customer');
+    }
+
+    function validateAddForm() {
+        $('#addForm .field').removeClass('invalid');
+        let valid = true;
+        if ($('#addFirstName').val().trim().length < 2) { $('#addFirstName').closest('.field').addClass('invalid'); valid = false; }
+        if ($('#addLastName').val().trim().length < 2) { $('#addLastName').closest('.field').addClass('invalid'); valid = false; }
+        if ($('#addPhone').val().trim().length < 5) { $('#addPhone').closest('.field').addClass('invalid'); valid = false; }
+        return valid;
+    }
+
+    function openEditModal(c) {
+        $('#editCustomerId').val(c.customerId ?? c.id);
+        $('#editFirstName').val(c.firstName || '');
+        $('#editLastName').val(c.lastName || '');
+        $('#editPhone').val(c.phone || '');
+        $('#editEmail').val(c.email || '');
+        $('#editAddress').val(c.address || '');
+        $('#editStatus').val((c.customerStatus || 'ACTIVE').toUpperCase());
+        const isVerified = c.verified === undefined ? c.isVerified : c.verified;
+        $('#editVerified').val(String(isVerified === true || isVerified === 'true'));
+        $('#saveCustomerBtn').prop('disabled', false).text('Save changes');
+        $('#editOverlay').addClass('show');
+    }
+
+    function closeEditModal() {
+        $('#editOverlay').removeClass('show');
+        $('#saveCustomerBtn').prop('disabled', false).text('Save changes');
+    }
+
+    function openDeleteModal(c) {
+        deletingCustomer = c;
+        const name = `${c.firstName || ''} ${c.lastName || ''}`.trim() || (c.phone || 'this customer');
+        $('#deleteCustomerName').text(name);
+        $('#deleteOverlay').addClass('show');
+    }
+
+    function closeDeleteModal() {
+        $('#deleteOverlay').removeClass('show');
+        deletingCustomer = null;
+    }
+
+    // EVENT LISTENERS (page ready)
+
+    $(document).ready(function () {
+        const token = localStorage.getItem('JWT');
+        if (!token || token === 'null' || token === 'undefined') {
+            renderSignInRequiredState();
+        } else {
+            loadCustomerStatuses();
+            loadCustomers();
+        }
+
+        $('#searchInput').on('input', renderTable);
+        $('#statusFilter, #verifiedFilter').on('change', renderTable);
+        $('#editForm').on('submit', function (e) { e.preventDefault(); saveCustomer(); });
+        $('#addForm').on('submit', function (e) { e.preventDefault(); createCustomer(); });
+
+        $('#signOutBtn').on('click', function () {
+            localStorage.removeItem('JWT');
+            localStorage.removeItem('userId');
+            window.location.href = 'login.html';
+        });
+
+        $('.modal-overlay').on('click', function (e) {
+            if (e.target === this) {
+                closeEditModal();
+                closeAddModal();
+                closeDeleteModal();
+            }
+        });
+
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeEditModal();
+                closeAddModal();
+                closeDeleteModal();
+            }
+        });
+    });
+
+       // API ENDPOINTS + AJAX CALLS  (backend communication)
+
+    const API_BASE = 'http://localhost:8080/v1/customers';
+
+    const ENDPOINTS = {
+        list:     API_BASE,                    // GET  – all customers
+        create:   API_BASE,                    // POST – create customer
+        update:   API_BASE,                    // PUT  – update customer
+        delete:   id => API_BASE + '/' + id,   // DELETE – soft delete
+        statuses: API_BASE + '/statuses'       // GET  – CustomerStatus enum value
+    };
+
+    // GET all customers
+    function loadCustomers() {
+        $('#refreshBtn').addClass('spinning');
+        renderLoadingState();
+
+        $.ajax({
+            url: ENDPOINTS.list,
+            type: 'GET',
+            contentType: 'application/json',
+            headers: authHeaders(),
+            success: function (customers) {
+                allCustomers = Array.isArray(customers) ? customers : (customers?.data || []);
+                $('#totalCount').text(allCustomers.length);
+
+                let totalPts = 0;
+                allCustomers.forEach(c => {
+                    const lp = c.loyaltyPoint || {};
+                    totalPts += (lp.availablePoints || 0);
+                });
+                $('#totalPoints').text(totalPts.toLocaleString());
+                renderTable();
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    renderSignInRequiredState();
+                    showError('Your session has expired or you don\'t have access. Please sign in again.');
+                } else {
+                    renderErrorState();
+                    showError('Couldn\'t load customers. Please check the connection and try again.');
+                }
+            },
+            complete: function () {
+                $('#refreshBtn').removeClass('spinning');
+            }
+        });
+    }
+
+    // GET CustomerStatus enum values → fill dropdowns
+    function loadCustomerStatuses() {
+        $.ajax({
+            url: ENDPOINTS.statuses,
+            type: 'GET',
+            contentType: 'application/json',
+            headers: authHeaders(),
+            success: function (statuses) {
+                const list = Array.isArray(statuses) ? statuses : [];
+
+                const $filter = $('#statusFilter');
+                const $add = $('#addStatus');
+                const $edit = $('#editStatus');
+
+                $filter.find('option:not(:first)').remove();
+                $add.empty();
+                $edit.empty();
+
+                list.forEach(s => {
+                    const value = String(s).toUpperCase();
+                    const label = value.charAt(0) + value.slice(1).toLowerCase();
+
+                    $filter.append(`<option value="${value}">${label}</option>`);
+                    $add.append(`<option value="${value}">${label}</option>`);
+                    $edit.append(`<option value="${value}">${label}</option>`);
+                });
+
+                if (list.map(String).map(x => x.toUpperCase()).includes('ACTIVE')) {
+                    $add.val('ACTIVE');
+                } else if (list.length > 0) {
+                    $add.val(String(list[0]).toUpperCase());
+                }
+            },
+            error: function (xhr) {
+                console.warn('Could not load customer statuses', xhr.status);
+                const fallback = ['ACTIVE', 'INACTIVE', 'PENDING'];
+                const $filter = $('#statusFilter');
+                const $add = $('#addStatus');
+                const $edit = $('#editStatus');
+
+                $filter.find('option:not(:first)').remove();
+                $add.empty();
+                $edit.empty();
+
+                fallback.forEach(value => {
+                    const label = value.charAt(0) + value.slice(1).toLowerCase();
+                    $filter.append(`<option value="${value}">${label}</option>`);
+                    $add.append(`<option value="${value}">${label}</option>`);
+                    $edit.append(`<option value="${value}">${label}</option>`);
+                });
+                $add.val('ACTIVE');
+            }
+        });
+    }
+
+    // POST create customer
+    function createCustomer() {
+        if (!validateAddForm()) return;
+
+        const payload = {
+            customerId: 0,
+            firstName: $('#addFirstName').val().trim(),
+            lastName: $('#addLastName').val().trim(),
+            phone: $('#addPhone').val().trim(),
+            email: $('#addEmail').val().trim(),
+            address: $('#addAddress').val().trim(),
+            customerStatus: $('#addStatus').val(),
+            verified: $('#addVerified').val() === 'true'
+        };
+
+        const btn = $('#createCustomerBtn');
+        btn.prop('disabled', true).text('Creating…');
+
+        $.ajax({
+            url: ENDPOINTS.create,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            headers: authHeaders(),
+            success: function (res) {
+                if (!isApiSuccess(res)) {
+                    showError(apiErrorMessage(res, null, 'Could not create customer.'));
+                    return;
+                }
+                showSuccess('Customer created successfully.');
+                closeAddModal();
+                loadCustomers();
+            },
+            error: function (xhr) {
+                showError(apiErrorMessage(null, xhr, `Couldn't create this customer (error ${xhr.status}).`));
+            },
+            complete: function () {
+                btn.prop('disabled', false).text('Create customer');
+            }
+        });
+    }
+
+    // PUT update customer
+    function saveCustomer() {
+        const payload = {
+            customerId: Number($('#editCustomerId').val()),
+            firstName: $('#editFirstName').val().trim(),
+            lastName: $('#editLastName').val().trim(),
+            phone: $('#editPhone').val().trim(),
+            email: $('#editEmail').val().trim(),
+            address: $('#editAddress').val().trim(),
+            customerStatus: $('#editStatus').val(),
+            verified: $('#editVerified').val() === 'true'
+        };
+
+        const btn = $('#saveCustomerBtn');
+        btn.prop('disabled', true).text('Saving…');
+
+        $.ajax({
+            url: ENDPOINTS.update,
+            type: 'PUT',
+            contentType: 'application/json',
+            headers: authHeaders(),
+            data: JSON.stringify(payload),
+            success: function (res) {
+                if (!isApiSuccess(res)) {
+                    showError(apiErrorMessage(res, null, 'Failed to update customer.'));
+                    return;
+                }
+                showSuccess('Customer updated successfully!');
+                closeEditModal();
+                loadCustomers();
+            },
+            error: function (xhr) {
+                showError(apiErrorMessage(null, xhr, 'Failed to update customer.'));
+            },
+            complete: function () {
+                btn.prop('disabled', false).text('Save changes');
+            }
+        });
+    }
+
+    //  DELETE (soft) deactivate customer
+    function confirmDelete() {
+        if (!deletingCustomer) return;
+        const id = deletingCustomer.customerId ?? deletingCustomer.id;
+        const btn = $('#confirmDeleteBtn');
+        btn.prop('disabled', true).text('Deactivating…');
+
+        $.ajax({
+            url: ENDPOINTS.delete(id),
+            type: 'DELETE',
+            contentType: 'application/json',
+            headers: authHeaders(),
+            success: function (res) {
+                if (!isApiSuccess(res)) {
+                    showError(apiErrorMessage(res, null, 'Could not deactivate customer.'));
+                    return;
+                }
+                showSuccess('Customer deactivated.');
+                closeDeleteModal();
+                loadCustomers();
+            },
+            error: function (xhr) {
+                showError(apiErrorMessage(null, xhr, `Couldn't deactivate this customer (error ${xhr.status}).`));
+            },
+            complete: function () {
+                btn.prop('disabled', false).text('Deactivate');
+            }
+        });
+    }
+</script>
+</body>
+</html>

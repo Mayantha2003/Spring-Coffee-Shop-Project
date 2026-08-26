@@ -174,6 +174,8 @@
     <a class="nav-link" href="user_Management.html">Users</a>
     <a class="nav-link" href="category_Management.html">Categories</a>
     <a class="nav-link" href="item_Management.html">Items</a>
+    <a class="nav-link" href="batch_Management.html">Batches</a>
+    <a class="nav-link" href="customer_Management.html">Customers</a>
     <button class="signout-btn" id="signOutBtn">Sign out</button>
   </div>
 </div>
@@ -346,154 +348,58 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 
-  // (All Api Assign the Variables and Handle Easy)
-  const API_BASE = 'http://localhost:8080/v1/categories'; // Main Api
-  const ENDPOINTS = {
-    list:   API_BASE,              // GET    -> all categories get
-    create: API_BASE,              // POST   -> Save or create category
-    update: API_BASE,              // PUT    -> Update category
-    delete: id => API_BASE + '/' + id, // DELETE -> Remove category
-    statuses: API_BASE + '/statuses'    // GET -> Get CategoryStatus Enum Values
-  };
-
+  // STATE VARIABLES
   let allCategories = [];
   let availableStatuses = [];
+  let editingCategory = null;
+  let deletingCategory = null;
 
 
+  // HELPERS
   function authHeaders() {
-    let reqHeaders = {};
+    const h = {};
     const token = localStorage.getItem('JWT');
-    if (token && token !== "null" && token !== "undefined") {
-      reqHeaders['Authorization'] = 'Bearer ' + token;
+    if (token && token !== 'null' && token !== 'undefined') {
+      h['Authorization'] = 'Bearer ' + token;
     }
-    return reqHeaders;
+    return h;
   }
 
-  $(document).ready(function(){
-    const token = localStorage.getItem('JWT');
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
 
-    if (!token || token === 'null' || token === 'undefined') {
-      renderSignInRequiredState();
-    } else {
-      loadCategories();
-      loadStatuses();
-    }
-
-    $('#searchInput').on('input', renderTable);
-    $('#statusFilter').on('change', renderTable);
-    $('#editForm').on('submit', function(e){ e.preventDefault(); saveCategory(); });
-    $('#addForm').on('submit', function(e){ e.preventDefault(); createCategory(); });
-  });
-
-  $('#signOutBtn').on('click', function(){
-    localStorage.removeItem('JWT');
-    localStorage.removeItem('userId');
-    window.location.href = 'login.html';
-  });
-
-  /* ---------- Banners ---------- */
-  function showError(msg){
+  function showError(msg) {
     $('#errorBannerText').text(msg);
     $('#errorBanner').addClass('show');
     $('#successBanner').removeClass('show');
   }
-  function showSuccess(msg){
+
+  function showSuccess(msg) {
     $('#successBannerText').text(msg);
     $('#successBanner').addClass('show');
     $('#errorBanner').removeClass('show');
     setTimeout(() => $('#successBanner').removeClass('show'), 3500);
   }
-  function dismissBanner(id){ $('#' + id).removeClass('show'); }
 
-  /* ---------- Load statuses (for filter + edit/add modals) ---------- */
-  function loadStatuses(){
-    $.ajax({
-      url: ENDPOINTS.statuses,
-      type: 'GET',
-      contentType: 'application/json',
-      headers: authHeaders(),
-      success: function (statuses){
-        console.log("Statuses from backend:", statuses);
-
-        const rawStatuses = Array.isArray(statuses) ? statuses : (statuses?.data || []);
-        availableStatuses = rawStatuses.map(s => (typeof s === 'object' && s !== null) ? (s.statusName || s.name || String(s)) : String(s)).filter(Boolean);
-
-        const statusFilter = $('#statusFilter');
-        const editStatus = $('#editStatus');
-        const addStatus = $('#addStatus');
-
-        statusFilter.find('option:not(:first)').remove();
-        editStatus.empty();
-        addStatus.empty();
-
-        availableStatuses.forEach(status => {
-          const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-
-          statusFilter.append(`<option value="${status}">${formatted}</option>`);
-          editStatus.append(`<option value="${status}">${formatted}</option>`);
-          addStatus.append(`<option value="${status}">${formatted}</option>`);
-        });
-
-        if (availableStatuses.includes('ACTIVE')) {
-          addStatus.val('ACTIVE');
-        }
-      },
-      error: function(xhr){
-        console.error('Could not load statuses. Status:', xhr.status, xhr.responseText);
-
-        availableStatuses = ['ACTIVE', 'INACTIVE'];
-
-        const statusFilter = $('#statusFilter');
-        const editStatus = $('#editStatus');
-        const addStatus = $('#addStatus');
-
-        statusFilter.find('option:not(:first)').remove();
-        editStatus.empty();
-        addStatus.empty();
-
-        availableStatuses.forEach(status => {
-          const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-          statusFilter.append(`<option value="${status}">${formatted}</option>`);
-          editStatus.append(`<option value="${status}">${formatted}</option>`);
-          addStatus.append(`<option value="${status}">${formatted}</option>`);
-        });
-
-        addStatus.val('ACTIVE');
-      }
-    });
-  }
-  /* ---------- Load categories ---------- */
-  function loadCategories(){
-    $('#refreshBtn').addClass('spinning');
-    renderLoadingState();
-
-    $.ajax({
-      url: ENDPOINTS.list,
-      type: 'GET',
-      contentType: 'application/json',
-      headers: authHeaders(),
-      success: function(categories){
-        allCategories = Array.isArray(categories) ? categories : (categories?.data || []);
-        $('#totalCount').text(allCategories.length);
-        renderTable();
-      },
-      error: function(xhr){
-        if (xhr.status === 401 || xhr.status === 403){
-          renderSignInRequiredState();
-          showError('Your session has expired or you don\'t have access. Please sign in again.');
-        } else {
-          renderErrorState();
-          showError('Couldn\'t load categories. Please check the connection and try again.');
-        }
-      },
-      complete: function(){
-        $('#refreshBtn').removeClass('spinning');
-      }
-    });
+  function dismissBanner(id) {
+    $('#' + id).removeClass('show');
   }
 
-  /* ---------- Filtering + rendering ---------- */
-  function getFilteredCategories(){
+  function statusClass(status) {
+    return (status || '').toUpperCase() === 'ACTIVE' ? 'status-active' : 'status-inactive';
+  }
+
+  function itemCountFor(c) {
+    if (Array.isArray(c.items)) return c.items.length;
+    if (typeof c.itemCount === 'number') return c.itemCount;
+    return 0;
+  }
+
+  // UI – TABLE / FILTER / RENDER
+  function getFilteredCategories() {
     const q = $('#searchInput').val().trim().toLowerCase();
     const statusF = $('#statusFilter').val();
 
@@ -505,17 +411,7 @@
     }).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   }
 
-  function statusClass(status){
-    return (status || '').toUpperCase() === 'ACTIVE' ? 'status-active' : 'status-inactive';
-  }
-
-  function itemCountFor(c){
-    if (Array.isArray(c.items)) return c.items.length;
-    if (typeof c.itemCount === 'number') return c.itemCount;
-    return 0;
-  }
-
-  function renderTable(){
+  function renderTable() {
     const hasAnyFilter = $('#searchInput').val().trim() || $('#statusFilter').val();
     $('#clearFiltersBtn').toggleClass('show', !!hasAnyFilter);
 
@@ -523,13 +419,13 @@
     const body = $('#categoryTableBody');
     body.empty();
 
-    if (allCategories.length === 0){
+    if (allCategories.length === 0) {
       renderEmptyState('No categories yet', 'Create your first category to start organizing the menu.');
       $('#tableFootCount').text('Showing 0 categories');
       return;
     }
 
-    if (categories.length === 0){
+    if (categories.length === 0) {
       renderEmptyState('No matches', 'Try a different search term or clear your filters.');
       $('#tableFootCount').text(`Showing 0 of ${allCategories.length} categories`);
       return;
@@ -559,10 +455,10 @@
           <td><span class="pill ${statusClass(status)}">${escapeHtml(status.toLowerCase())}</span></td>
           <td>
             <div class="row-actions">
-              <button class="icon-btn edit-btn" title="Edit category" aria-label="Edit ${escapeHtml(name)}">
+              <button class="icon-btn edit-btn" title="Edit category">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
               </button>
-              <button class="icon-btn danger delete-btn" title="Delete category" aria-label="Delete ${escapeHtml(name)}">
+              <button class="icon-btn danger delete-btn" title="Delete category">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
               </button>
             </div>
@@ -575,11 +471,13 @@
     });
 
     $('#tableFootCount').text(
-            hasAnyFilter ? `Showing ${categories.length} of ${allCategories.length} categories` : `Showing ${categories.length} categories`
+            hasAnyFilter
+                    ? `Showing ${categories.length} of ${allCategories.length} categories`
+                    : `Showing ${categories.length} categories`
     );
   }
 
-  function renderLoadingState(){
+  function renderLoadingState() {
     $('#categoryTableBody').html(`
       <tr class="state-row"><td colspan="5">
         <div class="state-box"><div class="spinner"></div><div class="state-sub">Loading categories…</div></div>
@@ -587,7 +485,7 @@
     `);
   }
 
-  function renderErrorState(){
+  function renderErrorState() {
     $('#categoryTableBody').html(`
       <tr class="state-row"><td colspan="5">
         <div class="state-box">
@@ -599,7 +497,7 @@
     `);
   }
 
-  function renderEmptyState(title, sub){
+  function renderEmptyState(title, sub) {
     $('#categoryTableBody').html(`
       <tr class="state-row"><td colspan="5">
         <div class="state-box">
@@ -611,7 +509,7 @@
     `);
   }
 
-  function renderSignInRequiredState(){
+  function renderSignInRequiredState() {
     $('#totalCount').text('—');
     $('#tableFootCount').text('Showing 0 categories');
     $('#categoryTableBody').html(`
@@ -626,30 +524,25 @@
     `);
   }
 
-  function clearFilters(){
+  function clearFilters() {
     $('#searchInput').val('');
     $('#statusFilter').val('');
     renderTable();
   }
 
-  function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, c => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[c]));
-  }
 
-  /* ---------- Add modal ---------- */
-  function openAddModal(){
+  // UI – MODALS (Add / Edit / Delete)
+  function openAddModal() {
     resetAddForm();
     $('#addOverlay').addClass('show');
     $('#addCategoryName').trigger('focus');
   }
 
-  function closeAddModal(){
+  function closeAddModal() {
     $('#addOverlay').removeClass('show');
   }
 
-  function resetAddForm(){
+  function resetAddForm() {
     $('#addForm')[0].reset();
     $('#addForm .field').removeClass('invalid');
     $('#addStatus').val('ACTIVE');
@@ -657,19 +550,175 @@
     $('#createCategoryBtn').prop('disabled', false).text('Create category');
   }
 
-  function validateAddForm(){
+  function validateAddForm() {
     $('#addForm .field').removeClass('invalid');
     let valid = true;
-
-    const name = $('#addCategoryName').val().trim();
-    if (name.length < 2){
-      $('#addCategoryName').closest('.field').addClass('invalid'); valid = false;
+    if ($('#addCategoryName').val().trim().length < 2) {
+      $('#addCategoryName').closest('.field').addClass('invalid');
+      valid = false;
     }
-
     return valid;
   }
 
-  function createCategory(){
+  function openEditModal(c) {
+    editingCategory = c;
+    $('#editCategoryId').val(c.categoryId ?? c.id);
+    $('#editCategoryName').val(c.categoryName || '');
+    $('#editDescription').val(c.description || '');
+    $('#editIcon').val(c.icon || '');
+    $('#editDisplayOrder').val(c.displayOrder ?? 0);
+    $('#editStatus').val((c.categoryStatus || 'ACTIVE').toUpperCase());
+    $('#saveCategoryBtn').prop('disabled', false).text('Save changes');
+    $('#editOverlay').addClass('show');
+  }
+
+  function closeEditModal() {
+    $('#editOverlay').removeClass('show');
+    $('#saveCategoryBtn').prop('disabled', false).text('Save changes');
+    editingCategory = null;
+  }
+
+  function openDeleteModal(c, count) {
+    deletingCategory = c;
+    $('#deleteCategoryName').text(c.categoryName || 'this category');
+    $('#deleteWarnNote').toggleClass('show', count > 0);
+    $('#deleteOverlay').addClass('show');
+  }
+
+  function closeDeleteModal() {
+    $('#deleteOverlay').removeClass('show');
+    deletingCategory = null;
+  }
+
+
+  // EVENT LISTENERS
+  $(document).ready(function () {
+    const token = localStorage.getItem('JWT');
+    if (!token || token === 'null' || token === 'undefined') {
+      renderSignInRequiredState();
+    } else {
+      loadStatuses();
+      loadCategories();
+    }
+
+    $('#searchInput').on('input', renderTable);
+    $('#statusFilter').on('change', renderTable);
+    $('#editForm').on('submit', function (e) { e.preventDefault(); saveCategory(); });
+    $('#addForm').on('submit', function (e) { e.preventDefault(); createCategory(); });
+
+    $('#signOutBtn').on('click', function () {
+      localStorage.removeItem('JWT');
+      localStorage.removeItem('userId');
+      window.location.href = 'login.html';
+    });
+
+    $('.modal-overlay').on('click', function (e) {
+      if (e.target === this) {
+        closeEditModal();
+        closeAddModal();
+        closeDeleteModal();
+      }
+    });
+
+    $(document).on('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeEditModal();
+        closeAddModal();
+        closeDeleteModal();
+      }
+    });
+  });
+
+  // API ENDPOINTS + AJAX CALLS
+  const API_BASE = 'http://localhost:8080/v1/categories';
+
+  const ENDPOINTS = {
+    list:     API_BASE,                  // GET    – all categories
+    create:   API_BASE,                  // POST   – create category
+    update:   API_BASE,                  // PUT    – update category
+    delete:   id => API_BASE + '/' + id, // DELETE – remove category
+    statuses: API_BASE + '/statuses'     // GET    – CategoryStatus enum
+  };
+
+  // GET CategoryStatus enum → fill dropdowns
+  function loadStatuses() {
+    $.ajax({
+      url: ENDPOINTS.statuses,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (statuses) {
+        const raw = Array.isArray(statuses) ? statuses : (statuses?.data || []);
+        availableStatuses = raw.map(s =>
+                (typeof s === 'object' && s !== null) ? (s.statusName || s.name || String(s)) : String(s)
+        ).filter(Boolean);
+
+        const $filter = $('#statusFilter');
+        const $edit = $('#editStatus');
+        const $add = $('#addStatus');
+
+        $filter.find('option:not(:first)').remove();
+        $edit.empty();
+        $add.empty();
+
+        availableStatuses.forEach(status => {
+          const label = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+          $filter.append(`<option value="${status}">${label}</option>`);
+          $edit.append(`<option value="${status}">${label}</option>`);
+          $add.append(`<option value="${status}">${label}</option>`);
+        });
+
+        if (availableStatuses.includes('ACTIVE')) $add.val('ACTIVE');
+      },
+      error: function () {
+        availableStatuses = ['ACTIVE', 'INACTIVE'];
+        const $filter = $('#statusFilter');
+        const $edit = $('#editStatus');
+        const $add = $('#addStatus');
+        $filter.find('option:not(:first)').remove();
+        $edit.empty();
+        $add.empty();
+        availableStatuses.forEach(status => {
+          const label = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+          $filter.append(`<option value="${status}">${label}</option>`);
+          $edit.append(`<option value="${status}">${label}</option>`);
+          $add.append(`<option value="${status}">${label}</option>`);
+        });
+        $add.val('ACTIVE');
+      }
+    });
+  }
+
+  // GET all categories
+  function loadCategories() {
+    $('#refreshBtn').addClass('spinning');
+    renderLoadingState();
+
+    $.ajax({
+      url: ENDPOINTS.list,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (categories) {
+        allCategories = Array.isArray(categories) ? categories : (categories?.data || []);
+        $('#totalCount').text(allCategories.length);
+        renderTable();
+      },
+      error: function (xhr) {
+        if (xhr.status === 401 || xhr.status === 403) {
+          renderSignInRequiredState();
+          showError('Your session has expired or you don\'t have access. Please sign in again.');
+        } else {
+          renderErrorState();
+          showError('Couldn\'t load categories. Please check the connection and try again.');
+        }
+      },
+      complete: function () {
+        $('#refreshBtn').removeClass('spinning');
+      }
+    });
+  }
+
+  // POST create category
+  function createCategory() {
     if (!validateAddForm()) return;
 
     const payload = {
@@ -689,52 +738,27 @@
       contentType: 'application/json',
       data: JSON.stringify(payload),
       headers: authHeaders(),
-      success: function(){
+      success: function () {
         showSuccess('Category created.');
         closeAddModal();
         loadCategories();
       },
-      error: function(xhr){
+      error: function (xhr) {
         let msg = `Couldn't create this category (error ${xhr.status}).`;
-        if (xhr.status === 409){
-          msg = 'A category with this name already exists.';
-        } else if (xhr.responseJSON && xhr.responseJSON.message){
-          msg = xhr.responseJSON.message;
-        }
+        if (xhr.status === 409) msg = 'A category with this name already exists.';
+        else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
         showError(msg);
       },
-      complete: function(){
+      complete: function () {
         btn.prop('disabled', false).text('Create category');
       }
     });
   }
 
-  /* ---------- Edit modal ---------- */
-  let editingCategory = null;
-
-  function openEditModal(c){
-    editingCategory = c;
-    $('#editCategoryId').val(c.categoryId ?? c.id);
-    $('#editCategoryName').val(c.categoryName || '');
-    $('#editDescription').val(c.description || '');
-    $('#editIcon').val(c.icon || '');
-    $('#editDisplayOrder').val(c.displayOrder ?? 0);
-    $('#editStatus').val((c.categoryStatus || 'ACTIVE').toUpperCase());
-
-    $('#saveCategoryBtn').prop('disabled', false).text('Save changes');
-    $('#editOverlay').addClass('show');
-  }
-
-  function closeEditModal(){
-    $('#editOverlay').removeClass('show');
-    $('#saveCategoryBtn').prop('disabled', false).text('Save changes');
-    editingCategory = null;
-  }
-
-  function saveCategory(){
-    const id = $('#editCategoryId').val();
+  // PUT update category
+  function saveCategory() {
     const payload = {
-      categoryId: Number(id),
+      categoryId: Number($('#editCategoryId').val()),
       categoryName: $('#editCategoryName').val().trim(),
       description: $('#editDescription').val().trim(),
       icon: $('#editIcon').val().trim(),
@@ -751,38 +775,22 @@
       contentType: 'application/json',
       headers: authHeaders(),
       data: JSON.stringify(payload),
-      success: function(){
+      success: function () {
         showSuccess('Category updated successfully!');
         closeEditModal();
         loadCategories();
       },
-      error: function(xhr){
-        console.error('Update error:', xhr.responseText);
+      error: function () {
         showError('Failed to update category.');
       },
-      complete: function(){
+      complete: function () {
         btn.prop('disabled', false).text('Save changes');
       }
     });
   }
 
-  /* ---------- Delete modal ---------- */
-  let deletingCategory = null;
-
-  function openDeleteModal(c, count){
-    deletingCategory = c;
-    const name = c.categoryName || 'this category';
-    $('#deleteCategoryName').text(name);
-    $('#deleteWarnNote').toggleClass('show', count > 0);
-    $('#deleteOverlay').addClass('show');
-  }
-
-  function closeDeleteModal(){
-    $('#deleteOverlay').removeClass('show');
-    deletingCategory = null;
-  }
-
-  function confirmDelete(){
+  // DELETE category
+  function confirmDelete() {
     if (!deletingCategory) return;
     const id = deletingCategory.categoryId ?? deletingCategory.id;
     const btn = $('#confirmDeleteBtn');
@@ -791,29 +799,20 @@
     $.ajax({
       url: ENDPOINTS.delete(id),
       type: 'DELETE',
-      contentType: 'application/json',
       headers: authHeaders(),
-      success: function(){
+      success: function () {
         showSuccess('Category deleted.');
         closeDeleteModal();
         loadCategories();
       },
-      error: function(xhr){
+      error: function (xhr) {
         showError(xhr.responseJSON?.message || `Couldn't delete this category (error ${xhr.status}).`);
       },
-      complete: function(){
+      complete: function () {
         btn.prop('disabled', false).text('Delete category');
       }
     });
   }
-
-  // Close modals on overlay click / Escape
-  $('.modal-overlay').on('click', function(e){
-    if (e.target === this){ closeEditModal(); closeAddModal(); closeDeleteModal(); }
-  });
-  $(document).on('keydown', function(e){
-    if (e.key === 'Escape'){ closeEditModal(); closeAddModal(); closeDeleteModal(); }
-  });
 </script>
 </body>
 </html>

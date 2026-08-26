@@ -4,7 +4,6 @@ import com.example.Spring_Coffee_Shop_Project.enumeration.UserRole;
 import com.example.Spring_Coffee_Shop_Project.enumeration.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,10 +26,10 @@ public class User {
 
     private String firstName;
     private String lastName;
-    private String  phone;
+    private String phone;
 
     @Enumerated(EnumType.STRING)
-    private UserStatus userstatus;
+    private UserStatus userStatus;
 
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
@@ -40,4 +39,13 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<LoginHistory> loginHistories = new ArrayList<>();
+
+    @OneToMany(mappedBy = "performedBy", fetch = FetchType.LAZY)
+    private List<StockTransaction> stockTransactions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "heldBy", fetch = FetchType.LAZY)
+    private List<HeldSale> heldSales = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Sale> sales = new ArrayList<>();
 }
