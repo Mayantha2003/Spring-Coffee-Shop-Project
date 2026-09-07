@@ -14,5 +14,6 @@ public class StockDTO {
     private String itemName;
     private int availableQuantity;
     private int reorderLevel;
+    private String categoryName;
     private Integer maxStockLevel;
 }

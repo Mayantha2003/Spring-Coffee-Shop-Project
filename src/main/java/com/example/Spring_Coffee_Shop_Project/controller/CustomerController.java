@@ -50,4 +50,14 @@ public class CustomerController {
     public ResponseEntity<CustomerStatus[]> getCustomerStatuses() {
         return ResponseEntity.ok(CustomerStatus.values());
     }
+
+    @GetMapping("/search/name")
+    public List<CustomerDTO> searchByName(@RequestParam String query) {
+        return customerService.searchCustomersByName(query);
+    }
+
+    @GetMapping("/search/phone")
+    public List<CustomerDTO> searchByPhone(@RequestParam String phone) {
+        return customerService.searchCustomersByPhone(phone);
+    }
 }

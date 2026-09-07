@@ -18,4 +18,5 @@ public class SaleCreateDTO {
     private String notes;
     private List<SaleItemDTO> items;
     private PaymentCreateDTO payment;
+    private Integer loyaltyPointsUsed;
 }

@@ -45,6 +45,9 @@ public class HeldSale {
     @Column(nullable = false, updatable = false)
     private LocalDateTime heldAt;
 
+    @Column(nullable = false)
+    private boolean removalRequested = false;
+
     @OneToMany(mappedBy = "heldSale", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HeldSaleItem> heldSaleItems = new ArrayList<>();
 

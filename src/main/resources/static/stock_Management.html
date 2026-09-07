@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Management · Cafe912</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --espresso:#241811;
+            --espresso-deep:#150e09;
+            --paper:#f7f1e6;
+            --paper-dim:#efe4d0;
+            --amber:#c17a34;
+            --amber-light:#e3a668;
+            --sage:#748a6a;
+            --sage-bg:#eaf0e6;
+            --ink:#26190f;
+            --ink-soft:#6b5c4c;
+            --line:rgba(38,25,15,0.14);
+            --error:#b23b3b;
+            --error-bg:rgba(178,59,59,0.08);
+            --success:#4c6b41;
+            --success-bg:#eaf0e6;
+            --radius:4px;
+        }
+        *{box-sizing:border-box; margin:0; padding:0;}
+        html,body{height:100%;}
+        body{
+            font-family:'Inter', sans-serif;
+            background:var(--paper);
+            color:var(--ink);
+            min-height:100vh;
+        }
+        @media (prefers-reduced-motion: reduce){
+            *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+        }
+        a{color:inherit;}
+
+        .topbar{position:sticky; top:0; z-index:20; background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%); color:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px;}
+        .topbar-left{display:flex; align-items:center; gap:14px;}
+        .seal{width:34px; height:34px; border-radius:50%; border:1.5px solid var(--amber); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+        .seal svg{width:16px; height:16px; stroke:var(--amber-light);}
+        .brand-name{font-size:12.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber-light); font-weight:600;}
+        .topbar-crumb{font-size:13px; color:rgba(247,241,230,0.5); padding-left:14px; margin-left:14px; border-left:1px solid rgba(247,241,230,0.18);}
+        .topbar-crumb strong{color:rgba(247,241,230,0.92); font-weight:600;}
+        .topbar-right{display:flex; align-items:center; gap:10px;}
+        .nav-link{font-size:13px; color:rgba(247,241,230,0.65); padding:8px 12px; border-radius:var(--radius); text-decoration:none; font-weight:600; transition:background .15s ease, color .15s ease; white-space:nowrap;}
+        .nav-link:hover{background:rgba(247,241,230,0.08); color:var(--paper);}
+        .nav-link.active{background:rgba(247,241,230,0.1); color:var(--paper);}
+        .signout-btn{background:none; border:1px solid rgba(247,241,230,0.25); color:var(--paper); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius); cursor:pointer; transition:border-color .18s ease, background .18s ease; flex-shrink:0;}
+        .signout-btn:hover{background:rgba(247,241,230,0.08); border-color:rgba(247,241,230,0.4);}
+
+        /* ===== PAGE ===== */
+        .page{
+            max-width:1180px;
+            margin:0 auto;
+            padding:44px 32px 80px;
+        }
+        .page-head{
+            display:flex; align-items:flex-end; justify-content:space-between;
+            gap:24px; margin-bottom:28px; flex-wrap:wrap;
+        }
+        .eyebrow{
+            font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase;
+            color:var(--amber); font-weight:700; margin-bottom:10px;
+        }
+        .page-head h1{
+            font-family:'Newsreader', serif; font-weight:500; font-size:32px;
+            color:var(--espresso); margin-bottom:6px;
+        }
+        .page-head .sub{color:var(--ink-soft); font-size:14.5px;}
+        .head-stat{
+            text-align:right;
+        }
+        .head-stat .num{font-family:'Newsreader', serif; font-size:26px; color:var(--espresso); font-weight:500;}
+        .head-stat .label{font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-top:2px;}
+
+        /* ===== STAT CARDS ===== */
+        .stat-grid{
+            display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;
+            margin-bottom:24px;
+        }
+        .stat-card{
+            background:#fff; border:1px solid var(--line); border-radius:6px;
+            padding:16px 18px;
+        }
+        .stat-card .stat-label{
+            font-size:11px; text-transform:uppercase; letter-spacing:0.07em;
+            color:var(--ink-soft); font-weight:700; margin-bottom:8px;
+            display:flex; align-items:center; gap:6px;
+        }
+        .stat-card .stat-label .dot{width:7px; height:7px; border-radius:50%; flex-shrink:0;}
+        .stat-card .stat-num{font-family:'Newsreader', serif; font-size:28px; color:var(--espresso); font-weight:500;}
+        .stat-card.card-low .stat-num{color:var(--amber);}
+        .stat-card.card-out .stat-num{color:var(--error);}
+
+        /* ===== TABS ===== */
+        .tab-row{
+            display:flex; gap:6px; margin-bottom:18px; border-bottom:1px solid var(--line);
+        }
+        .tab-btn{
+            background:none; border:none; cursor:pointer; font-family:'Inter',sans-serif;
+            font-size:13.5px; font-weight:600; color:var(--ink-soft); padding:10px 4px;
+            position:relative; margin-right:22px; transition:color .15s ease;
+        }
+        .tab-btn:hover{color:var(--ink);}
+        .tab-btn.active{color:var(--espresso);}
+        .tab-btn.active::after{
+            content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+            background:var(--amber); border-radius:2px 2px 0 0;
+        }
+
+        /* ===== TOOLBAR ===== */
+        .toolbar{
+            display:flex; align-items:center; gap:12px;
+            margin-bottom:20px; flex-wrap:wrap;
+        }
+        .search-wrap{
+            position:relative; flex:1; min-width:220px;
+        }
+        .search-wrap svg{
+            position:absolute; left:14px; top:50%; transform:translateY(-50%);
+            width:16px; height:16px; stroke:var(--ink-soft); pointer-events:none;
+        }
+        .search-wrap input{
+            width:100%; padding:11px 14px 11px 40px;
+            border:1.5px solid var(--line); border-radius:var(--radius);
+            font-family:'Inter', sans-serif; font-size:14px; background:#fff; color:var(--ink);
+            outline:none; transition:border-color .18s ease, box-shadow .18s ease;
+        }
+        .search-wrap input:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
+        .search-wrap input::placeholder{color:#b5a996;}
+
+        .filter-select{
+            position:relative;
+        }
+        .filter-select select{
+            appearance:none;
+            padding:11px 34px 11px 14px;
+            border:1.5px solid var(--line); border-radius:var(--radius);
+            font-family:'Inter', sans-serif; font-size:13.5px; background:#fff; color:var(--ink);
+            outline:none; cursor:pointer; min-width:150px;
+            transition:border-color .18s ease;
+        }
+        .filter-select select:focus{border-color:var(--espresso);}
+        .filter-select::after{
+            content:""; position:absolute; right:13px; top:50%;
+            width:8px; height:8px; margin-top:-5px;
+            border-right:1.5px solid var(--ink-soft); border-bottom:1.5px solid var(--ink-soft);
+            rotate:45deg; pointer-events:none;
+        }
+        .clear-filters{
+            font-size:13px; color:var(--ink-soft); background:none; border:none; cursor:pointer;
+            font-weight:600; padding:8px 4px; text-decoration:underline; text-underline-offset:2px;
+            display:none;
+        }
+        .clear-filters.show{display:inline-block;}
+
+        .refresh-btn{
+            display:flex; align-items:center; gap:7px;
+            padding:11px 16px; background:var(--espresso); color:var(--paper);
+            border:none; border-radius:var(--radius); font-family:'Inter',sans-serif;
+            font-size:13.5px; font-weight:600; cursor:pointer; transition:background .18s ease;
+            flex-shrink:0;
+        }
+        .refresh-btn:hover{background:#3a281a;}
+        .refresh-btn svg{width:14px; height:14px;}
+        .refresh-btn.spinning svg{animation:spin 0.8s linear infinite;}
+        .refresh-btn.ghost-btn{background:#fff; color:var(--ink); border:1.5px solid var(--line);}
+        .refresh-btn.ghost-btn:hover{background:var(--paper-dim); border-color:var(--espresso);}
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        /* ===== TABLE CARD ===== */
+        .table-card{
+            background:#fff;
+            border:1px solid var(--line);
+            border-radius:6px;
+            overflow:hidden;
+        }
+        table{width:100%; border-collapse:collapse;}
+        thead th{
+            text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.07em;
+            color:var(--ink-soft); font-weight:700; padding:14px 18px;
+            background:var(--paper-dim); border-bottom:1px solid var(--line);
+            white-space:nowrap;
+        }
+        tbody td{
+            padding:15px 18px; font-size:14px; color:var(--ink); border-bottom:1px solid var(--line);
+            vertical-align:middle;
+        }
+        tbody tr:last-child td{border-bottom:none;}
+        tbody tr{transition:background .12s ease;}
+        tbody tr:hover{background:rgba(193,122,52,0.045);}
+
+        .num-cell{font-variant-numeric:tabular-nums; font-weight:700; color:var(--espresso);}
+        .num-cell.dim{font-weight:500; color:var(--ink);}
+
+        .item-cell{display:flex; align-items:center; gap:11px;}
+        .avatar{
+            width:34px; height:34px; border-radius:50%;
+            background:var(--paper-dim); color:var(--espresso);
+            display:flex; align-items:center; justify-content:center;
+            font-family:'Newsreader', serif; font-weight:600; font-size:13.5px;
+            flex-shrink:0; border:1px solid var(--line);
+        }
+        .item-name{font-weight:600; color:var(--ink); line-height:1.3;}
+        .item-sub{color:var(--ink-soft); font-size:12.5px; margin-top:1px;}
+
+        .pill{
+            display:inline-flex; align-items:center; gap:5px;
+            padding:4px 10px; border-radius:100px; font-size:11.5px; font-weight:600;
+            text-transform:capitalize; white-space:nowrap;
+        }
+        .pill::before{content:""; width:6px; height:6px; border-radius:50%; flex-shrink:0;}
+        .pill.status-ok{background:var(--success-bg); color:var(--success);}
+        .pill.status-ok::before{background:var(--success);}
+        .pill.status-low{background:rgba(193,122,52,0.1); color:var(--amber);}
+        .pill.status-low::before{background:var(--amber);}
+        .pill.status-out{background:var(--error-bg); color:var(--error);}
+        .pill.status-out::before{background:var(--error);}
+        .pill.type-in{background:var(--success-bg); color:var(--success);}
+        .pill.type-in::before{background:var(--success);}
+        .pill.type-out{background:var(--error-bg); color:var(--error);}
+        .pill.type-out::before{background:var(--error);}
+        .pill.type-adjust{background:rgba(193,122,52,0.1); color:var(--amber);}
+        .pill.type-adjust::before{background:var(--amber);}
+
+        .row-actions{display:flex; gap:6px; justify-content:flex-end;}
+        .adjust-btn{
+            padding:7px 13px; border-radius:var(--radius);
+            border:1.5px solid var(--line); background:#fff; cursor:pointer;
+            font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; color:var(--ink);
+            transition:background .15s ease, border-color .15s ease;
+            white-space:nowrap;
+        }
+        .adjust-btn:hover{border-color:var(--espresso); background:var(--paper-dim);}
+
+        .state-row td{padding:56px 18px; text-align:center;}
+        .state-box{display:flex; flex-direction:column; align-items:center; gap:10px; color:var(--ink-soft);}
+        .state-box svg{width:30px; height:30px; stroke:var(--ink-soft); opacity:0.5;}
+        .state-box .state-title{font-family:'Newsreader', serif; font-size:17px; color:var(--espresso); font-weight:500;}
+        .state-box .state-sub{font-size:13px; max-width:320px;}
+        .spinner{
+            width:22px; height:22px; border-radius:50%;
+            border:2.5px solid var(--line); border-top-color:var(--amber);
+            animation:spin 0.7s linear infinite;
+        }
+
+        .table-foot{
+            display:flex; align-items:center; justify-content:space-between;
+            padding:13px 18px; font-size:12.5px; color:var(--ink-soft);
+            border-top:1px solid var(--line); background:var(--paper-dim);
+        }
+
+        .banner{
+            font-size:13px; padding:11px 14px; border-radius:var(--radius); margin-bottom:16px;
+            display:none; align-items:center; justify-content:space-between; gap:10px;
+        }
+        .banner.show{display:flex;}
+        .banner.error-banner{background:var(--error-bg); border:1px solid rgba(178,59,59,0.25); color:var(--error);}
+        .banner.success-banner{background:var(--success-bg); border:1px solid rgba(76,107,65,0.25); color:var(--success);}
+        .banner button{background:none; border:none; cursor:pointer; color:inherit; font-weight:700; font-size:14px;}
+
+        /* ===== MODAL ===== */
+        .modal-overlay{
+            position:fixed; inset:0; background:rgba(21,14,9,0.55);
+            display:none; align-items:center; justify-content:center; z-index:50; padding:24px;
+        }
+        .modal-overlay.show{display:flex;}
+        .modal{
+            background:var(--paper); border-radius:6px; width:100%; max-width:440px;
+            padding:30px 30px 26px; animation:modal-in .22s cubic-bezier(.2,.8,.2,1) both;
+            max-height:90vh; overflow-y:auto;
+        }
+        @keyframes modal-in{from{opacity:0; transform:translateY(10px) scale(0.98);} to{opacity:1; transform:translateY(0) scale(1);}}
+        .modal h3{font-family:'Newsreader', serif; font-weight:500; font-size:22px; color:var(--espresso); margin-bottom:4px;}
+        .modal .modal-sub{font-size:13.5px; color:var(--ink-soft); margin-bottom:22px;}
+        .field{margin-bottom:16px;}
+        .field label{display:block; font-size:12px; font-weight:600; color:var(--ink); margin-bottom:6px;}
+        .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+        .field input, .field select, .field textarea{
+            width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:var(--radius);
+            font-family:'Inter', sans-serif; font-size:14px; background:#fff; color:var(--ink); outline:none;
+            transition:border-color .18s ease, box-shadow .18s ease;
+        }
+        .field textarea{resize:vertical; min-height:64px;}
+        .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
+        .field select{appearance:none;}
+        .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none;}
+        .field.invalid input, .field.invalid select, .field.invalid textarea{border-color:var(--error);}
+        .field.invalid .field-err{display:block;}
+        .readonly-box{
+            background:var(--paper-dim); border:1px solid var(--line); border-radius:var(--radius);
+            padding:12px 14px; margin-bottom:16px;
+        }
+        .readonly-box .ro-name{font-weight:600; color:var(--espresso); font-family:'Newsreader',serif; font-size:16px;}
+        .readonly-box .ro-qty{font-size:12.5px; color:var(--ink-soft); margin-top:4px;}
+        .field-hint{font-size:12px; color:var(--ink-soft); margin-top:6px; line-height:1.5;}
+        .modal-actions{display:flex; gap:10px; margin-top:22px;}
+        .btn{
+            flex:1; padding:12px; border-radius:var(--radius); font-family:'Inter',sans-serif;
+            font-size:13.5px; font-weight:600; cursor:pointer; border:1.5px solid transparent;
+            transition:background .15s ease, border-color .15s ease;
+        }
+        .btn-ghost{background:#fff; border-color:var(--line); color:var(--ink);}
+        .btn-ghost:hover{border-color:var(--espresso);}
+        .btn-dark{background:var(--espresso); color:var(--paper);}
+        .btn-dark:hover{background:#3a281a;}
+        .btn:disabled{opacity:0.55; cursor:not-allowed;}
+
+        @media (max-width: 900px){
+            .stat-grid{grid-template-columns:repeat(2, 1fr);}
+        }
+        @media (max-width: 760px){
+            .page{padding:28px 16px 60px;}
+            .table-card{overflow-x:auto;}
+            table{min-width:680px;}
+            .field-row{grid-template-columns:1fr;}
+            .topbar{padding:0 16px;}
+            .nav-link{display:none;}
+            .stat-grid{grid-template-columns:1fr 1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="seal">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+        </div>
+        <div class="brand-name">Cafe912</div>
+        <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>Stock Management</strong></div>
+    </div>
+    <div class="topbar-right">
+        <a class="nav-link" href="user_Management.html">Users</a>
+        <a class="nav-link" href="sale_Management.html">Sales</a>
+        <a class="nav-link " href="held_Sale.html">Held Sales</a>
+        <a class="nav-link" href="category_Management.html">Categories</a>
+        <a class="nav-link" href="item_Management.html">Items</a>
+        <a class="nav-link" href="batch_Management.html">Batches</a>
+        <a class="nav-link" href="customer_Management.html">Customers</a>
+        <a class="nav-link " href="stock_Management.html">Stock</a>
+        <a class="nav-link" href="sale_history.html">Sale History</a>
+        <button class="signout-btn" id="signOutBtn">Sign out</button>
+    </div>
+</div>
+
+
+<div class="page">
+    <div class="page-head">
+        <div>
+            <div class="eyebrow">Admin Portal</div>
+            <h1>Stock Management</h1>
+            <p class="sub">Track inventory levels, adjust stock, and view movement history.</p>
+        </div>
+        <div class="head-stat">
+            <div class="num" id="totalCount">0</div>
+            <div class="label">Stock Records</div>
+        </div>
+    </div>
+
+    <div class="banner error-banner" id="errorBanner">
+        <span id="errorBannerText">Something went wrong.</span>
+        <button onclick="dismissBanner('errorBanner')">&times;</button>
+    </div>
+    <div class="banner success-banner" id="successBanner">
+        <span id="successBannerText">Done.</span>
+        <button onclick="dismissBanner('successBanner')">&times;</button>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-label"><span class="dot" style="background:var(--espresso);"></span>Total Items</div>
+            <div class="stat-num" id="statTotalItems">0</div>
+        </div>
+        <div class="stat-card card-low">
+            <div class="stat-label"><span class="dot" style="background:var(--amber);"></span>Low Stock</div>
+            <div class="stat-num" id="statLow">0</div>
+        </div>
+        <div class="stat-card card-out">
+            <div class="stat-label"><span class="dot" style="background:var(--error);"></span>Out of Stock</div>
+            <div class="stat-num" id="statOut">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label"><span class="dot" style="background:var(--sage);"></span>Units on Hand</div>
+            <div class="stat-num" id="statUnits">0</div>
+        </div>
+    </div>
+
+    <div class="tab-row">
+        <button class="tab-btn active" id="tabStockBtn" onclick="switchTab('stock')">Current Stock</button>
+        <button class="tab-btn" id="tabHistoryBtn" onclick="switchTab('history')">Transaction History</button>
+    </div>
+
+    <div class="toolbar">
+        <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="searchInput" placeholder="Search by item name…">
+        </div>
+        <div class="filter-select" id="stockStatusFilterWrap">
+            <select id="stockStatusFilter">
+                <option value="">All statuses</option>
+                <option value="OK">OK</option>
+                <option value="LOW">Low stock</option>
+                <option value="OUT">Out of stock</option>
+            </select>
+        </div>
+        <div class="filter-select" id="historyTypeFilterWrap" style="display:none;">
+            <select id="historyTypeFilter">
+                <option value="">All types</option>
+                <option value="IN">IN</option>
+                <option value="OUT">OUT</option>
+                <option value="ADJUST">ADJUST</option>
+            </select>
+        </div>
+        <button class="clear-filters" id="clearFiltersBtn" onclick="clearFilters()">Clear filters</button>
+        <button class="refresh-btn ghost-btn" id="refreshBtn" onclick="refreshAll()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            Refresh
+        </button>
+    </div>
+
+    <!-- STOCK TABLE -->
+    <div class="table-card" id="stockTableCard">
+        <table>
+            <thead>
+            <tr>
+                <th>Item</th>
+                <th>Available Qty</th>
+                <th>Reorder Level</th>
+                <th>Max Level</th>
+                <th>Status</th>
+                <th style="text-align:right;">Actions</th>
+            </tr>
+            </thead>
+            <tbody id="stockTableBody">
+            <tr class="state-row">
+                <td colspan="6">
+                    <div class="state-box">
+                        <div class="spinner"></div>
+                        <div class="state-sub">Loading stock…</div>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="table-foot">
+            <span id="stockFootCount">Showing 0 records</span>
+        </div>
+    </div>
+
+    <!-- HISTORY TABLE -->
+    <div class="table-card" id="historyTableCard" style="display:none;">
+        <table>
+            <thead>
+            <tr>
+                <th>Date / Time</th>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Quantity</th>
+                <th>Reason</th>
+                <th>Performed By</th>
+            </tr>
+            </thead>
+            <tbody id="historyTableBody">
+            <tr class="state-row">
+                <td colspan="6">
+                    <div class="state-box">
+                        <div class="spinner"></div>
+                        <div class="state-sub">Loading transactions…</div>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="table-foot">
+            <span id="historyFootCount">Showing 0 transactions</span>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Stock Modal -->
+<div class="modal-overlay" id="adjustOverlay">
+    <div class="modal">
+        <h3>Adjust stock</h3>
+        <p class="modal-sub">Record a stock movement for this item.</p>
+
+        <div class="readonly-box">
+            <div class="ro-name" id="adjustItemName">—</div>
+            <div class="ro-qty">Current available: <strong id="adjustCurrentQty">0</strong> units</div>
+        </div>
+
+        <form id="adjustForm">
+            <div class="field">
+                <label for="adjustType">Transaction type</label>
+                <select id="adjustType">
+                    <option value="IN">IN — add to stock</option>
+                    <option value="OUT">OUT — remove from stock</option>
+                    <option value="ADJUST">ADJUST — set absolute quantity</option>
+                </select>
+                <div class="field-hint" id="adjustTypeHint">Adds the entered quantity to current stock.</div>
+            </div>
+            <div class="field">
+                <label for="adjustQuantity">Quantity</label>
+                <input type="number" id="adjustQuantity" min="1" step="1" placeholder="e.g. 20" required>
+                <div class="field-err" id="adjustQuantityErr">Enter a quantity greater than 0.</div>
+            </div>
+            <div class="field">
+                <label for="adjustReason">Reason (optional)</label>
+                <textarea id="adjustReason" placeholder="e.g. Weekly delivery, wastage, stock count correction…"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" onclick="closeAdjustModal()">Cancel</button>
+                <button type="submit" class="btn btn-dark" id="saveAdjustBtn">Save adjustment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+    // ============================================================
+    // STATE VARIABLES
+    // ============================================================
+    let allStocks = [];
+    let allTransactions = [];
+    let adjustingStock = null;
+    let currentTab = 'stock';
+    let transactionsLoaded = false;
+
+    // ============================================================
+    // HELPERS
+    // ============================================================
+    function authHeaders() {
+        const h = {};
+        const token = localStorage.getItem('JWT');
+        if (token && token !== 'null' && token !== 'undefined') {
+            h['Authorization'] = 'Bearer ' + token;
+        }
+        return h;
+    }
+
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    function showError(msg) {
+        $('#errorBannerText').text(msg);
+        $('#errorBanner').addClass('show');
+        $('#successBanner').removeClass('show');
+    }
+
+    function showSuccess(msg) {
+        $('#successBannerText').text(msg);
+        $('#successBanner').addClass('show');
+        $('#errorBanner').removeClass('show');
+        setTimeout(() => $('#successBanner').removeClass('show'), 3500);
+    }
+
+    function dismissBanner(id) {
+        $('#' + id).removeClass('show');
+    }
+
+    function initialsFromName(name) {
+        const parts = String(name || '?').trim().split(/\s+/);
+        const f = (parts[0] || '?').charAt(0);
+        const l = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+        return (f + l).toUpperCase();
+    }
+
+    function stockStatus(s) {
+        const qty = Number(s.availableQuantity) || 0;
+        const reorder = Number(s.reorderLevel) || 0;
+        if (qty <= 0) return 'OUT';
+        if (qty <= reorder) return 'LOW';
+        return 'OK';
+    }
+
+    function statusClass(status) {
+        if (status === 'OK') return 'status-ok';
+        if (status === 'LOW') return 'status-low';
+        return 'status-out';
+    }
+
+    function statusLabel(status) {
+        if (status === 'OK') return 'OK';
+        if (status === 'LOW') return 'Low';
+        return 'Out';
+    }
+
+    function typeClass(type) {
+        const t = String(type || '').toUpperCase();
+        if (t === 'IN') return 'type-in';
+        if (t === 'OUT') return 'type-out';
+        return 'type-adjust';
+    }
+
+    function formatDateTime(dtStr) {
+        if (!dtStr) return '—';
+        const d = new Date(dtStr);
+        if (isNaN(d.getTime())) return escapeHtml(dtStr);
+        return d.toLocaleString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    // ============================================================
+    // UI – TABS / TABLE / FILTER / RENDER
+    // ============================================================
+    function switchTab(tab) {
+        currentTab = tab;
+        $('#tabStockBtn').toggleClass('active', tab === 'stock');
+        $('#tabHistoryBtn').toggleClass('active', tab === 'history');
+        $('#stockTableCard').toggle(tab === 'stock');
+        $('#historyTableCard').toggle(tab === 'history');
+        $('#stockStatusFilterWrap').toggle(tab === 'stock');
+        $('#historyTypeFilterWrap').toggle(tab === 'history');
+        $('#searchInput').attr('placeholder', tab === 'stock' ? 'Search by item name…' : 'Search by item name…');
+
+        if (tab === 'history' && !transactionsLoaded) {
+            loadTransactions();
+        }
+        renderCurrentTab();
+    }
+
+    function renderCurrentTab() {
+        if (currentTab === 'stock') renderStockTable();
+        else renderHistoryTable();
+    }
+
+    function getFilteredStocks() {
+        const q = $('#searchInput').val().trim().toLowerCase();
+        const statusF = $('#stockStatusFilter').val();
+
+        return allStocks.filter(s => {
+            const name = (s.itemName || '').toLowerCase();
+            const matchesSearch = !q || name.includes(q);
+            const matchesStatus = !statusF || stockStatus(s) === statusF;
+            return matchesSearch && matchesStatus;
+        });
+    }
+
+    function getFilteredTransactions() {
+        const q = $('#searchInput').val().trim().toLowerCase();
+        const typeF = $('#historyTypeFilter').val();
+
+        return allTransactions.filter(t => {
+            const name = (t.itemName || '').toLowerCase();
+            const matchesSearch = !q || name.includes(q);
+            const matchesType = !typeF || String(t.transactionType).toUpperCase() === typeF;
+            return matchesSearch && matchesType;
+        }).sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate));
+    }
+
+    function hasActiveFilter() {
+        if (currentTab === 'stock') {
+            return !!($('#searchInput').val().trim() || $('#stockStatusFilter').val());
+        }
+        return !!($('#searchInput').val().trim() || $('#historyTypeFilter').val());
+    }
+
+    function clearFilters() {
+        $('#searchInput').val('');
+        $('#stockStatusFilter').val('');
+        $('#historyTypeFilter').val('');
+        renderCurrentTab();
+    }
+
+    function updateStatCards() {
+        const total = allStocks.length;
+        let low = 0, out = 0, units = 0;
+        allStocks.forEach(s => {
+            const st = stockStatus(s);
+            if (st === 'LOW') low++;
+            if (st === 'OUT') out++;
+            units += Number(s.availableQuantity) || 0;
+        });
+        $('#statTotalItems').text(total);
+        $('#statLow').text(low);
+        $('#statOut').text(out);
+        $('#statUnits').text(units);
+        $('#totalCount').text(total);
+    }
+
+    function renderStockTable() {
+        $('#clearFiltersBtn').toggleClass('show', hasActiveFilter());
+
+        const rows = getFilteredStocks();
+        const body = $('#stockTableBody');
+        body.empty();
+
+        if (allStocks.length === 0) {
+            renderStockEmptyState('No stock records yet', 'Stock records will appear here once items have inventory tracked.');
+            $('#stockFootCount').text('Showing 0 records');
+            return;
+        }
+
+        if (rows.length === 0) {
+            renderStockEmptyState('No matches', 'Try a different search term or clear your filters.');
+            $('#stockFootCount').text(`Showing 0 of ${allStocks.length} records`);
+            return;
+        }
+
+        rows.forEach(s => {
+            const status = stockStatus(s);
+            const maxLevel = (s.maxStockLevel === null || s.maxStockLevel === undefined || s.maxStockLevel === 0) ? '—' : s.maxStockLevel;
+
+            const row = $(`
+        <tr>
+          <td>
+            <div class="item-cell">
+              <div class="avatar">${initialsFromName(s.itemName)}</div>
+              <div>
+                <div class="item-name">${escapeHtml(s.itemName || '—')}</div>
+                <div class="item-sub">${s.categoryName ? escapeHtml(s.categoryName) : ''}</div>
+              </div>
+            </div>
+          </td>
+          <td class="num-cell">${Number(s.availableQuantity) || 0}</td>
+          <td class="num-cell dim">${Number(s.reorderLevel) || 0}</td>
+          <td class="num-cell dim">${escapeHtml(String(maxLevel))}</td>
+          <td><span class="pill ${statusClass(status)}">${statusLabel(status)}</span></td>
+          <td>
+            <div class="row-actions">
+              <button class="adjust-btn" title="Adjust stock">Adjust</button>
+            </div>
+          </td>
+        </tr>
+      `);
+            row.find('.adjust-btn').on('click', () => openAdjustModal(s));
+            body.append(row);
+        });
+
+        $('#stockFootCount').text(
+            hasActiveFilter()
+                ? `Showing ${rows.length} of ${allStocks.length} records`
+                : `Showing ${rows.length} records`
+        );
+    }
+
+    function renderHistoryTable() {
+        $('#clearFiltersBtn').toggleClass('show', hasActiveFilter());
+
+        const rows = getFilteredTransactions();
+        const body = $('#historyTableBody');
+        body.empty();
+
+        if (!transactionsLoaded) {
+            renderHistoryLoadingState();
+            return;
+        }
+
+        if (allTransactions.length === 0) {
+            renderHistoryEmptyState('No transactions yet', 'Stock movements will show up here once you make an adjustment.');
+            $('#historyFootCount').text('Showing 0 transactions');
+            return;
+        }
+
+        if (rows.length === 0) {
+            renderHistoryEmptyState('No matches', 'Try a different search term or clear your filters.');
+            $('#historyFootCount').text(`Showing 0 of ${allTransactions.length} transactions`);
+            return;
+        }
+
+        rows.forEach(t => {
+            const type = String(t.transactionType || '').toUpperCase();
+            const performedBy = t.performedByName || '—';
+
+            const row = $(`
+        <tr>
+          <td>${formatDateTime(t.transactionDate)}</td>
+          <td>${escapeHtml(t.itemName || '—')}</td>
+          <td><span class="pill ${typeClass(type)}">${escapeHtml(type)}</span></td>
+          <td class="num-cell">${Number(t.quantity) || 0}</td>
+          <td>${escapeHtml(t.reason || '—')}</td>
+          <td>${escapeHtml(performedBy)}</td>
+        </tr>
+      `);
+            body.append(row);
+        });
+
+        $('#historyFootCount').text(
+            hasActiveFilter()
+                ? `Showing ${rows.length} of ${allTransactions.length} transactions`
+                : `Showing ${rows.length} transactions`
+        );
+    }
+
+    function renderStockLoadingState() {
+        $('#stockTableBody').html(`
+      <tr class="state-row"><td colspan="6">
+        <div class="state-box"><div class="spinner"></div><div class="state-sub">Loading stock…</div></div>
+      </td></tr>
+    `);
+    }
+
+    function renderStockErrorState() {
+        $('#stockTableBody').html(`
+      <tr class="state-row"><td colspan="6">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/></svg>
+          <div class="state-title">Couldn't load stock</div>
+          <div class="state-sub">Check your connection, then try refreshing.</div>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function renderStockEmptyState(title, sub) {
+        $('#stockTableBody').html(`
+      <tr class="state-row"><td colspan="6">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <div class="state-title">${escapeHtml(title)}</div>
+          <div class="state-sub">${escapeHtml(sub)}</div>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function renderHistoryLoadingState() {
+        $('#historyTableBody').html(`
+      <tr class="state-row"><td colspan="6">
+        <div class="state-box"><div class="spinner"></div><div class="state-sub">Loading transactions…</div></div>
+      </td></tr>
+    `);
+    }
+
+    function renderHistoryErrorState() {
+        $('#historyTableBody').html(`
+      <tr class="state-row"><td colspan="6">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/></svg>
+          <div class="state-title">Couldn't load transactions</div>
+          <div class="state-sub">Check your connection, then try refreshing.</div>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function renderHistoryEmptyState(title, sub) {
+        $('#historyTableBody').html(`
+      <tr class="state-row"><td colspan="6">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <div class="state-title">${escapeHtml(title)}</div>
+          <div class="state-sub">${escapeHtml(sub)}</div>
+        </div>
+      </td></tr>
+    `);
+    }
+
+    function renderSignInRequiredState() {
+        $('#totalCount').text('—');
+        $('#statTotalItems, #statLow, #statOut, #statUnits').text('—');
+        $('#stockFootCount').text('Showing 0 records');
+        $('#historyFootCount').text('Showing 0 transactions');
+        const html = `
+      <tr class="state-row"><td colspan="6">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div class="state-title">Please sign in</div>
+          <div class="state-sub">You need an admin session to view stock.</div>
+          <button class="refresh-btn" style="margin-top:6px;" onclick="window.location.href='login.html'">Go to sign in</button>
+        </div>
+      </td></tr>
+    `;
+        $('#stockTableBody').html(html);
+        $('#historyTableBody').html(html);
+    }
+
+    // ============================================================
+    // UI – MODALS
+    // ============================================================
+    function openAdjustModal(stock) {
+        adjustingStock = stock;
+        $('#adjustItemName').text(stock.itemName || '—');
+        $('#adjustCurrentQty').text(Number(stock.availableQuantity) || 0);
+        $('#adjustType').val('IN');
+        $('#adjustQuantity').val('');
+        $('#adjustReason').val('');
+        $('#adjustQuantity').closest('.field').removeClass('invalid');
+        updateAdjustHint();
+        $('#saveAdjustBtn').prop('disabled', false).text('Save adjustment');
+        $('#adjustOverlay').addClass('show');
+        $('#adjustQuantity').trigger('focus');
+    }
+
+    function closeAdjustModal() {
+        $('#adjustOverlay').removeClass('show');
+        adjustingStock = null;
+    }
+
+    function updateAdjustHint() {
+        const type = $('#adjustType').val();
+        let hint = 'Adds the entered quantity to current stock.';
+        if (type === 'OUT') hint = 'Removes the entered quantity from current stock. Cannot exceed the available quantity.';
+        if (type === 'ADJUST') hint = 'Sets the available quantity to exactly the entered value (absolute set).';
+        $('#adjustTypeHint').text(hint);
+    }
+
+    function validateAdjustForm() {
+        $('#adjustQuantity').closest('.field').removeClass('invalid');
+        const qty = Number($('#adjustQuantity').val());
+        if (!qty || qty <= 0 || !Number.isFinite(qty)) {
+            $('#adjustQuantity').closest('.field').addClass('invalid');
+            return false;
+        }
+
+        const type = $('#adjustType').val();
+        if (type === 'OUT' && adjustingStock) {
+            const available = Number(adjustingStock.availableQuantity) || 0;
+            if (qty > available) {
+                showError(`Cannot remove ${qty} units — only ${available} available.`);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
+    $(document).ready(function () {
+        const token = localStorage.getItem('JWT');
+        if (!token || token === 'null' || token === 'undefined') {
+            renderSignInRequiredState();
+        } else {
+            loadStocks();
+        }
+
+        $('#searchInput').on('input', renderCurrentTab);
+        $('#stockStatusFilter, #historyTypeFilter').on('change', renderCurrentTab);
+        $('#adjustType').on('change', updateAdjustHint);
+        $('#adjustForm').on('submit', function (e) { e.preventDefault(); adjustStock(); });
+
+        $('#signOutBtn').on('click', function () {
+            localStorage.removeItem('JWT');
+            localStorage.removeItem('userId');
+            window.location.href = 'login.html';
+        });
+
+        $('.modal-overlay').on('click', function (e) {
+            if (e.target === this) closeAdjustModal();
+        });
+
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape') closeAdjustModal();
+        });
+    });
+
+    function refreshAll() {
+        loadStocks();
+        if (transactionsLoaded) loadTransactions();
+    }
+
+    // API ENDPOINTS + AJAX CALLS=
+
+    const API_BASE = 'http://localhost:8080/api/stock';
+
+    const ENDPOINTS = {
+        stocks:       API_BASE,                      // GET  /api/stock
+        statistics:   API_BASE + '/statistics',      // GET  /api/stock/statistics
+        adjust:       API_BASE + '/adjust',          // POST /api/stock/adjust
+        transactions: API_BASE + '/transactions'     // GET  /api/stock/transactions
+    };
+
+    // GET all stocks + statistics
+    function loadStocks() {
+        $('#refreshBtn').addClass('spinning');
+        renderStockLoadingState();
+
+        $.ajax({
+            url: ENDPOINTS.stocks,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (stocks) {
+                allStocks = Array.isArray(stocks) ? stocks : (stocks?.data || []);
+                updateStatCards();
+                if (currentTab === 'stock') renderStockTable();
+
+                // load statistics
+                $.ajax({
+                    url: ENDPOINTS.statistics,
+                    type: 'GET',
+                    headers: authHeaders(),
+                    success: function (stats) {
+                        $('#statTotalItems').text(stats.totalItems ?? 0);
+                        $('#statLow').text(stats.lowStock ?? 0);
+                        $('#statOut').text(stats.outOfStock ?? 0);
+                        $('#statUnits').text(stats.totalUnits ?? 0);
+                        $('#totalCount').text(stats.totalItems ?? 0);
+                    }
+                });
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    renderSignInRequiredState();
+                    showError('Your session has expired. Please sign in again.');
+                } else {
+                    renderStockErrorState();
+                    showError('Couldn\'t load stock. Status: ' + xhr.status);
+                }
+            },
+            complete: function () {
+                $('#refreshBtn').removeClass('spinning');
+            }
+        });
+    }
+
+    // GET all transactions
+    function loadTransactions() {
+        renderHistoryLoadingState();
+
+        $.ajax({
+            url: ENDPOINTS.transactions,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (transactions) {
+                allTransactions = Array.isArray(transactions) ? transactions : (transactions?.data || []);
+                transactionsLoaded = true;
+                if (currentTab === 'history') renderHistoryTable();
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    renderSignInRequiredState();
+                    showError('Your session has expired. Please sign in again.');
+                } else {
+                    transactionsLoaded = true;
+                    allTransactions = [];
+                    renderHistoryErrorState();
+                    showError('Couldn\'t load transaction history.');
+                }
+            }
+        });
+    }
+
+    // POST adjust stock
+    function adjustStock() {
+        if (!adjustingStock) return;
+        if (!validateAdjustForm()) return;
+
+        let type = $('#adjustType').val();
+        if (type === 'ADJUST') type = 'ADJUSTMENT';  // enum match
+
+        const payload = {
+            itemId: adjustingStock.itemId,
+            transactionType: type,
+            quantity: Number($('#adjustQuantity').val()),
+            reason: $('#adjustReason').val().trim() || null
+        };
+
+        const btn = $('#saveAdjustBtn');
+        btn.prop('disabled', true).text('Saving…');
+
+        $.ajax({
+            url: ENDPOINTS.adjust,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            headers: authHeaders(),
+            success: function () {
+                showSuccess('Stock adjustment saved.');
+                closeAdjustModal();
+                loadStocks();
+                if (transactionsLoaded) loadTransactions();
+            },
+            error: function (xhr) {
+                let msg = 'Couldn\'t save adjustment (error ' + xhr.status + ').';
+                if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+                showError(msg);
+            },
+            complete: function () {
+                btn.prop('disabled', false).text('Save adjustment');
+            }
+        });
+    }
+</script>
+</body>
+</html>

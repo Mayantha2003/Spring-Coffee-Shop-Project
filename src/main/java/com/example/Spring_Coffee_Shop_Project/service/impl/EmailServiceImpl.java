@@ -21,7 +21,7 @@ public class EmailServiceImpl implements EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject("Caffè Nomad - Verify Your Email");
-        message.setText("Welcome to Caffè Nomad!\n\n"
+        message.setText("Welcome to Caffè 912!\n\n"
                 + "Please click the link below to verify your account:\n\n"
                 + verificationUrl + "\n\n"
                 + "Thank you!");

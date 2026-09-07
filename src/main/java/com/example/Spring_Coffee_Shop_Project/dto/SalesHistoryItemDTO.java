@@ -2,7 +2,6 @@ package com.example.Spring_Coffee_Shop_Project.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,22 +11,24 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class HeldSaleDTO {
+public class SalesHistoryItemDTO {
 
-    private long heldSaleId;
-    private String holdCode;
-    private long batchId;
+    private long saleId;
+    private String saleCode;
     private Long customerId;
     private String customerName;
-    private long heldByUserId;
-    private String heldByName;
-    private BigDecimal subTotal;
+    private String customerPhone;
+    private long batchId;
+    private String batchCode;
+    private String itemSummary;
+    private int totalQty;
     private BigDecimal totalAmount;
-    private String notes;
-    private boolean removalRequested;
+    private BigDecimal profit;
+    private int pointsEarned;
+    private boolean flagged;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime heldAt;
+    private LocalDateTime createdAt;
 
-    private List<HeldSaleItemDTO> heldSaleItems;
+    private List<SaleItemDTO> saleItems;
 }

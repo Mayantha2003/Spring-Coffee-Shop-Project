@@ -131,6 +131,45 @@ public class CustomerServiceImpl implements CustomerService {
         return list;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<CustomerDTO> searchCustomersByName(String query) {
+        log.info("Searching customers by name prefix: {}", query);
+
+        if (query == null || query.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String prefix = query.trim();
+        List<Customer> customers = customerRepository
+                .findByFirstNameStartingWithIgnoreCaseOrLastNameStartingWithIgnoreCase(prefix, prefix);
+
+        List<CustomerDTO> result = new ArrayList<>();
+        for (Customer c : customers) {
+            result.add(mapToDTO(c));
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CustomerDTO> searchCustomersByPhone(String phone) {
+        log.info("Searching customers by phone: {}", phone);
+
+        if (phone == null || phone.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String cleaned = phone.trim().replaceAll("\\s+", "");
+        List<Customer> customers = customerRepository.findByPhoneContaining(cleaned);
+
+        List<CustomerDTO> result = new ArrayList<>();
+        for (Customer c : customers) {
+            result.add(mapToDTO(c));
+        }
+        return result;
+    }
+
     private CustomerDTO mapToDTO(Customer customer) {
         LoyaltyPoint lp = customer.getLoyaltyPoint();
         LoyaltyPointDTO lpDto = null;

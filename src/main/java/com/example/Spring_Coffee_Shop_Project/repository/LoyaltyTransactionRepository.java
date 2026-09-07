@@ -11,5 +11,5 @@ public interface LoyaltyTransactionRepository extends JpaRepository<LoyaltyTrans
 
     List<LoyaltyTransaction> findByCustomerCustomerId(Long customerId);
 
-    //List<LoyaltyTransaction> findBySaleSaleId(Long saleId);
+    List<LoyaltyTransaction> findBySaleSaleId(Long saleId);
 }

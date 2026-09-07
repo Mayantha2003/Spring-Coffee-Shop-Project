@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Record Sale Management · Cafe912</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --espresso:#241811; --espresso-deep:#150e09; --paper:#f7f1e6; --paper-dim:#efe4d0;
+      --amber:#c17a34; --amber-light:#e3a668; --sage:#748a6a; --sage-bg:#eaf0e6;
+      --ink:#26190f; --ink-soft:#6b5c4c; --line:rgba(38,25,15,0.14);
+      --error:#b23b3b; --error-bg:rgba(178,59,59,0.08); --success:#4c6b41; --success-bg:#eaf0e6;
+      --radius:4px; --topbar-h:64px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink)}
+    @media (prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+    a{color:inherit}
+
+    .topbar{height:var(--topbar-h);flex-shrink:0;background:linear-gradient(160deg,var(--espresso) 0%,var(--espresso-deep) 100%);color:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:20}
+    .topbar-left{display:flex;align-items:center;gap:14px}
+    .seal{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--amber);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .seal svg{width:16px;height:16px;stroke:var(--amber-light)}
+    .brand-name{font-size:12.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--amber-light);font-weight:600}
+    .topbar-crumb{font-size:13px;color:rgba(247,241,230,0.5);padding-left:14px;margin-left:14px;border-left:1px solid rgba(247,241,230,0.18)}
+    .topbar-crumb strong{color:rgba(247,241,230,0.92);font-weight:600}
+    .topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .nav-link{font-size:13px;color:rgba(247,241,230,0.65);padding:7px 10px;border-radius:var(--radius);text-decoration:none;font-weight:600}
+    .nav-link:hover{background:rgba(247,241,230,0.08);color:var(--paper)}
+    .nav-link.active{background:rgba(193,122,52,0.18);color:var(--amber-light)}
+    .signout-btn{background:none;border:1px solid rgba(247,241,230,0.25);color:var(--paper);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:var(--radius);cursor:pointer}
+    .signout-btn:hover{background:rgba(247,241,230,0.08)}
+
+    .app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+    .page{flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 24px 16px;max-width:1600px;width:100%;margin:0 auto}
+    .page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;flex-shrink:0;flex-wrap:wrap}
+    .eyebrow{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--amber);font-weight:700;margin-bottom:4px}
+    .page-head h1{font-family:'Newsreader',serif;font-weight:500;font-size:24px;color:var(--espresso);line-height:1.2}
+    .page-head .sub{color:var(--ink-soft);font-size:13px;margin-top:2px}
+
+    .batch-chip{display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:100px;font-size:13px;font-weight:600;border:1.5px solid var(--line);background:#fff}
+    .batch-chip.no-batch{border-color:rgba(193,122,52,0.35);background:rgba(193,122,52,0.07);color:var(--amber)}
+    .batch-chip.active-batch{border-color:rgba(76,107,65,0.3);background:var(--success-bg);color:var(--success)}
+    .batch-chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+    .batch-chip button{background:var(--espresso);color:var(--paper);border:none;border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:5px 11px;cursor:pointer}
+    .batch-chip button:hover{background:#3a281a}
+
+    .banner{font-size:13px;padding:10px 12px;border-radius:var(--radius);margin-bottom:10px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+    .banner.show{display:flex}
+    .banner.error-banner{background:var(--error-bg);border:1px solid rgba(178,59,59,0.25);color:var(--error)}
+    .banner.success-banner{background:var(--success-bg);border:1px solid rgba(76,107,65,0.25);color:var(--success)}
+    .banner button{background:none;border:none;cursor:pointer;color:inherit;font-weight:700;font-size:14px}
+
+    .pos-grid{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:stretch}
+    .catalog-card{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+    .catalog-toolbar{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+    .search-wrap{position:relative}
+    .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--ink-soft);pointer-events:none}
+    .search-wrap input{width:100%;padding:10px 12px 10px 36px;border:1.5px solid var(--line);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13.5px;background:#fff;color:var(--ink);outline:none}
+    .search-wrap input:focus{border-color:var(--espresso);box-shadow:0 0 0 3px rgba(193,122,52,0.14)}
+    .search-wrap input::placeholder{color:#b5a996}
+    .category-chips{display:flex;gap:6px;flex-wrap:wrap;max-height:64px;overflow-y:auto}
+    .cat-chip{padding:6px 12px;border-radius:100px;border:1.5px solid var(--line);background:#fff;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+    .cat-chip:hover{border-color:var(--espresso)}
+    .cat-chip.active{background:var(--espresso);border-color:var(--espresso);color:var(--paper)}
+
+    .item-grid{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;padding:12px;align-content:start}
+    .item-card{border:1.5px solid var(--line);border-radius:6px;background:var(--paper);padding:12px 8px;text-align:center;cursor:pointer;user-select:none;transition:border-color .15s ease,transform .1s ease;position:relative}
+    .item-card:hover{border-color:var(--amber)}
+    .item-card:active{transform:scale(0.97)}
+    .item-card .thumb{width:44px;height:44px;border-radius:8px;background:var(--paper-dim);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--line)}
+    .item-card .thumb img{width:100%;height:100%;object-fit:cover}
+    .item-card .thumb svg{width:20px;height:20px;stroke:var(--amber)}
+    .item-card .name{font-weight:600;font-size:12.5px;color:var(--ink);line-height:1.25;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .item-card .price{font-size:12px;color:var(--ink-soft);font-weight:600}
+    .item-card .qty-badge{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;border-radius:50%;background:var(--amber);color:#fff;font-size:11px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--paper)}
+    .item-card.in-cart .qty-badge{display:flex}
+    .item-card.in-cart{border-color:var(--amber)}
+    .item-card.out-of-stock{opacity:0.45;cursor:not-allowed}
+    .item-card.out-of-stock:hover{border-color:var(--line)}
+
+    .catalog-state{padding:40px 16px;text-align:center;color:var(--ink-soft);grid-column:1/-1}
+    .catalog-state svg{width:26px;height:26px;stroke:var(--ink-soft);opacity:.5;margin-bottom:8px}
+    .catalog-state .t{font-family:'Newsreader',serif;font-size:15px;color:var(--espresso);margin-bottom:4px}
+    .spinner{width:20px;height:20px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--amber);animation:spin .7s linear infinite;margin:0 auto 8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .cart-panel{background:#fff;border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+    .cart-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .cart-head h2{font-family:'Newsreader',serif;font-weight:500;font-size:16px;color:var(--espresso)}
+    .cart-count{font-size:12px;color:var(--ink-soft);font-weight:600}
+    .cart-body{flex:1;min-height:0;overflow-y:auto}
+    .cart-empty{padding:28px 14px;text-align:center;color:var(--ink-soft)}
+    .cart-empty svg{width:24px;height:24px;stroke:var(--ink-soft);opacity:.5;margin-bottom:6px}
+    .cart-empty .t{font-family:'Newsreader',serif;font-size:14px;color:var(--espresso);margin-bottom:2px}
+    .cart-empty .s{font-size:12px}
+    .cart-line{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line)}
+    .cart-line .info{flex:1;min-width:0}
+    .cart-line .name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cart-line .unit{font-size:11px;color:var(--ink-soft)}
+    .stepper{display:flex;align-items:center;gap:5px;flex-shrink:0}
+    .stepper button{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--paper-dim);color:var(--espresso);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .stepper button:hover{background:var(--amber-light);color:#fff}
+    .stepper .qty{width:16px;text-align:center;font-size:12.5px;font-weight:600}
+    .line-total{width:58px;text-align:right;font-size:13px;font-weight:600;color:var(--ink);flex-shrink:0}
+    .remove-line{background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0}
+    .remove-line svg{width:13px;height:13px;stroke:var(--ink-soft)}
+    .remove-line:hover svg{stroke:var(--error)}
+
+    .cart-subtotal{padding:10px 14px;border-top:1px solid var(--line);background:var(--paper-dim);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .cart-subtotal .label{font-size:12.5px;font-weight:600;color:var(--ink)}
+    .cart-subtotal .amount{font-family:'Newsreader',serif;font-size:18px;font-weight:600;color:var(--espresso)}
+    .cart-subtotal .pts{font-size:11px;color:var(--amber);font-weight:600;margin-top:1px}
+
+    .checkout-section{padding:10px 14px;border-top:1px solid var(--line);flex-shrink:0}
+    .checkout-section .sec-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-soft);font-weight:700;margin-bottom:8px}
+    .toggle-row{display:flex;border:1.5px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:8px}
+    .toggle-row button{flex:1;padding:7px;background:#fff;border:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+    .toggle-row button.active{background:var(--espresso);color:var(--paper)}
+    .toggle-row button:not(:last-child){border-right:1px solid var(--line)}
+    .find-row{display:flex;gap:6px;margin-bottom:6px;position:relative}
+    .find-row input{flex:1;padding:8px 10px;border:1.5px solid var(--line);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13px;background:#fff;color:var(--ink);outline:none}
+    .find-row input:focus{border-color:var(--espresso);box-shadow:0 0 0 3px rgba(193,122,52,0.14)}
+    .find-row button{padding:8px 12px;background:var(--paper-dim);border:1.5px solid var(--line);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer}
+    .find-row button:hover{border-color:var(--espresso)}
+    .customer-found{display:none;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--radius);background:var(--sage-bg);border:1px solid rgba(116,138,106,0.3)}
+    .customer-found.show{display:flex}
+    .customer-found .avatar{width:26px;height:26px;border-radius:50%;background:#fff;color:var(--espresso);display:flex;align-items:center;justify-content:center;font-family:'Newsreader',serif;font-weight:600;font-size:11px;flex-shrink:0}
+    .customer-found .cn{font-size:12px;font-weight:600;color:var(--ink);line-height:1.25}
+    .customer-found .cp{font-size:10.5px;color:var(--success)}
+    .customer-found .clear-cust{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:15px;line-height:1}
+
+    #customerResults{border:1px solid var(--line);border-radius:6px;background:#fff;max-height:180px;overflow-y:auto;margin-top:4px;box-shadow:0 4px 12px rgba(0,0,0,0.08);position:absolute;left:0;right:0;z-index:50;top:100%}
+    .customer-result-item{padding:9px 12px;cursor:pointer;border-bottom:1px solid #f0eae0;font-size:13px}
+    .customer-result-item:hover{background:var(--paper-dim)}
+    .customer-result-item:last-child{border-bottom:none}
+
+    .pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+    .pay-field label{display:block;font-size:10.5px;font-weight:600;color:var(--ink-soft);margin-bottom:3px}
+    .pay-field .input-prefix{position:relative}
+    .pay-field .input-prefix span{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink-soft)}
+    .pay-field input{width:100%;padding:8px 8px 8px 28px;border:1.5px solid var(--line);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13px;background:#fff;color:var(--ink);outline:none}
+    .pay-field input:focus{border-color:var(--espresso);box-shadow:0 0 0 3px rgba(193,122,52,0.14)}
+    .pay-field input:disabled{background:var(--paper-dim);color:#b5a996;cursor:not-allowed}
+    .pay-hint{font-size:10.5px;color:var(--ink-soft);margin:0 0 8px}
+    .pay-cover{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:7px 10px;border-radius:var(--radius);margin-bottom:8px;font-weight:600}
+    .pay-cover.ok{background:var(--success-bg);color:var(--success)}
+    .pay-cover.short{background:var(--error-bg);color:var(--error)}
+
+    .btn{width:100%;padding:10px;border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;gap:7px}
+    .btn svg{width:14px;height:14px}
+    .btn-hold{background:#fff;border-color:var(--sage);color:var(--sage);margin-bottom:6px}
+    .btn-hold:hover{background:var(--sage-bg)}
+    .btn-record{background:var(--amber);color:#fff}
+    .btn-record:hover{background:#a8672a}
+    .btn:disabled{opacity:0.5;cursor:not-allowed}
+
+    @media (max-width:1100px){
+      html,body{overflow:auto}
+      .app{height:auto;min-height:100vh}
+      .page{flex:none}
+      .pos-grid{grid-template-columns:1fr;flex:none}
+      .catalog-card{min-height:360px;max-height:50vh}
+      .cart-panel{max-height:none}
+      .item-grid,.cart-body{overflow-y:auto}
+    }
+    @media (max-width:760px){
+      .page{padding:12px 12px 16px}
+      .topbar{padding:0 12px}
+      .nav-link{display:none}
+      .pay-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="seal">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+      </div>
+      <div class="brand-name">Cafe912</div>
+      <div class="topbar-crumb">Admin Portal / <strong>Record Sale</strong></div>
+    </div>
+    <div class="topbar-right">
+      <a class="nav-link" href="user_Management.html">Users</a>
+      <a class="nav-link" href="sale_Management.html">Sales</a>
+      <a class="nav-link" href="held_Sale.html">Held Sales</a>
+      <a class="nav-link" href="category_Management.html">Categories</a>
+      <a class="nav-link" href="item_Management.html">Items</a>
+      <a class="nav-link" href="batch_Management.html">Batches</a>
+      <a class="nav-link" href="customer_Management.html">Customers</a>
+      <a class="nav-link" href="stock_Management.html">Stock</a>
+      <a class="nav-link" href="sale_history.html">Sale History</a>
+      <button class="signout-btn" id="signOutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Admin Portal</div>
+        <h1>Record Sale</h1>
+        <p class="sub">Add items, confirm the order, and take payment.</p>
+      </div>
+      <div class="batch-chip no-batch" id="batchChip">
+        <span class="dot"></span>
+        <span id="batchChipText">No active batch</span>
+        <button type="button" id="startBatchBtn" onclick="openBatchPrompt()">Open batch</button>
+      </div>
+    </div>
+
+    <div class="banner error-banner" id="errorBanner">
+      <span id="errorBannerText">Something went wrong.</span>
+      <button type="button" onclick="dismissBanner('errorBanner')">&times;</button>
+    </div>
+    <div class="banner success-banner" id="successBanner">
+      <span id="successBannerText">Done.</span>
+      <button type="button" onclick="dismissBanner('successBanner')">&times;</button>
+    </div>
+
+    <div class="pos-grid">
+      <div class="catalog-card">
+        <div class="catalog-toolbar">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="itemSearch" placeholder="Search items…" autocomplete="off">
+          </div>
+          <div class="category-chips" id="categoryChips">
+            <button type="button" class="cat-chip active" data-cat="">All</button>
+          </div>
+        </div>
+        <div class="item-grid" id="itemGrid">
+          <div class="catalog-state"><div class="spinner"></div><div class="t" style="font-size:13px;">Loading items…</div></div>
+        </div>
+      </div>
+
+      <div class="cart-panel">
+        <div class="cart-head">
+          <h2>Cart</h2>
+          <span class="cart-count" id="cartCount">0 items</span>
+        </div>
+        <div class="cart-body" id="cartBody">
+          <div class="cart-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+            <div class="t">Cart is empty</div>
+            <div class="s">Tap an item on the left to add it.</div>
+          </div>
+        </div>
+        <div class="cart-subtotal">
+          <div>
+            <div class="label">Total</div>
+            <div class="pts" id="ptsEarned">+0 pts</div>
+          </div>
+          <div class="amount" id="cartTotal">Rs. 0.00</div>
+        </div>
+
+        <div class="checkout-section">
+          <div class="sec-label">Customer (optional)</div>
+          <div class="toggle-row">
+            <button type="button" class="active" id="byContactBtn" onclick="setCustomerMode('contact')">By phone</button>
+            <button type="button" id="byNameBtn" onclick="setCustomerMode('name')">By name</button>
+          </div>
+          <div class="find-row">
+            <input type="text" id="customerQuery" placeholder="Phone number (optional)" autocomplete="off">
+            <button type="button" onclick="liveSearchCustomer()">Find</button>
+          </div>
+          <div class="customer-found" id="customerFound">
+            <div class="avatar" id="custAvatar">–</div>
+            <div>
+              <div class="cn" id="custName">–</div>
+              <div class="cp" id="custPoints">0 pts available</div>
+            </div>
+            <button type="button" class="clear-cust" onclick="clearCustomer()" title="Remove">&times;</button>
+          </div>
+        </div>
+
+        <div class="checkout-section">
+          <div class="sec-label">Payment</div>
+          <div class="pay-grid">
+            <div class="pay-field">
+              <label for="payCash">Cash</label>
+              <div class="input-prefix"><span>Rs.</span><input type="number" min="0" step="0.01" id="payCash" value="0"></div>
+            </div>
+            <div class="pay-field">
+              <label for="payBank">Card / Bank</label>
+              <div class="input-prefix"><span>Rs.</span><input type="number" min="0" step="0.01" id="payBank" value="0"></div>
+            </div>
+          </div>
+          <div class="pay-grid">
+            <div class="pay-field">
+              <label for="payLoyalty">Loyalty points used</label>
+              <input type="number" min="0" step="1" id="payLoyalty" value="0" disabled>
+            </div>
+            <div class="pay-field">
+              <label for="payChange">Change due</label>
+              <div class="input-prefix"><span>Rs.</span><input type="number" id="payChange" value="0" readonly disabled></div>
+            </div>
+          </div>
+          <div class="pay-hint" id="loyaltyHint">Select a customer to redeem points.</div>
+          <div class="pay-cover short" id="payCover">
+            <span id="payCoverLabel">Short</span>
+            <span id="payCoverAmount">Rs. 0.00 of Rs. 0.00</span>
+          </div>
+          <button type="button" class="btn btn-hold" id="holdSaleBtn" onclick="submitSale('PENDING')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+            Save as pending
+          </button>
+          <button type="button" class="btn btn-record" id="recordSaleBtn" onclick="submitSale('COMPLETED')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            <span id="recordBtnLabel">Record sale</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+  let allItems = [];
+  let categories = [];
+  let categoryNameById = {};
+  let cart = [];
+  let activeBatch = null;
+  let selectedCustomer = null;
+  let customerMode = 'contact';
+  let resumeHeldSaleId = null;
+
+  const LOYALTY_POINT_VALUE = 1;
+  const API_BASE = 'http://localhost:8080/v1';
+  const ENDPOINTS = {
+    items:       API_BASE + '/items',
+    categories:  API_BASE + '/categories',
+    activeBatch: API_BASE + '/batches/active',
+    openBatch:   API_BASE + '/batches/open',
+    customers:   API_BASE + '/customers',
+    create:      API_BASE + '/sales',
+    heldSales:   API_BASE + '/held-sales',
+    searchName:  API_BASE + '/customers/search/name',
+    searchPhone: API_BASE + '/customers/search/phone'
+  };
+
+  function authHeaders() {
+    const h = {};
+    const token = localStorage.getItem('JWT');
+    if (token && token !== 'null' && token !== 'undefined') h['Authorization'] = 'Bearer ' + token;
+    return h;
+  }
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c =>
+              '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) { return null; }
+  }
+  function currentUsername() {
+    const token = localStorage.getItem('JWT');
+    const decoded = token ? parseJwt(token) : null;
+    return decoded && decoded.username ? decoded.username : null;
+  }
+  function isErrorResponse(res) {
+    return !!res && typeof res === 'object' && !Array.isArray(res)
+            && typeof res.status === 'number' && typeof res.message === 'string';
+  }
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+  function money(n) {
+    return 'Rs. ' + (Number(n) || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function showError(msg) {
+    $('#errorBannerText').text(msg);
+    $('#errorBanner').addClass('show');
+    $('#successBanner').removeClass('show');
+  }
+  function showSuccess(msg) {
+    $('#successBannerText').text(msg);
+    $('#successBanner').addClass('show');
+    $('#errorBanner').removeClass('show');
+    setTimeout(() => $('#successBanner').removeClass('show'), 3500);
+  }
+  function dismissBanner(id) { $('#' + id).removeClass('show'); }
+  function initials(first, last) {
+    return ((first || '?').charAt(0) + (last || '').charAt(0)).toUpperCase();
+  }
+
+  function normalizeItem(it) {
+    const id = it.itemId ?? it.id;
+    const categoryId = it.categoryId ?? it.category?.categoryId ?? it.category?.id ?? null;
+    const categoryName = categoryNameById[categoryId] || '';
+    const status = String(it.itemStatus || it.status || 'AVAILABLE').toUpperCase();
+    const outOfStock = status === 'OUT_OF_STOCK' || status === 'DISCONTINUED' || it.inStock === false;
+    let imageUrl = it.imageUrl || '';
+    if (imageUrl && !/^https?:\/\//i.test(imageUrl) && !imageUrl.startsWith('data:')) {
+      imageUrl = 'http://localhost:8080' + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+    }
+    const price = Number(it.discountPrice != null && it.discountPrice > 0 ? it.discountPrice : it.price) || 0;
+    return { itemId: id, itemName: it.itemName || 'Item', price, categoryName, imageUrl, outOfStock };
+  }
+
+  function resetSale() {
+    cart = [];
+    clearCustomer();
+    resumeHeldSaleId = null;
+    $('#payCash').val(0);
+    $('#payBank').val(0);
+    $('#payLoyalty').val(0);
+    $('#payChange').val(0);
+    $('#itemSearch').val('');
+    $('#customerQuery').val('');
+    $('#customerResults').remove();
+    $('.cat-chip').removeClass('active');
+    $('.cat-chip[data-cat=""]').addClass('active');
+    renderCart();
+    renderItemGrid();
+    recalcPayment();
+  }
+
+  function cartSubtotal() {
+    return cart.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
+  }
+  function pointsEarned(subtotal) { return Math.floor(subtotal / 50); }
+
+  function addToCart(item) {
+    if (item.outOfStock) return;
+    const existing = cart.find(l => l.itemId === item.itemId);
+    if (existing) existing.quantity += 1;
+    else cart.push({ itemId: item.itemId, itemName: item.itemName, unitPrice: item.price, quantity: 1 });
+    renderCart();
+    renderItemGrid();
+  }
+  function changeQty(itemId, delta) {
+    const line = cart.find(l => l.itemId === itemId);
+    if (!line) return;
+    line.quantity += delta;
+    if (line.quantity <= 0) cart = cart.filter(l => l.itemId !== itemId);
+    renderCart();
+    renderItemGrid();
+  }
+  function removeLine(itemId) {
+    cart = cart.filter(l => l.itemId !== itemId);
+    renderCart();
+    renderItemGrid();
+  }
+
+  function renderCart() {
+    const body = $('#cartBody');
+    const totalQty = cart.reduce((n, l) => n + l.quantity, 0);
+    $('#cartCount').text(totalQty + ' item' + (totalQty === 1 ? '' : 's'));
+    if (cart.length === 0) {
+      body.html(`<div class="cart-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+        <div class="t">Cart is empty</div>
+        <div class="s">Tap an item on the left to add it.</div>
+      </div>`);
+    } else {
+      body.empty();
+      cart.forEach(l => {
+        const row = $(`<div class="cart-line">
+          <div class="info">
+            <div class="name">${escapeHtml(l.itemName)}</div>
+            <div class="unit">${money(l.unitPrice)} each</div>
+          </div>
+          <div class="stepper">
+            <button type="button" class="dec">−</button>
+            <span class="qty">${l.quantity}</span>
+            <button type="button" class="inc">+</button>
+          </div>
+          <div class="line-total">${money(l.unitPrice * l.quantity)}</div>
+          <button type="button" class="remove-line" title="Remove">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+          </button>
+        </div>`);
+        row.find('.dec').on('click', () => changeQty(l.itemId, -1));
+        row.find('.inc').on('click', () => changeQty(l.itemId, 1));
+        row.find('.remove-line').on('click', () => removeLine(l.itemId));
+        body.append(row);
+      });
+    }
+    const subtotal = cartSubtotal();
+    $('#cartTotal').text(money(subtotal));
+    $('#ptsEarned').text('+' + pointsEarned(subtotal) + ' pts');
+    recalcPayment();
+  }
+
+  function renderCategoryChips() {
+    const wrap = $('#categoryChips');
+    wrap.empty();
+    wrap.append('<button type="button" class="cat-chip active" data-cat="">All</button>');
+    categories.forEach(cat => {
+      wrap.append(`<button type="button" class="cat-chip" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}</button>`);
+    });
+    wrap.find('.cat-chip').on('click', function () {
+      wrap.find('.cat-chip').removeClass('active');
+      $(this).addClass('active');
+      renderItemGrid();
+    });
+  }
+
+  function getFilteredItems() {
+    const q = ($('#itemSearch').val() || '').trim().toLowerCase();
+    const cat = $('.cat-chip.active').data('cat') || '';
+    return allItems.filter(it => {
+      const matchesSearch = !q || (it.itemName || '').toLowerCase().includes(q);
+      const matchesCat = !cat || it.categoryName === cat;
+      return matchesSearch && matchesCat;
+    });
+  }
+
+  function renderItemGrid() {
+    const grid = $('#itemGrid');
+    const items = getFilteredItems();
+    if (allItems.length === 0) {
+      grid.html(`<div class="catalog-state"><div class="t">No items yet</div><div class="s">Add items in Item Management first.</div></div>`);
+      return;
+    }
+    if (items.length === 0) {
+      grid.html(`<div class="catalog-state"><div class="t">No matches</div></div>`);
+      return;
+    }
+    grid.empty();
+    items.forEach(it => {
+      const inCartLine = cart.find(l => l.itemId === it.itemId);
+      const thumb = it.imageUrl
+              ? `<img src="${escapeHtml(it.imageUrl)}" alt="" onerror="this.style.display='none'">`
+              : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>`;
+      const card = $(`<div class="item-card ${inCartLine ? 'in-cart' : ''} ${it.outOfStock ? 'out-of-stock' : ''}">
+        <span class="qty-badge">${inCartLine ? inCartLine.quantity : ''}</span>
+        <div class="thumb">${thumb}</div>
+        <div class="name">${escapeHtml(it.itemName)}</div>
+        <div class="price">${money(it.price)}</div>
+      </div>`);
+      if (!it.outOfStock) card.on('click', () => addToCart(it));
+      grid.append(card);
+    });
+  }
+
+  function setCustomerMode(mode) {
+    customerMode = mode;
+    $('#byContactBtn').toggleClass('active', mode === 'contact');
+    $('#byNameBtn').toggleClass('active', mode === 'name');
+    $('#customerQuery').attr('placeholder', mode === 'contact' ? 'Phone number (optional)' : 'Customer name (optional)');
+    $('#customerQuery').val('');
+    $('#customerResults').remove();
+  }
+
+  function liveSearchCustomer() {
+    const q = ($('#customerQuery').val() || '').trim();
+    $('#customerResults').remove();
+    if (!q) return;
+    const isPhone = customerMode === 'contact';
+    const url = isPhone
+            ? ENDPOINTS.searchPhone + '?phone=' + encodeURIComponent(q)
+            : ENDPOINTS.searchName + '?query=' + encodeURIComponent(q);
+    $.ajax({
+      url: url,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (list) {
+        if (!list || list.length === 0) return;
+        let html = '<div id="customerResults">';
+        list.slice(0, 8).forEach(c => {
+          const name = `${c.firstName || ''} ${c.lastName || ''}`.trim() || 'No name';
+          const phone = c.phone || '';
+          const pts = (c.loyaltyPoint && c.loyaltyPoint.availablePoints != null) ? c.loyaltyPoint.availablePoints : 0;
+          html += `<div class="customer-result-item" data-id="${c.customerId}">
+            <strong>${escapeHtml(name)}</strong>
+            <div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px">${escapeHtml(phone)} · ${pts} pts</div>
+          </div>`;
+        });
+        html += '</div>';
+        $('.find-row').append(html);
+        $('.customer-result-item').on('click', function () {
+          const id = $(this).data('id');
+          const selected = list.find(c => c.customerId == id);
+          if (selected) {
+            setCustomer(selected);
+            $('#customerResults').remove();
+            $('#customerQuery').val('');
+          }
+        });
+      }
+    });
+  }
+
+  function setCustomer(c) {
+    const pts = (c.loyaltyPoint && c.loyaltyPoint.availablePoints != null)
+            ? c.loyaltyPoint.availablePoints
+            : (c.loyaltyPoints || c.availablePoints || 0);
+    selectedCustomer = {
+      customerId: c.customerId ?? c.id,
+      firstName: c.firstName,
+      lastName: c.lastName,
+      phone: c.phone,
+      loyaltyPoints: Number(pts) || 0
+    };
+    $('#custAvatar').text(initials(c.firstName, c.lastName));
+    $('#custName').text(`${c.firstName || ''} ${c.lastName || ''}`.trim() || (c.phone || 'Customer'));
+    $('#custPoints').text(selectedCustomer.loyaltyPoints + ' pts available');
+    $('#customerFound').addClass('show');
+    $('#payLoyalty').prop('disabled', selectedCustomer.loyaltyPoints <= 0)
+            .attr('max', selectedCustomer.loyaltyPoints).val(0);
+    $('#loyaltyHint').text(
+            selectedCustomer.loyaltyPoints > 0
+                    ? `Up to ${selectedCustomer.loyaltyPoints} pts can be redeemed (1 pt = ${money(LOYALTY_POINT_VALUE)}).`
+                    : 'This customer has no points to redeem yet.'
+    );
+    recalcPayment();
+  }
+
+  function clearCustomer() {
+    selectedCustomer = null;
+    $('#customerFound').removeClass('show');
+    $('#payLoyalty').prop('disabled', true).val(0);
+    $('#loyaltyHint').text('Select a customer to redeem points.');
+    $('#customerResults').remove();
+    recalcPayment();
+  }
+
+  function loadActiveBatch() {
+    $.ajax({
+      url: ENDPOINTS.activeBatch,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (res) {
+        const b = res?.data || res;
+        if (b && (b.batchId || b.id)) {
+          activeBatch = b;
+          $('#batchChip').removeClass('no-batch').addClass('active-batch');
+          $('#batchChipText').text('Batch ' + (b.batchCode || b.batchId || b.id));
+          $('#startBatchBtn').hide();
+        } else setNoBatch();
+      },
+      error: function (xhr) {
+        setNoBatch();
+        if (xhr.status === 401 || xhr.status === 403) showError('Session expired. Please sign in again.');
+      }
+    });
+  }
+
+  function setNoBatch() {
+    activeBatch = null;
+    $('#batchChip').removeClass('active-batch').addClass('no-batch');
+    $('#batchChipText').text('No active batch');
+    $('#startBatchBtn').show();
+  }
+
+  function openBatchPrompt() {
+    const startingCash = prompt('Enter starting cash amount (Rs.):', '0');
+    if (startingCash === null) return;
+    const amount = Number(startingCash);
+    if (isNaN(amount) || amount < 0) { showError('Please enter a valid starting cash amount.'); return; }
+    startBatch(amount);
+  }
+
+  function startBatch(startingCash) {
+    const btn = $('#startBatchBtn');
+    const openedBy = currentUsername();
+    if (!openedBy) { showError('Could not identify the signed-in user. Please sign in again.'); return; }
+    btn.prop('disabled', true).text('Opening…');
+    $.ajax({
+      url: ENDPOINTS.openBatch,
+      type: 'POST',
+      contentType: 'application/json',
+      headers: authHeaders(),
+      data: JSON.stringify({ openedBy, startingCash }),
+      success: function (res) {
+        if (isErrorResponse(res)) { showError(res.message || 'Could not open batch.'); return; }
+        showSuccess('Batch opened.');
+        loadActiveBatch();
+      },
+      error: function (xhr) { showError(xhr.responseJSON?.message || 'Could not open batch.'); },
+      complete: function () { btn.prop('disabled', false).text('Open batch'); }
+    });
+  }
+
+  function loyaltyPointsRequested() {
+    if (!selectedCustomer) return 0;
+    const raw = Number($('#payLoyalty').val()) || 0;
+    return Math.max(0, Math.min(raw, selectedCustomer.loyaltyPoints));
+  }
+
+  function recalcPayment() {
+    const subtotal = cartSubtotal();
+    const cash = Number($('#payCash').val()) || 0;
+    const bank = Number($('#payBank').val()) || 0;
+    const loyaltyPts = loyaltyPointsRequested();
+    const loyaltyValue = loyaltyPts * LOYALTY_POINT_VALUE;
+    const covered = cash + bank + loyaltyValue;
+    const change = Math.max(0, covered - subtotal);
+    $('#payChange').val(change.toFixed(2));
+    $('#payCoverAmount').text(money(Math.min(covered, subtotal)) + ' of ' + money(subtotal));
+    const coverBox = $('#payCover');
+    if (subtotal <= 0) {
+      coverBox.removeClass('ok').addClass('short');
+      $('#payCoverLabel').text('Add items');
+    } else if (covered + 0.009 >= subtotal) {
+      coverBox.removeClass('short').addClass('ok');
+      $('#payCoverLabel').text(change > 0 ? 'Change due' : 'Covered');
+    } else {
+      coverBox.removeClass('ok').addClass('short');
+      $('#payCoverLabel').text('Short by ' + money(subtotal - covered));
+    }
+  }
+
+  function buildSalePayload() {
+    const cash = Number($('#payCash').val()) || 0;
+    const bank = Number($('#payBank').val()) || 0;
+    const loyaltyPts = loyaltyPointsRequested();
+    const loyaltyValue = loyaltyPts * LOYALTY_POINT_VALUE;
+    const change = Math.max(0, cash + bank + loyaltyValue - cartSubtotal());
+    const paymentDetails = [];
+    if (cash > 0) paymentDetails.push({ paymentMethod: 'CASH', amount: cash, reference: null });
+    if (bank > 0) paymentDetails.push({ paymentMethod: 'CARD', amount: bank, reference: null });
+    if (loyaltyPts > 0) paymentDetails.push({ paymentMethod: 'LOYALTY_POINTS', amount: loyaltyValue, reference: null });
+    return {
+      customerId: selectedCustomer ? selectedCustomer.customerId : null,
+      batchId: activeBatch ? (activeBatch.batchId ?? activeBatch.id) : null,
+      discountAmount: 0,
+      loyaltyPointsUsed: loyaltyPts,
+      notes: null,
+      items: cart.map(l => ({ itemId: l.itemId, quantity: l.quantity })),
+      payment: {
+        totalPaid: cash + bank + loyaltyValue,
+        changeAmount: change,
+        paymentDetails
+      }
+    };
+  }
+
+  function submitSale(status) {
+    if (cart.length === 0) { showError('Add at least one item to the cart first.'); return; }
+    if (!activeBatch) { showError('Open a batch before recording a sale.'); return; }
+
+    if (status === 'COMPLETED') {
+      const subtotal = cartSubtotal();
+      const cash = Number($('#payCash').val()) || 0;
+      const bank = Number($('#payBank').val()) || 0;
+      const loyaltyValue = loyaltyPointsRequested() * LOYALTY_POINT_VALUE;
+      if (cash + bank + loyaltyValue + 0.009 < subtotal) {
+        showError('Payment does not cover the total amount.');
+        return;
+      }
+    }
+
+    const btn = status === 'PENDING' ? $('#holdSaleBtn') : $('#recordSaleBtn');
+    const otherBtn = status === 'PENDING' ? $('#recordSaleBtn') : $('#holdSaleBtn');
+    const originalHtml = btn.html();
+    btn.prop('disabled', true);
+    otherBtn.prop('disabled', true);
+    btn.text(status === 'PENDING' ? 'Saving…' : 'Recording…');
+
+    const oldHeldId = resumeHeldSaleId;
+
+    function enableBtns() {
+      btn.prop('disabled', false).html(originalHtml);
+      otherBtn.prop('disabled', false);
+    }
+
+    function deleteOldHeld(thenDo) {
+      if (!oldHeldId) { thenDo(); return; }
+      $.ajax({
+        url: ENDPOINTS.heldSales + '/' + oldHeldId,
+        type: 'DELETE',
+        headers: authHeaders(),
+        complete: function () { thenDo(); }
+      });
+    }
+
+    if (status === 'PENDING') {
+      const holdPayload = {
+        customerId: selectedCustomer ? selectedCustomer.customerId : null,
+        batchId: activeBatch ? (activeBatch.batchId ?? activeBatch.id) : null,
+        notes: null,
+        items: cart.map(l => ({ itemId: l.itemId, quantity: l.quantity }))
+      };
+      deleteOldHeld(function () {
+        $.ajax({
+          url: ENDPOINTS.heldSales,
+          type: 'POST',
+          contentType: 'application/json',
+          headers: authHeaders(),
+          data: JSON.stringify(holdPayload),
+          success: function (res) {
+            if (isErrorResponse(res)) { showError(res.message || 'Could not hold sale.'); enableBtns(); return; }
+            showSuccess('Sale held successfully.');
+            resetSale();
+          },
+          error: function (xhr) {
+            showError(xhr.responseJSON?.message || 'Could not hold sale.');
+          },
+          complete: enableBtns
+        });
+      });
+    } else {
+      const salePayload = buildSalePayload();
+      deleteOldHeld(function () {
+        $.ajax({
+          url: ENDPOINTS.create,
+          type: 'POST',
+          contentType: 'application/json',
+          headers: authHeaders(),
+          data: JSON.stringify(salePayload),
+          success: function (res) {
+            if (isErrorResponse(res)) { showError(res.message || 'Could not save sale.'); enableBtns(); return; }
+            showSuccess('Sale recorded successfully.');
+            resetSale();
+          },
+          error: function (xhr) {
+            showError(xhr.responseJSON?.message || 'Could not save sale.');
+          },
+          complete: enableBtns
+        });
+      });
+    }
+  }
+
+  function loadCategories(done) {
+    $.ajax({
+      url: ENDPOINTS.categories,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (res) {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        categoryNameById = {};
+        list.forEach(c => {
+          const id = c.categoryId ?? c.id;
+          if (id != null) categoryNameById[id] = c.categoryName || 'Unnamed';
+        });
+        if (done) done();
+      },
+      error: function () { if (done) done(); }
+    });
+  }
+
+  function loadItems() {
+    $('#itemGrid').html('<div class="catalog-state"><div class="spinner"></div><div class="t" style="font-size:13px;">Loading items…</div></div>');
+    $.ajax({
+      url: ENDPOINTS.items,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (res) {
+        const raw = Array.isArray(res) ? res : (res?.data || []);
+        allItems = raw.map(normalizeItem).filter(it => it.itemId != null);
+        categories = [...new Set(allItems.map(i => i.categoryName).filter(Boolean))].sort();
+        renderCategoryChips();
+        renderItemGrid();
+      },
+      error: function (xhr) {
+        $('#itemGrid').html(`<div class="catalog-state"><div class="t">Couldn't load items</div><div class="s">Error ${xhr.status}</div></div>`);
+        if (xhr.status === 401 || xhr.status === 403) showError('Session expired. Please sign in again.');
+        else showError('Could not load the item catalog.');
+      }
+    });
+  }
+
+  $(document).ready(function () {
+    const token = localStorage.getItem('JWT');
+    if (!token || token === 'null' || token === 'undefined') {
+      window.location.href = 'login.html';
+      return;
+    }
+    loadCategories(loadItems);
+    loadActiveBatch();
+    renderCart();
+
+    $('#itemSearch').on('input', renderItemGrid);
+    $('#payCash, #payBank, #payLoyalty').on('input', recalcPayment);
+    $('#customerQuery').on('input', liveSearchCustomer);
+    $('#customerQuery').on('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); liveSearchCustomer(); }
+    });
+    $('#payCash, #payBank').on('focus', function () {
+      if ($(this).val() == 0 || $(this).val() === '0') $(this).val('');
+    });
+    $('#payCash, #payBank').on('blur', function () {
+      if ($(this).val() === '' || $(this).val() === null) $(this).val(0);
+      recalcPayment();
+    });
+    $('#signOutBtn').on('click', function () {
+      localStorage.removeItem('JWT');
+      localStorage.removeItem('userId');
+      window.location.href = 'login.html';
+    });
+
+    // Resume held sale
+    if (new URLSearchParams(window.location.search).get('resume') === '1') {
+      const raw = localStorage.getItem('RESUME_HELD_SALE');
+      if (raw) {
+        try {
+          const held = JSON.parse(raw);
+          localStorage.removeItem('RESUME_HELD_SALE');
+          resumeHeldSaleId = held.heldSaleId || null;
+          cart = (held.heldSaleItems || []).map(it => ({
+            itemId: it.itemId,
+            itemName: it.itemName,
+            unitPrice: Number(it.unitPrice) || 0,
+            quantity: it.quantity
+          }));
+          if (held.customerId) {
+            selectedCustomer = {
+              customerId: held.customerId,
+              firstName: (held.customerName || '').split(' ')[0] || '',
+              lastName: (held.customerName || '').split(' ').slice(1).join(' ') || '',
+              phone: '',
+              loyaltyPoints: 0
+            };
+            $('#custAvatar').text(initials(selectedCustomer.firstName, selectedCustomer.lastName));
+            $('#custName').text(held.customerName || 'Customer');
+            $('#custPoints').text('0 pts available');
+            $('#customerFound').addClass('show');
+          }
+          renderCart();
+          renderItemGrid();
+          showSuccess('Held sale loaded. Take payment or hold again.');
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Held Sales · Cafe912</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --espresso:#241811; --espresso-deep:#150e09; --paper:#f7f1e6; --paper-dim:#efe4d0;
+      --amber:#c17a34; --amber-light:#e3a668; --sage:#748a6a; --sage-bg:#eaf0e6;
+      --ink:#26190f; --ink-soft:#6b5c4c; --line:rgba(38,25,15,0.14);
+      --error:#b23b3b; --error-bg:rgba(178,59,59,0.08); --success:#4c6b41; --success-bg:#eaf0e6;
+      --radius:4px;
+    }
+    *{box-sizing:border-box; margin:0; padding:0;}
+    html,body{height:100%;}
+    body{font-family:'Inter', sans-serif; background:var(--paper); color:var(--ink); min-height:100vh;}
+    a{color:inherit;}
+
+    .topbar{position:sticky; top:0; z-index:20; background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%); color:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px;}
+    .topbar-left{display:flex; align-items:center; gap:14px;}
+    .seal{width:34px; height:34px; border-radius:50%; border:1.5px solid var(--amber); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+    .seal svg{width:16px; height:16px; stroke:var(--amber-light);}
+    .brand-name{font-size:12.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber-light); font-weight:600;}
+    .topbar-crumb{font-size:13px; color:rgba(247,241,230,0.5); padding-left:14px; margin-left:14px; border-left:1px solid rgba(247,241,230,0.18);}
+    .topbar-crumb strong{color:rgba(247,241,230,0.92); font-weight:600;}
+    .topbar-right{display:flex; align-items:center; gap:10px;}
+    .nav-link{font-size:13px; color:rgba(247,241,230,0.65); padding:8px 12px; border-radius:var(--radius); text-decoration:none; font-weight:600;}
+    .nav-link:hover{background:rgba(247,241,230,0.08); color:var(--paper);}
+    .nav-link.active{background:rgba(227,166,104,0.14); color:var(--amber-light);}
+    .signout-btn{background:none; border:1px solid rgba(247,241,230,0.25); color:var(--paper); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius); cursor:pointer;}
+    .signout-btn:hover{background:rgba(247,241,230,0.08);}
+
+    .page{max-width:1180px; margin:0 auto; padding:44px 32px 80px;}
+    .page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:32px; flex-wrap:wrap;}
+    .eyebrow{font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); font-weight:700; margin-bottom:10px;}
+    .page-head h1{font-family:'Newsreader', serif; font-weight:500; font-size:32px; color:var(--espresso); margin-bottom:6px;}
+    .page-head .sub{color:var(--ink-soft); font-size:14.5px;}
+    .head-stat{text-align:right;}
+    .head-stat .num{font-family:'Newsreader', serif; font-size:26px; color:var(--espresso); font-weight:500;}
+    .head-stat .label{font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-top:2px;}
+
+    .toolbar{display:flex; align-items:center; gap:12px; margin-bottom:24px; flex-wrap:wrap;}
+    .search-wrap{position:relative; flex:1; min-width:220px;}
+    .search-wrap svg{position:absolute; left:14px; top:50%; transform:translateY(-50%); width:16px; height:16px; stroke:var(--ink-soft); pointer-events:none;}
+    .search-wrap input{width:100%; padding:11px 14px 11px 40px; border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter', sans-serif; font-size:14px; background:#fff; color:var(--ink); outline:none;}
+    .search-wrap input:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
+    .refresh-btn{display:flex; align-items:center; gap:7px; padding:11px 16px; background:#fff; color:var(--ink); border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer;}
+    .refresh-btn:hover{background:var(--paper-dim); border-color:var(--espresso);}
+    .refresh-btn svg{width:14px; height:14px;}
+    .refresh-btn.spinning svg{animation:spin 0.8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    .hold-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;}
+    .hold-card{background:#fff; border:1px solid var(--line); border-radius:6px; display:flex; flex-direction:column; transition:opacity .2s ease, box-shadow .15s ease;}
+    .hold-card:hover{border-color:rgba(38,25,15,0.24); box-shadow:0 4px 14px rgba(21,14,9,0.06);}
+    .hold-card.faded{opacity:0.5;}
+    .hold-card.faded .btn-resume{opacity:0.5; pointer-events:none;}
+
+    .hold-card-head{display:flex; align-items:flex-start; gap:11px; padding:16px 16px 10px;}
+    .hold-avatar{width:36px; height:36px; border-radius:50%; background:var(--paper-dim); color:var(--espresso); display:flex; align-items:center; justify-content:center; font-family:'Newsreader', serif; font-weight:600; font-size:14px; flex-shrink:0; border:1px solid var(--line);}
+    .hold-name-wrap{flex:1; min-width:0;}
+    .hold-name{font-weight:600; color:var(--ink); font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .hold-phone{color:var(--ink-soft); font-size:12.5px; margin-top:1px;}
+    .hold-age{font-size:11.5px; color:var(--ink-soft); white-space:nowrap; padding-top:2px;}
+
+    .pill.pending-removal{display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:100px; font-size:11px; font-weight:600; background:rgba(193,122,52,0.1); color:var(--amber); margin:0 16px 10px;}
+    .pill.pending-removal::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--amber);}
+
+    .hold-items{padding:0 16px 6px; flex:1;}
+    .hold-item-row{display:flex; justify-content:space-between; gap:10px; padding:5px 0; font-size:13.5px; border-bottom:1px dashed var(--line);}
+    .hold-item-row:last-child{border-bottom:none;}
+    .hold-item-row .qty{color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    .hold-item-row .amt{color:var(--ink); flex-shrink:0;}
+    .hold-item-more{font-size:12px; color:var(--ink-soft); padding:6px 0 0; font-style:italic;}
+
+    .hold-total-row{display:flex; align-items:baseline; justify-content:space-between; padding:11px 16px; border-top:1px solid var(--line); background:var(--paper-dim);}
+    .hold-total-row .label{font-weight:600; font-size:14px;}
+    .hold-total-row .amount{font-family:'Newsreader', serif; font-weight:600; font-size:18px; color:var(--espresso); margin-left:6px;}
+    .hold-total-row .items-count{font-size:11.5px; color:var(--ink-soft);}
+
+    .hold-actions{display:flex; gap:8px; padding:12px 16px 16px;}
+    .btn{flex:1; padding:10px; border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:13px; font-weight:600; cursor:pointer; border:1.5px solid transparent; display:flex; align-items:center; justify-content:center; gap:6px;}
+    .btn svg{width:14px; height:14px;}
+    .btn-remove{background:#fff; border-color:rgba(178,59,59,0.32); color:var(--error);}
+    .btn-remove:hover{background:var(--error-bg);}
+    .btn-remove:disabled{opacity:0.55; cursor:not-allowed;}
+    .btn-resume{background:var(--amber); color:#fff; border-color:var(--amber);}
+    .btn-resume:hover{background:#a9682b;}
+    .btn-resume:disabled{opacity:0.45; cursor:not-allowed;}
+
+    .state-box{display:flex; flex-direction:column; align-items:center; gap:10px; color:var(--ink-soft); padding:70px 18px; text-align:center;}
+    .state-box .state-title{font-family:'Newsreader', serif; font-size:17px; color:var(--espresso);}
+    .spinner{width:22px; height:22px; border-radius:50%; border:2.5px solid var(--line); border-top-color:var(--amber); animation:spin 0.7s linear infinite;}
+
+    .banner{font-size:13px; padding:11px 14px; border-radius:var(--radius); margin-bottom:16px; display:none; align-items:center; justify-content:space-between; gap:10px;}
+    .banner.show{display:flex;}
+    .banner.error-banner{background:var(--error-bg); border:1px solid rgba(178,59,59,0.25); color:var(--error);}
+    .banner.success-banner{background:var(--success-bg); border:1px solid rgba(76,107,65,0.25); color:var(--success);}
+    .banner button{background:none; border:none; cursor:pointer; color:inherit; font-weight:700; font-size:14px;}
+
+    .modal-overlay{position:fixed; inset:0; background:rgba(21,14,9,0.55); display:none; align-items:center; justify-content:center; z-index:50; padding:24px;}
+    .modal-overlay.show{display:flex;}
+    .modal{background:var(--paper); border-radius:6px; width:100%; max-width:420px; padding:28px;}
+    .modal h3{font-family:'Newsreader', serif; font-weight:500; font-size:21px; color:var(--espresso);}
+    .modal p{font-size:13.5px; color:var(--ink-soft); line-height:1.55; margin-top:10px;}
+    .modal .target-name{color:var(--ink); font-weight:600;}
+    .modal-actions{display:flex; gap:10px; margin-top:22px;}
+    .modal-actions .btn{padding:12px;}
+    .btn-ghost{background:#fff; border-color:var(--line); color:var(--ink);}
+    .btn-danger-solid{background:var(--error); color:#fff; border-color:var(--error);}
+
+    @media (max-width: 760px){
+      .page{padding:28px 16px 60px;}
+      .topbar{padding:0 16px;}
+      .hold-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="seal">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+    </div>
+    <div class="brand-name">Cafe912</div>
+    <div class="topbar-crumb">Admin Portal / <strong>Held Sales</strong></div>
+  </div>
+  <div class="topbar-right">
+    <a class="nav-link" href="user_Management.html">Users</a>
+    <a class="nav-link" href="sale_Management.html">Sales</a>
+    <a class="nav-link" href="held_Sale.html">Held Sales</a>
+    <a class="nav-link" href="category_Management.html">Categories</a>
+    <a class="nav-link" href="item_Management.html">Items</a>
+    <a class="nav-link" href="batch_Management.html">Batches</a>
+    <a class="nav-link" href="customer_Management.html">Customers</a>
+    <a class="nav-link" href="stock_Management.html">Stock</a>
+    <a class="nav-link" href="sale_history.html">Sale History</a>
+    <button class="signout-btn" id="signOutBtn">Sign out</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Point of Sale</div>
+      <h1>Held Sales</h1>
+      <p class="sub">Sales on hold. Request removal (staff) or delete permanently (Super Admin).</p>
+    </div>
+    <div class="head-stat">
+      <div class="num" id="totalCount">0</div>
+      <div class="label">Held Sales</div>
+    </div>
+  </div>
+
+  <div class="banner error-banner" id="errorBanner">
+    <span id="errorBannerText">Something went wrong.</span>
+    <button onclick="dismissBanner('errorBanner')">&times;</button>
+  </div>
+  <div class="banner success-banner" id="successBanner">
+    <span id="successBannerText">Done.</span>
+    <button onclick="dismissBanner('successBanner')">&times;</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search by customer name or hold code…">
+    </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadHeldSales()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div id="gridWrap">
+    <div class="state-box"><div class="spinner"></div><div class="state-sub">Loading held sales…</div></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="deleteOverlay">
+  <div class="modal">
+    <h3>Delete permanently</h3>
+    <p>This will permanently delete <span class="target-name" id="deleteSaleName">this held sale</span>. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+      <button type="button" class="btn btn-danger-solid" id="confirmDeleteBtn" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+  let heldSales = [];
+  let deletingId = null;
+
+  const API_BASE = 'http://localhost:8080/v1';
+  const ENDPOINTS = {
+    list: API_BASE + '/held-sales',
+    requestRemoval: function (id) { return API_BASE + '/held-sales/' + id + '/request-removal'; },
+    delete: function (id) { return API_BASE + '/held-sales/' + id; }
+  };
+
+  function authHeaders() {
+    const h = {};
+    const token = localStorage.getItem('JWT');
+    if (token && token !== 'null' && token !== 'undefined') h['Authorization'] = 'Bearer ' + token;
+    return h;
+  }
+
+  function currentUserIsSuperAdmin() {
+    try {
+      const token = localStorage.getItem('JWT');
+      if (!token) return false;
+
+      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+
+      let roles = [];
+      if (payload.role) roles.push(payload.role);
+      if (payload.userRole) roles.push(payload.userRole);
+      if (payload.authorities) {
+        if (Array.isArray(payload.authorities)) {
+          payload.authorities.forEach(a => {
+            if (typeof a === 'string') roles.push(a);
+            else if (a && a.authority) roles.push(a.authority);
+          });
+        } else {
+          roles.push(String(payload.authorities));
+        }
+      }
+      if (payload.roles && Array.isArray(payload.roles)) {
+        roles = roles.concat(payload.roles);
+      }
+
+      const text = roles.join(' ').toUpperCase();
+      console.log('JWT roles detected:', text);
+      return text.includes('SUPER') || text.includes('ADMIN');
+    } catch (e) {
+      console.error('Role check failed', e);
+      return false;
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
+    );
+  }
+  function initials(name) {
+    const parts = (name || '?').trim().split(' ');
+    return ((parts[0]?.charAt(0) || '?') + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '')).toUpperCase();
+  }
+  function money(n) {
+    return 'Rs. ' + Number(n || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function timeAgo(dateStr) {
+    if (!dateStr) return '';
+    const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  }
+
+  function showError(msg) {
+    $('#errorBannerText').text(msg);
+    $('#errorBanner').addClass('show');
+    $('#successBanner').removeClass('show');
+  }
+  function showSuccess(msg) {
+    $('#successBannerText').text(msg);
+    $('#successBanner').addClass('show');
+    $('#errorBanner').removeClass('show');
+    setTimeout(() => $('#successBanner').removeClass('show'), 3500);
+  }
+  function dismissBanner(id) { $('#' + id).removeClass('show'); }
+
+  function mapHeldToCard(s) {
+    return {
+      id: s.heldSaleId,
+      saleCode: s.holdCode || '',
+      customer: s.customerName || 'Walk-in Customer',
+      heldAgo: timeAgo(s.heldAt),
+      items: (s.heldSaleItems || []).map(it => ({
+        name: it.itemName || 'Item',
+        qty: it.quantity || 1,
+        amount: Number(it.lineTotal || 0)
+      })),
+      total: Number(s.totalAmount || 0),
+      removalRequested: !!s.removalRequested,
+      raw: s
+    };
+  }
+
+  function getFiltered() {
+    const q = ($('#searchInput').val() || '').trim().toLowerCase();
+    return heldSales.filter(s =>
+            !q || s.customer.toLowerCase().includes(q) || (s.saleCode || '').toLowerCase().includes(q)
+    );
+  }
+
+  function renderGrid() {
+    const list = getFiltered();
+    const wrap = $('#gridWrap');
+    $('#totalCount').text(heldSales.length);
+
+    if (heldSales.length === 0) {
+      wrap.html(`<div class="state-box"><div class="state-title">No held sales</div><div class="state-sub">When a sale is put on hold, it will show up here.</div></div>`);
+      return;
+    }
+    if (list.length === 0) {
+      wrap.html(`<div class="state-box"><div class="state-title">No matches</div><div class="state-sub">Try a different search term.</div></div>`);
+      return;
+    }
+
+    const grid = $('<div class="hold-grid"></div>');
+    list.forEach(s => grid.append(cardHtml(s)));
+    wrap.empty().append(grid);
+  }
+
+  function cardHtml(s) {
+    const shownItems = s.items.slice(0, 3);
+    const moreCount = s.items.length - shownItems.length;
+    const itemRows = shownItems.map(it => `
+      <div class="hold-item-row">
+        <span class="qty">${escapeHtml(it.name)} ×${it.qty}</span>
+        <span class="amt">${money(it.amount)}</span>
+      </div>`).join('');
+    const moreRow = moreCount > 0 ? `<div class="hold-item-more">+ ${moreCount} more item${moreCount > 1 ? 's' : ''}</div>` : '';
+    const totalQty = s.items.reduce((a, it) => a + it.qty, 0);
+    const isSuper = currentUserIsSuperAdmin();
+
+    let removeLabel = 'Request removal';
+    let removeDisabled = false;
+
+    if (isSuper) {
+      removeLabel = s.removalRequested ? 'Delete permanently' : 'Delete';
+    } else {
+      if (s.removalRequested) {
+        removeLabel = 'Requested';
+        removeDisabled = true;
+      } else {
+        removeLabel = 'Request removal';
+      }
+    }
+
+    const card = $(`
+      <div class="hold-card ${s.removalRequested ? 'faded' : ''}" data-id="${s.id}">
+        <div class="hold-card-head">
+          <div class="hold-avatar">${initials(s.customer)}</div>
+          <div class="hold-name-wrap">
+            <div class="hold-name">${escapeHtml(s.customer)}</div>
+            <div class="hold-phone">${escapeHtml(s.saleCode)}</div>
+          </div>
+          <div class="hold-age">${escapeHtml(s.heldAgo)}</div>
+        </div>
+        ${s.removalRequested ? '<div class="pill pending-removal">Removal requested</div>' : ''}
+        <div class="hold-items">${itemRows}${moreRow}</div>
+        <div class="hold-total-row">
+          <span><span class="label">Total:</span><span class="amount">${money(s.total)}</span></span>
+          <span class="items-count">${totalQty} item${totalQty !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="hold-actions">
+          <button class="btn btn-remove" ${removeDisabled ? 'disabled' : ''}>${removeLabel}</button>
+          <button class="btn btn-resume" ${s.removalRequested ? 'disabled' : ''}>Resume sale</button>
+        </div>
+      </div>`);
+
+    card.find('.btn-remove').on('click', function () {
+      if ($(this).prop('disabled')) return;
+
+      if (isSuper) {
+        openDeleteModal(s);
+      } else if (!s.removalRequested) {
+        doRequestRemoval(s);
+      }
+    });
+    card.find('.btn-resume').on('click', () => {
+      if (!s.removalRequested) resumeSale(s);
+    });
+    return card;
+  }
+
+  function doRequestRemoval(s) {
+    $.ajax({
+      url: ENDPOINTS.requestRemoval(s.id),
+      type: 'PUT',
+      headers: authHeaders(),
+      success: function (res) {
+        const updated = mapHeldToCard(res);
+        const idx = heldSales.findIndex(x => x.id === s.id);
+        if (idx >= 0) heldSales[idx] = updated;
+        showSuccess('Removal requested. Waiting for Super Admin.');
+        renderGrid();
+      },
+      error: function (xhr) {
+        showError(xhr.responseJSON?.message || 'Could not request removal.');
+      }
+    });
+  }
+
+  function openDeleteModal(s) {
+    deletingId = s.id;
+    $('#deleteSaleName').text(s.customer + (s.saleCode ? ' (' + s.saleCode + ')' : ''));
+    $('#deleteOverlay').addClass('show');
+  }
+  function closeDeleteModal() {
+    $('#deleteOverlay').removeClass('show');
+    deletingId = null;
+  }
+
+  function confirmDelete() {
+    const btn = $('#confirmDeleteBtn');
+    btn.prop('disabled', true).text('Deleting…');
+    $.ajax({
+      url: ENDPOINTS.delete(deletingId),
+      type: 'DELETE',
+      headers: authHeaders(),
+      success: function () {
+        heldSales = heldSales.filter(x => x.id !== deletingId);
+        closeDeleteModal();
+        showSuccess('Held sale deleted permanently.');
+        renderGrid();
+      },
+      error: function (xhr) {
+        showError(xhr.responseJSON?.message || 'Could not delete.');
+      },
+      complete: function () {
+        btn.prop('disabled', false).text('Delete');
+      }
+    });
+  }
+
+  function resumeSale(s) {
+    localStorage.setItem('RESUME_HELD_SALE', JSON.stringify(s.raw));
+    window.location.href = 'sale_Management.html?resume=1';
+  }
+
+  function loadHeldSales() {
+    $('#refreshBtn').addClass('spinning');
+    $('#gridWrap').html('<div class="state-box"><div class="spinner"></div><div class="state-sub">Loading…</div></div>');
+    $.ajax({
+      url: ENDPOINTS.list,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (res) {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        heldSales = list.map(mapHeldToCard);
+        renderGrid();
+      },
+      error: function (xhr) {
+        showError(xhr.responseJSON?.message || 'Could not load held sales.');
+        heldSales = [];
+        renderGrid();
+      },
+      complete: function () {
+        $('#refreshBtn').removeClass('spinning');
+      }
+    });
+  }
+
+  $(document).ready(function () {
+    const token = localStorage.getItem('JWT');
+    if (!token || token === 'null' || token === 'undefined') {
+      window.location.href = 'login.html';
+      return;
+    }
+    loadHeldSales();
+    $('#searchInput').on('input', renderGrid);
+    $('#signOutBtn').on('click', function () {
+      localStorage.removeItem('JWT');
+      localStorage.removeItem('userId');
+      window.location.href = 'login.html';
+    });
+    $('.modal-overlay').on('click', function (e) { if (e.target === this) closeDeleteModal(); });
+    $(document).on('keydown', function (e) { if (e.key === 'Escape') closeDeleteModal(); });
+  });
+</script>
+</body>
+</html>

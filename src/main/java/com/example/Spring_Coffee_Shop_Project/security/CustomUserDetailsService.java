@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         // Check if the user's status is ACTIVE
-        boolean isActive = user.getUserstatus() == UserStatus.ACTIVE;
+        boolean isActive = user.getUserStatus() == UserStatus.ACTIVE;
 
         return User.builder()
                 .username(user.getUsername())

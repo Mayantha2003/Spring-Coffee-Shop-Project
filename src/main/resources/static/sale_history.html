@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales History · Cafe912</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --espresso:#241811;
+            --espresso-deep:#150e09;
+            --paper:#f7f1e6;
+            --paper-dim:#efe4d0;
+            --amber:#c17a34;
+            --amber-light:#e3a668;
+            --sage:#748a6a;
+            --sage-bg:#eaf0e6;
+            --ink:#26190f;
+            --ink-soft:#6b5c4c;
+            --line:rgba(38,25,15,0.14);
+            --error:#b23b3b;
+            --success:#4c6b41;
+            --radius:4px;
+
+            /* content-area surface tokens — same paper/cream theme as User Management */
+            --deep-bg:var(--paper);
+            --deep-card:#ffffff;
+            --deep-card-2:var(--paper-dim);
+            --deep-line:var(--line);
+            --deep-text:var(--ink);
+            --deep-text-soft:var(--ink-soft);
+            --deep-text-mute:rgba(38,25,15,0.42);
+            --sale-amber:var(--amber);
+            --sale-green:var(--success);
+        }
+        *{box-sizing:border-box; margin:0; padding:0;}
+        html,body{height:100%;}
+        body{
+            font-family:'Inter', sans-serif;
+            background:var(--deep-bg);
+            color:var(--deep-text);
+            min-height:100vh;
+        }
+        @media (prefers-reduced-motion: reduce){
+            *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+        }
+        a{color:inherit;}
+        button{font-family:'Inter',sans-serif;}
+        ::-webkit-scrollbar{height:0; width:0;}
+
+        /* ===== TOPBAR (matches admin portal) ===== */
+        .topbar{position:sticky; top:0; z-index:30; background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%); color:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px;}
+        .topbar-left{display:flex; align-items:center; gap:14px;}
+        .seal{width:34px; height:34px; border-radius:50%; border:1.5px solid var(--amber); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+        .seal svg{width:16px; height:16px; stroke:var(--amber-light);}
+        .brand-name{font-size:12.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber-light); font-weight:600;}
+        .topbar-crumb{font-size:13px; color:rgba(247,241,230,0.5); padding-left:14px; margin-left:14px; border-left:1px solid rgba(247,241,230,0.18);}
+        .topbar-crumb strong{color:rgba(247,241,230,0.92); font-weight:600;}
+        .topbar-right{display:flex; align-items:center; gap:10px;}
+        .nav-link{font-size:13px; color:rgba(247,241,230,0.65); padding:8px 12px; border-radius:var(--radius); text-decoration:none; font-weight:600; transition:background .15s ease, color .15s ease;}
+        .nav-link:hover{background:rgba(247,241,230,0.08); color:var(--paper);}
+        .nav-link.active{background:rgba(193,122,52,0.18); color:var(--amber-light);}
+        .signout-btn{background:none; border:1px solid rgba(247,241,230,0.25); color:var(--paper); font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius); cursor:pointer; transition:border-color .18s ease, background .18s ease;}
+        .signout-btn:hover{background:rgba(247,241,230,0.08); border-color:rgba(247,241,230,0.4);}
+
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        /* ===== PAGE SHELL ===== */
+        .page-shell{background:var(--deep-bg);}
+        .page{
+            max-width:640px;
+            margin:0 auto;
+            padding:26px 18px 70px;
+        }
+        @media (min-width: 720px){
+            .page{max-width:820px; padding:34px 28px 90px;}
+        }
+        @media (min-width: 1100px){
+            .page{max-width:1080px; padding:40px 32px 100px;}
+        }
+        @media (min-width: 1440px){
+            .page{max-width:1240px;}
+        }
+
+        .eyebrow{
+            font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+            color:var(--sale-amber); font-weight:700; margin-bottom:8px;
+        }
+        .page-head h1{
+            font-family:'Newsreader', serif; font-weight:500; font-size:26px;
+            color:var(--deep-text); margin-bottom:5px;
+        }
+        .page-head .sub{color:var(--deep-text-soft); font-size:13.5px; margin-bottom:22px;}
+
+        /* ===== FILTER BAR ===== */
+        .filter-row{
+            display:flex; align-items:center; gap:8px; margin-bottom:16px;
+        }
+        .filter-scroll{
+            display:flex; align-items:center; gap:8px;
+            overflow-x:auto; flex:1; scroll-behavior:smooth;
+            padding-bottom:2px;
+        }
+        .filter-pill{
+            flex-shrink:0; display:flex; align-items:center; gap:6px;
+            padding:9px 14px; border-radius:100px; border:1px solid var(--deep-line);
+            background:var(--deep-card); color:var(--deep-text-soft);
+            font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;
+            transition:background .15s ease, border-color .15s ease, color .15s ease;
+            position:relative;
+        }
+        .filter-pill:hover{border-color:rgba(247,241,230,0.2);}
+        .filter-pill svg{width:12px; height:12px; stroke:currentColor; flex-shrink:0;}
+        .filter-pill.active{
+            background:rgba(224,138,62,0.16); border-color:rgba(224,138,62,0.45); color:var(--sale-amber);
+        }
+        .filter-pill select{
+            appearance:none; background:none; border:none; color:inherit; font:inherit;
+            cursor:pointer; outline:none; max-width:110px; text-overflow:ellipsis;
+        }
+        .filter-pill select option{background:var(--deep-card); color:var(--deep-text);}
+        .filter-pill.date-btn input[type="date"]{
+            appearance:none; background:none; border:none; color:inherit; font:inherit;
+            outline:none; width:78px; cursor:pointer;
+        }
+        .filter-pill.date-btn input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.75); cursor:pointer;}
+
+        .filter-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+        .icon-action{
+            width:34px; height:34px; border-radius:100px; border:1px solid var(--deep-line);
+            background:var(--deep-card); display:flex; align-items:center; justify-content:center;
+            cursor:pointer; transition:background .15s ease, border-color .15s ease;
+        }
+        .icon-action:hover{border-color:rgba(247,241,230,0.22);}
+        .icon-action svg{width:15px; height:15px;}
+        .icon-action.clear-action{color:var(--sale-amber);}
+        .icon-action.clear-action svg{stroke:var(--sale-amber);}
+        .icon-action.refresh-action{color:var(--deep-text-soft);}
+        .icon-action.refresh-action svg{stroke:var(--deep-text-soft); transition:stroke .15s ease;}
+        .icon-action.refresh-action:hover svg{stroke:var(--deep-text);}
+        .icon-action.refresh-action.spinning svg{animation:spin .8s linear infinite;}
+
+        /* ===== GROUP BY TOGGLE ===== */
+        .groupby-row{display:flex; align-items:center; gap:10px; margin-bottom:18px;}
+        .groupby-label{font-size:12.5px; color:var(--deep-text-soft); font-weight:600; flex-shrink:0;}
+        .groupby-toggle{display:flex; flex:1; background:var(--deep-card); border:1px solid var(--deep-line); border-radius:100px; padding:3px; gap:3px;}
+        .groupby-btn{
+            flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+            padding:9px 10px; border-radius:100px; border:none; background:none;
+            color:var(--deep-text-soft); font-size:13px; font-weight:600; cursor:pointer;
+            transition:background .18s ease, color .18s ease;
+        }
+        .groupby-btn svg{width:13px; height:13px; stroke:currentColor;}
+        .groupby-btn.active{background:linear-gradient(160deg,#3a281a,#241811); color:var(--paper); box-shadow:0 1px 0 rgba(0,0,0,0.2) inset;}
+        .groupby-btn .check{display:none; width:13px; height:13px;}
+        .groupby-btn.active .check{display:inline-block;}
+        .groupby-btn.active .type-icon{display:none;}
+
+        /* ===== SUMMARY GRID ===== */
+        .summary-grid{
+            display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px;
+        }
+        .summary-card{
+            background:var(--deep-card); border:1px solid var(--deep-line); border-radius:10px;
+            padding:16px;
+        }
+        .summary-card.profit-card{background:linear-gradient(160deg,#eef3e9,#e6efdf); border-color:rgba(76,107,65,0.22);}
+        .summary-card .icon-wrap{
+            width:30px; height:30px; border-radius:8px; background:rgba(224,138,62,0.14);
+            display:flex; align-items:center; justify-content:center; margin-bottom:12px;
+        }
+        .summary-card.profit-card .icon-wrap{background:rgba(127,174,109,0.16);}
+        .summary-card .icon-wrap svg{width:15px; height:15px; stroke:var(--sale-amber);}
+        .summary-card.profit-card .icon-wrap svg{stroke:var(--sale-green);}
+        .summary-card .num{font-family:'Newsreader', serif; font-weight:600; font-size:21px; color:var(--deep-text); line-height:1.1;}
+        .summary-card .label{font-size:12px; color:var(--deep-text-soft); margin-top:4px;}
+        .summary-card.profit-card .label{color:rgba(38,25,15,0.55);}
+        .summary-card .label .pct{color:var(--sale-green); font-weight:600;}
+
+        /* ===== DESKTOP / WEB APP SIZING ===== */
+        @media (min-width: 720px){
+            .summary-grid{grid-template-columns:repeat(4, 1fr); gap:14px;}
+            .summary-card{padding:18px 20px;}
+            .filter-scroll{flex-wrap:wrap; overflow-x:visible;}
+            .groupby-row{max-width:340px;}
+            .filter-row{flex-wrap:wrap;}
+        }
+        @media (min-width: 1100px){
+            .sale-list{display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; align-content:start;}
+            .sale-list.collapsed{max-height:0; display:block; overflow:hidden;}
+            .sale-card{margin-bottom:0;}
+        }
+
+        /* ===== TOP ITEMS ===== */
+        .top-items-head{
+            display:flex; align-items:center; justify-content:space-between;
+            cursor:pointer; padding:4px 2px; margin-bottom:12px;
+        }
+        .top-items-head h3{font-family:'Newsreader', serif; font-weight:500; font-size:16px; color:var(--sale-amber);}
+        .top-items-head svg{width:16px; height:16px; stroke:var(--sale-amber); transition:transform .2s ease;}
+        .top-items-head.collapsed svg{transform:rotate(-90deg);}
+        .top-items-body{overflow:hidden; max-height:400px; transition:max-height .25s ease;}
+        .top-items-body.collapsed{max-height:0;}
+        .top-item-row{
+            display:flex; align-items:center; justify-content:space-between;
+            padding:10px 0; border-bottom:1px solid var(--deep-line); font-size:13.5px;
+        }
+        .top-item-row:last-child{border-bottom:none;}
+        .top-item-row .ti-name{color:var(--deep-text); font-weight:600;}
+        .top-item-row .ti-qty{color:var(--deep-text-soft); font-size:12.5px; margin-left:6px; font-weight:400;}
+        .top-item-row .ti-rev{color:var(--sale-amber); font-weight:600;}
+
+        .flag-banner{
+            display:flex; align-items:center; gap:9px;
+            border:1px solid rgba(224,138,62,0.4); background:rgba(224,138,62,0.08);
+            color:var(--sale-amber); border-radius:8px; padding:11px 14px;
+            font-size:13px; font-weight:600; margin-bottom:18px;
+        }
+        .flag-banner svg{width:14px; height:14px; stroke:var(--sale-amber); flex-shrink:0;}
+
+        /* ===== GROUP HEADERS (customer / date) ===== */
+        .group-block{margin-bottom:14px;}
+        .group-header{
+            display:flex; align-items:center; justify-content:space-between; gap:10px;
+            padding:12px 4px; cursor:pointer;
+        }
+        .group-header .gh-left{display:flex; align-items:center; gap:11px; min-width:0;}
+        .avatar{
+            width:36px; height:36px; border-radius:50%; flex-shrink:0;
+            background:var(--paper-dim); color:var(--espresso);
+            display:flex; align-items:center; justify-content:center;
+            font-family:'Newsreader', serif; font-weight:600; font-size:14px;
+            border:1px solid var(--line);
+        }
+        .gh-name{font-weight:600; font-size:14.5px; color:var(--deep-text); line-height:1.3;}
+        .gh-sub{font-size:12px; color:var(--deep-text-mute); margin-top:1px;}
+        .gh-right{text-align:right; flex-shrink:0;}
+        .gh-right .gh-count{font-size:13px; color:var(--sale-amber); font-weight:600;}
+        .gh-right .gh-meta{font-size:11.5px; color:var(--deep-text-mute); margin-top:2px;}
+        .gh-right .gh-meta .pts{color:var(--sale-green);}
+
+        .date-chip{
+            display:inline-flex; align-items:center; padding:6px 12px; border-radius:100px;
+            background:rgba(224,138,62,0.14); color:var(--sale-amber); font-weight:700; font-size:12.5px;
+        }
+        .date-header-top{display:flex; align-items:center; gap:10px; margin-bottom:3px;}
+        .date-header-top .dh-count{font-size:12.5px; color:var(--deep-text-soft);}
+        .date-header-range{font-size:11.5px; color:var(--deep-text-mute);}
+
+        /* ===== SALE LIST ===== */
+        .sale-list{overflow:hidden; max-height:3000px; transition:max-height .3s ease;}
+        .sale-list.collapsed{max-height:0;}
+        .sale-card{
+            display:flex; align-items:flex-start; gap:12px;
+            background:var(--deep-card); border:1px solid var(--deep-line); border-radius:10px;
+            padding:13px 14px; margin-bottom:9px; cursor:pointer;
+        }
+        .sale-card .sc-icon{
+            width:34px; height:34px; border-radius:9px; background:var(--deep-card-2);
+            display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;
+            border:1px solid var(--deep-line);
+        }
+        .sale-card .sc-icon svg{width:16px; height:16px; stroke:var(--amber-light);}
+        .sale-card .sc-main{flex:1; min-width:0;}
+        .sale-card .sc-title{font-size:14px; font-weight:600; color:var(--deep-text); margin-bottom:6px;}
+        .sale-card .inv-pill{
+            display:inline-block; font-size:11px; font-weight:600; color:var(--sale-amber);
+            border:1px solid rgba(224,138,62,0.4); border-radius:100px; padding:2px 9px; margin-bottom:6px;
+        }
+        .sale-card .sc-datetime{font-size:12px; color:var(--deep-text-soft); margin-bottom:2px;}
+        .sale-card .sc-customer{font-size:12.5px; color:var(--deep-text-soft); margin-bottom:4px;}
+        .sale-card .sc-pts{font-size:12px; color:var(--sale-green); font-weight:600;}
+        .sale-card .sc-right{display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;}
+        .sale-card .sc-price{font-size:14.5px; font-weight:700; color:var(--sale-amber);}
+        .sale-card .sc-flags{display:flex; align-items:center; gap:8px;}
+        .sale-card .flag-icon{width:14px; height:14px; stroke:var(--sale-amber); fill:rgba(224,138,62,0.25);}
+        .sale-card .chevron{width:13px; height:13px; stroke:var(--deep-text-mute); transition:transform .2s ease;}
+        .sale-card.expanded .chevron{transform:rotate(180deg);}
+        .sale-card.flagged{border-color:rgba(224,138,62,0.35); background:linear-gradient(160deg, rgba(224,138,62,0.06), var(--deep-card));}
+
+        .sale-detail{
+            max-height:0; overflow:hidden; transition:max-height .2s ease;
+            font-size:12.5px; color:var(--deep-text-soft); border-top:1px dashed var(--deep-line);
+            margin-top:0;
+        }
+        .sale-card.expanded .sale-detail{max-height:120px; margin-top:10px; padding-top:10px;}
+        .sale-detail div{display:flex; justify-content:space-between; padding:3px 0;}
+        .sale-detail span:last-child{color:var(--deep-text);}
+
+        /* ===== STATES ===== */
+        .state-box{
+            display:flex; flex-direction:column; align-items:center; gap:10px;
+            padding:60px 20px; color:var(--deep-text-soft); text-align:center;
+        }
+        .state-box svg{width:30px; height:30px; stroke:var(--deep-text-mute); opacity:0.6;}
+        .state-box .state-title{font-family:'Newsreader', serif; font-size:17px; color:var(--deep-text); font-weight:500;}
+        .state-box .state-sub{font-size:13px; max-width:300px;}
+        .spinner{
+            width:24px; height:24px; border-radius:50%;
+            border:2.5px solid var(--deep-line); border-top-color:var(--sale-amber);
+            animation:spin 0.7s linear infinite;
+        }
+        .retry-btn{
+            margin-top:4px; background:rgba(224,138,62,0.14); color:var(--sale-amber);
+            border:1px solid rgba(224,138,62,0.4); padding:9px 16px; border-radius:100px;
+            font-size:12.5px; font-weight:600; cursor:pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="seal">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+        </div>
+        <div class="brand-name">Cafe912</div>
+        <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>Sales History</strong></div>
+    </div>
+    <div class="topbar-right">
+        <a class="nav-link" href="user_Management.html">Users</a>
+        <a class="nav-link active" href="sale_Management.html">Sales</a>
+        <a class="nav-link" href="held_Sale.html">Held Sales</a>
+        <a class="nav-link" href="category_Management.html">Categories</a>
+        <a class="nav-link" href="item_Management.html">Items</a>
+        <a class="nav-link" href="batch_Management.html">Batches</a>
+        <a class="nav-link" href="customer_Management.html">Customers</a>
+        <a class="nav-link" href="stock_Management.html">Stock</a>
+        <a class="nav-link" href="sale_history.html">Sale History</a>
+        <button class="signout-btn" id="signOutBtn">Sign out</button>
+    </div>
+</div>
+
+<div class="page-shell">
+    <div class="page">
+
+        <div class="page-head">
+            <div class="eyebrow">Sales History</div>
+            <h1>Sales History</h1>
+            <p class="sub">View and analyze all completed sales</p>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div class="filter-row">
+            <div class="filter-scroll" id="filterScroll">
+                <div class="filter-pill" id="batchPill">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-6-9 6 9 6 9-6Z"/><path d="m3 16 9 6 9-6"/><path d="M3 12l9 6 9-6"/></svg>
+                    <select id="batchFilter"><option value="">Batch</option></select>
+                </div>
+                <div class="filter-pill" id="yearPill">
+                    <select id="yearFilter"><option value="">Year</option></select>
+                </div>
+                <div class="filter-pill" id="monthPill">
+                    <select id="monthFilter"><option value="">Month</option></select>
+                </div>
+                <div class="filter-pill" id="dayPill">
+                    <select id="dayFilter"><option value="">Day</option></select>
+                </div>
+                <div class="filter-pill date-btn" id="fromPill">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    <span class="date-label" id="fromLabel">From</span>
+                    <input type="date" id="fromDate">
+                </div>
+                <div class="filter-pill date-btn" id="toPill">
+                    <span class="date-label" id="toLabel">To</span>
+                    <input type="date" id="toDate">
+                </div>
+                <div class="filter-pill active" id="sortPill">
+                    <select id="sortFilter">
+                        <option value="newest">Sort: Newest</option>
+                        <option value="oldest">Sort: Oldest</option>
+                        <option value="highest">Sort: Highest value</option>
+                        <option value="lowest">Sort: Lowest value</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="icon-action clear-action" id="clearBtn" title="Clear filters">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 6-12 12"/><path d="m6 6 12 12"/></svg>
+                </button>
+                <button class="icon-action refresh-action" id="refreshBtn" title="Refresh">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- GROUP BY TOGGLE -->
+        <div class="groupby-row">
+            <span class="groupby-label">Group by:</span>
+            <div class="groupby-toggle">
+                <button class="groupby-btn active" id="groupCustomerBtn" data-mode="customer">
+                    <svg class="type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    Customer
+                </button>
+                <button class="groupby-btn" id="groupBatchBtn" data-mode="batch">
+                    <svg class="type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 8-9-6-9 6 9 6 9-6Z"/><path d="m3 16 9 6 9-6"/><path d="M3 12l9 6 9-6"/></svg>
+                    <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    Batch
+                </button>
+            </div>
+        </div>
+
+        <!-- SUMMARY CARDS -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6l1 4H8l1-4Z"/><path d="M5 6h14l-1.5 14a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2L5 6Z"/></svg></div>
+                <div class="num" id="statSales">0</div>
+                <div class="label">Sales</div>
+            </div>
+            <div class="summary-card">
+                <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg></div>
+                <div class="num" id="statRevenue">Rs.0</div>
+                <div class="label">Revenue</div>
+            </div>
+            <div class="summary-card profit-card">
+                <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m23 6-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg></div>
+                <div class="num" id="statProfit">Rs.0</div>
+                <div class="label">Profit <span class="pct" id="statProfitPct">0%</span></div>
+            </div>
+            <div class="summary-card">
+                <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <div class="num" id="statCustomers">0</div>
+                <div class="label">Customers</div>
+            </div>
+        </div>
+
+        <!-- TOP ITEMS -->
+        <div class="top-items-head" id="topItemsHead">
+            <h3>Top Items</h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <div class="top-items-body" id="topItemsBody"></div>
+
+        <!-- SALES LIST -->
+        <div id="salesContainer"></div>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+    const API_BASE = 'http://localhost:8080/v1/sales';
+
+    function authHeaders() {
+        const h = { 'Content-Type': 'application/json' };
+        const token = localStorage.getItem('JWT');
+        if (token && token !== 'null' && token !== 'undefined') {
+            h['Authorization'] = 'Bearer ' + token;
+        }
+        return h;
+    }
+
+    /* =========================================================
+       STATE
+       ========================================================= */
+    let groupMode = 'customer';
+    let topItemsCollapsed = false;
+    const expandedGroups = new Set();
+    const expandedSales = new Set();
+
+    /* =========================================================
+       HELPERS
+       ========================================================= */
+    function pad(n){ return String(n).padStart(2,'0'); }
+    function fmtMoney(n){ return 'Rs.' + Math.round(Number(n) || 0).toLocaleString('en-US'); }
+    function fmtDate(d){
+        const dt = (d instanceof Date) ? d : new Date(d);
+        return `${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`;
+    }
+    function fmtTime(d){
+        const dt = (d instanceof Date) ? d : new Date(d);
+        return `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    }
+    function fmtDateTime(d){ return `${fmtDate(d)} · ${fmtTime(d)}`; }
+    function dateLongLabel(d){
+        const dt = (d instanceof Date) ? d : new Date(d);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return `${pad(dt.getDate())} ${months[dt.getMonth()]} ${dt.getFullYear()}`;
+    }
+    function escapeHtml(str){
+        return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function initials(name){
+        const parts = String(name || '').trim().split(/\s+/);
+        return ((parts[0]?.[0]||'') + (parts[1]?.[0]||'')).toUpperCase() || '?';
+    }
+
+    /* =========================================================
+       LOAD FROM BACKEND
+       ========================================================= */
+    function loadSalesHistory() {
+        $('#refreshBtn').addClass('spinning');
+        renderLoadingState();
+
+        const params = new URLSearchParams();
+
+        const batchId = $('#batchFilter').val();
+        const year    = $('#yearFilter').val();
+        const month   = $('#monthFilter').val();
+        const from    = $('#fromDate').val();
+        const to      = $('#toDate').val();
+        const sort    = $('#sortFilter').val() || 'newest';
+
+        if (batchId) params.append('batchId', batchId);
+        if (year)    params.append('year', year);
+        if (month !== '') params.append('month', parseInt(month) + 1); // JS 0-based → API 1-based
+        if (from) params.append('fromDate', from);
+        if (to)   params.append('toDate', to);
+        params.append('sort', sort);
+        params.append('groupBy', groupMode);
+
+        $.ajax({
+            url: API_BASE + '/history?' + params.toString(),
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (res) {
+                renderSummaryFromApi(res.summary);
+                renderTopItemsFromApi(res.topItems || []);
+                renderSalesFromApi(res.sales || []);
+                updateActivePillStates();
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    $('#salesContainer').html(`
+                        <div class="state-box">
+                            <div class="state-title">Please sign in</div>
+                            <div class="state-sub">Your session has expired.</div>
+                            <button class="retry-btn" onclick="window.location.href='login.html'">Go to login</button>
+                        </div>`);
+                } else {
+                    $('#salesContainer').html(`
+                        <div class="state-box">
+                            <div class="state-title">Couldn't load sales</div>
+                            <div class="state-sub">Check connection and try again.</div>
+                            <button class="retry-btn" onclick="loadSalesHistory()">Retry</button>
+                        </div>`);
+                }
+            },
+            complete: function () {
+                $('#refreshBtn').removeClass('spinning');
+            }
+        });
+    }
+
+    function renderSummaryFromApi(summary) {
+        if (!summary) return;
+        $('#statSales').text(summary.totalSales || 0);
+        $('#statRevenue').text(fmtMoney(summary.totalRevenue));
+        $('#statProfit').text(fmtMoney(summary.totalProfit));
+        $('#statProfitPct').text((summary.profitPercentage || 0) + '%');
+        $('#statCustomers').text(summary.totalCustomers || 0);
+    }
+
+    function renderTopItemsFromApi(topItems) {
+        const $body = $('#topItemsBody');
+        if (!topItems || topItems.length === 0) {
+            $body.html(`<div class="top-item-row"><span class="ti-name" style="color:var(--deep-text-mute);">No items in this range</span></div>`);
+            return;
+        }
+        $body.html(topItems.map(t => `
+            <div class="top-item-row">
+                <span><span class="ti-name">${escapeHtml(t.itemName)}</span>
+                <span class="ti-qty">×${t.quantity}</span></span>
+                <span class="ti-rev">${fmtMoney(t.revenue)}</span>
+            </div>
+        `).join(''));
+    }
+
+    function renderSalesFromApi(sales) {
+        if (!sales || sales.length === 0) {
+            $('#salesContainer').html(renderEmptyState());
+            return;
+        }
+        if (groupMode === 'customer') {
+            $('#salesContainer').html(renderGroupedByCustomerFromApi(sales));
+        } else {
+            $('#salesContainer').html(renderGroupedByBatchFromApi(sales));
+        }
+    }
+
+    function renderSaleCardFromApi(s) {
+        const expanded = expandedSales.has(s.saleId);
+        const d = new Date(s.createdAt);
+        return `
+        <div class="sale-card ${expanded ? 'expanded' : ''}" data-sale-id="${s.saleId}">
+            <div class="sc-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8Z"/><path d="M6 2v2M10 2v2M14 2v2"/>
+                </svg>
+            </div>
+            <div class="sc-main">
+                <div class="sc-title">${escapeHtml(s.itemSummary)}</div>
+                <div class="inv-pill">${escapeHtml(s.saleCode)}</div>
+                <div class="sc-datetime">${fmtDateTime(d)}</div>
+                <div class="sc-customer">${escapeHtml(s.customerName || 'Walk-in')}</div>
+                <div class="sc-pts">+${s.pointsEarned || 0} pts</div>
+                <div class="sale-detail">
+                    ${(s.saleItems || []).map(i => `
+                        <div><span>${escapeHtml(i.itemName)} ×${i.quantity}</span><span>${fmtMoney(i.lineTotal)}</span></div>
+                    `).join('')}
+                    <div><span>Profit</span><span>${fmtMoney(s.profit)}</span></div>
+                </div>
+            </div>
+            <div class="sc-right">
+                <div class="sc-price">${fmtMoney(s.totalAmount)}</div>
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </div>
+        </div>`;
+    }
+
+    function renderGroupedByCustomerFromApi(sales) {
+        const groups = {};
+        sales.forEach(s => {
+            const key = s.customerId || 'walk-in';
+            if (!groups[key]) {
+                groups[key] = {
+                    customerId: s.customerId,
+                    name: s.customerName || 'Walk-in Customer',
+                    phone: s.customerPhone || '—',
+                    sales: []
+                };
+            }
+            groups[key].sales.push(s);
+        });
+
+        const ordered = Object.values(groups).sort((a, b) => {
+            const revA = a.sales.reduce((sum, s) => sum + Number(s.totalAmount), 0);
+            const revB = b.sales.reduce((sum, s) => sum + Number(s.totalAmount), 0);
+            return revB - revA;
+        });
+
+        return ordered.map(g => {
+            const key = 'c' + (g.customerId || '0');
+            const open = !expandedGroups.has(key + ':closed');
+            const revenue = g.sales.reduce((sum, s) => sum + Number(s.totalAmount), 0);
+            const profit  = g.sales.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+            const pts     = g.sales.reduce((sum, s) => sum + (s.pointsEarned || 0), 0);
+
+            return `
+            <div class="group-block">
+                <div class="group-header" data-group-key="${key}">
+                    <div class="gh-left">
+                        <div class="avatar">${initials(g.name)}</div>
+                        <div>
+                            <div class="gh-name">${escapeHtml(g.name)}</div>
+                            <div class="gh-sub">${escapeHtml(g.phone)}</div>
+                        </div>
+                    </div>
+                    <div class="gh-right">
+                        <div class="gh-count">${g.sales.length} sale${g.sales.length > 1 ? 's' : ''} · ${fmtMoney(revenue)}</div>
+                        <div class="gh-meta"><span class="pts">+${pts} pts</span> · P: ${fmtMoney(profit)}</div>
+                    </div>
+                </div>
+                <div class="sale-list ${open ? '' : 'collapsed'}" data-group-list="${key}">
+                    ${g.sales.map(renderSaleCardFromApi).join('')}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderGroupedByBatchFromApi(sales) {
+        const groups = {};
+        sales.forEach(s => {
+            const d = new Date(s.createdAt);
+            const key = d.toISOString().slice(0, 10);
+            if (!groups[key]) groups[key] = { date: d, sales: [] };
+            groups[key].sales.push(s);
+        });
+
+        const ordered = Object.values(groups).sort((a, b) => b.date - a.date);
+
+        return ordered.map(g => {
+            const key = 'd' + g.date.toISOString().slice(0, 10);
+            const open = !expandedGroups.has(key + ':closed');
+            const revenue = g.sales.reduce((sum, s) => sum + Number(s.totalAmount), 0);
+            const profit  = g.sales.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+            const sorted  = g.sales.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+            const earliest = new Date(sorted[0].createdAt);
+            const latest   = new Date(sorted[sorted.length - 1].createdAt);
+
+            return `
+            <div class="group-block">
+                <div class="group-header" data-group-key="${key}" style="align-items:flex-start;">
+                    <div>
+                        <div class="date-header-top">
+                            <span class="date-chip">${dateLongLabel(g.date)}</span>
+                            <span class="dh-count">${g.sales.length} sales</span>
+                        </div>
+                        <div class="date-header-range">${fmtDateTime(earliest)} → ${fmtDateTime(latest)}</div>
+                    </div>
+                    <div class="gh-right">
+                        <div class="gh-count">Rev: ${fmtMoney(revenue)}</div>
+                        <div class="gh-meta" style="color:var(--sale-green);">Profit: ${fmtMoney(profit)}</div>
+                    </div>
+                </div>
+                <div class="sale-list ${open ? '' : 'collapsed'}" data-group-list="${key}">
+                    ${sorted.slice().reverse().map(renderSaleCardFromApi).join('')}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderEmptyState(){
+        return `
+        <div class="state-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <div class="state-title">No sales found</div>
+            <div class="state-sub">Try adjusting your filters or clearing them to see all sales.</div>
+        </div>`;
+    }
+
+    function renderLoadingState(){
+        $('#salesContainer').html(`
+        <div class="state-box">
+            <div class="spinner"></div>
+            <div class="state-sub">Loading sales…</div>
+        </div>`);
+    }
+
+    function updateActivePillStates(){
+        const batch = $('#batchFilter').val();
+        const year  = $('#yearFilter').val();
+        const month = $('#monthFilter').val();
+        const from  = $('#fromDate').val();
+        const to    = $('#toDate').val();
+
+        $('#batchPill').toggleClass('active', !!batch);
+        $('#yearPill').toggleClass('active', !!year);
+        $('#monthPill').toggleClass('active', month !== '');
+        $('#fromPill').toggleClass('active', !!from);
+        $('#toPill').toggleClass('active', !!to);
+
+        $('#fromLabel').text(from ? fmtDate(new Date(from)) : 'From');
+        $('#toLabel').text(to ? fmtDate(new Date(to)) : 'To');
+
+        const anyActive = batch || year || month !== '' || from || to;
+        $('#clearBtn').css('opacity', anyActive ? 1 : 0.45);
+    }
+
+    function populateYearMonth(){
+        const year = new Date().getFullYear();
+        const $year = $('#yearFilter');
+        for (let y = year; y >= year - 5; y--) {
+            $year.append(`<option value="${y}">${y}</option>`);
+        }
+        const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const $month = $('#monthFilter');
+        months.forEach((m, i) => $month.append(`<option value="${i}">${m}</option>`));
+    }
+
+    /* =========================================================
+       EVENTS
+       ========================================================= */
+    $(document).ready(function () {
+        populateYearMonth();
+        loadSalesHistory();
+
+        $('#batchFilter, #yearFilter, #monthFilter, #fromDate, #toDate, #sortFilter')
+            .on('change', loadSalesHistory);
+
+        $('#clearBtn').on('click', function () {
+            $('#batchFilter, #yearFilter, #monthFilter').val('');
+            $('#fromDate, #toDate').val('');
+            $('#sortFilter').val('newest');
+            loadSalesHistory();
+        });
+
+        $('#refreshBtn').on('click', loadSalesHistory);
+
+        $('#groupCustomerBtn, #groupBatchBtn').on('click', function () {
+            groupMode = $(this).data('mode');
+            $('.groupby-btn').removeClass('active');
+            $(this).addClass('active');
+            expandedGroups.clear();
+            loadSalesHistory();
+        });
+
+        $('#topItemsHead').on('click', function () {
+            topItemsCollapsed = !topItemsCollapsed;
+            $(this).toggleClass('collapsed', topItemsCollapsed);
+            $('#topItemsBody').toggleClass('collapsed', topItemsCollapsed);
+        });
+
+        $('#salesContainer').on('click', '.group-header', function () {
+            const key = $(this).data('group-key');
+            const closedKey = key + ':closed';
+            if (expandedGroups.has(closedKey)) expandedGroups.delete(closedKey);
+            else expandedGroups.add(closedKey);
+            // re-render current list without re-fetch
+            const list = $(this).next('.sale-list');
+            list.toggleClass('collapsed');
+        });
+
+        $('#salesContainer').on('click', '.sale-card', function (e) {
+            e.stopPropagation();
+            const id = Number($(this).data('sale-id'));
+            if (expandedSales.has(id)) expandedSales.delete(id);
+            else expandedSales.add(id);
+            $(this).toggleClass('expanded');
+        });
+
+        $('#signOutBtn').on('click', function () {
+            localStorage.removeItem('JWT');
+            localStorage.removeItem('userId');
+            window.location.href = 'login.html';
+        });
+    });
+</script></body>
+</html>

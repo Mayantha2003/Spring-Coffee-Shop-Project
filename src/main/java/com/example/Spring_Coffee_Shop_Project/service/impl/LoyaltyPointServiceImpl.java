@@ -19,7 +19,6 @@ public class LoyaltyPointServiceImpl implements LoyaltyPointService {
 
     @Override
     public LoyaltyPoint getByCustomerId(long customerId) {
-
         return loyaltyPointRepository.findByCustomerCustomerId(customerId)
                 .orElseThrow(() -> new RuntimeException("Loyalty points not found for customer: " + customerId ));
     }
