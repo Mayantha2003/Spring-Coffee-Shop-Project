@@ -33,8 +33,7 @@ public class SaleServiceImpl implements SaleService {
     private final StockTransactionRepository stockTransactionRepository;
     private final LoyaltyPointRepository loyaltyPointRepository;
     private final LoyaltyTransactionRepository loyaltyTransactionRepository;
-
-    // ==================== CREATE SALE ====================
+    private final SaleItemRepository saleItemRepository;
 
     @Override
     @Transactional
@@ -576,6 +575,55 @@ public class SaleServiceImpl implements SaleService {
 
         log.info("Loyalty points processed for customer {}: earned={}, redeemed={}",
                 customer.getCustomerId(), pointsToEarn, pointsUsed);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ItemSalesChartDTO> getItemSalesChart(String period, String category, Long batchId) {
+
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate   = null;
+        LocalDateTime now = LocalDateTime.now();
+
+        if ("today".equalsIgnoreCase(period)) {
+            fromDate = now.toLocalDate().atStartOfDay();
+            toDate   = fromDate.plusDays(1);
+        } else if ("month".equalsIgnoreCase(period)) {
+            fromDate = now.withDayOfMonth(1).toLocalDate().atStartOfDay();
+            toDate   = fromDate.plusMonths(1);
+        }
+        String catFilter = (category == null || category.isBlank()) ? null : category.trim();
+
+        List<Object[]> rows = saleItemRepository.findItemSalesChart(
+                fromDate, toDate, catFilter, batchId
+        );
+
+        List<ItemSalesChartDTO> result = new ArrayList<>();
+
+        for (Object[] row : rows) {
+            String itemName     = (String) row[0];
+            String categoryName = (String) row[1];
+            Long unitsLong      = (Long) row[2];
+            BigDecimal revenue  = (BigDecimal) row[3];
+
+            int units = unitsLong != null ? unitsLong.intValue() : 0;
+            if (revenue == null) revenue = BigDecimal.ZERO;
+
+            // Same 42% profit logic used in sales history
+            BigDecimal profit = revenue
+                    .multiply(BigDecimal.valueOf(0.42))
+                    .setScale(0, RoundingMode.HALF_UP);
+
+            result.add(ItemSalesChartDTO.builder()
+                    .name(itemName)
+                    .category(categoryName)
+                    .units(units)
+                    .revenue(revenue)
+                    .profit(profit)
+                    .build());
+        }
+
+        return result;
     }
 
     private SaleDTO mapToDTO(Sale sale) {

@@ -1,9 +1,6 @@
 package com.example.Spring_Coffee_Shop_Project.service;
 
-import com.example.Spring_Coffee_Shop_Project.dto.SaleCreateDTO;
-import com.example.Spring_Coffee_Shop_Project.dto.SaleDTO;
-import com.example.Spring_Coffee_Shop_Project.dto.SalesHistoryFilterDTO;
-import com.example.Spring_Coffee_Shop_Project.dto.SalesHistoryResponseDTO;
+import com.example.Spring_Coffee_Shop_Project.dto.*;
 import com.example.Spring_Coffee_Shop_Project.enumeration.SaleStatus;
 
 import java.util.List;
@@ -25,4 +22,6 @@ public interface SaleService {
     SaleDTO cancelSale(long id);
 
     SalesHistoryResponseDTO getSalesHistory(SalesHistoryFilterDTO filter);
+
+    List<ItemSalesChartDTO> getItemSalesChart(String period, String category, Long batchId);
 }

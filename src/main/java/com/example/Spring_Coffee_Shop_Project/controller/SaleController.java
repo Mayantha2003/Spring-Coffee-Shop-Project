@@ -48,6 +48,15 @@ public class SaleController {
         return ResponseEntity.ok(saleService.getSalesHistory(filter));
     }
 
+    @GetMapping("/item-chart")
+    public ResponseEntity<List<ItemSalesChartDTO>> getItemSalesChart(
+            @RequestParam(required = false, defaultValue = "today") String period,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Long batchId
+    ) {
+        return ResponseEntity.ok(saleService.getItemSalesChart(period, category, batchId));
+    }
+
     @GetMapping("/batch/{batchId}")
     public ResponseEntity<List<SaleDTO>> getSalesByBatch(@PathVariable long batchId) {
         return ResponseEntity.ok(saleService.getSalesByBatch(batchId));
