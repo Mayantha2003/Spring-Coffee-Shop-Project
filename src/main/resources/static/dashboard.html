@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · Cafe912</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --espresso:#241811; --espresso-deep:#150e09; --paper:#f7f1e6; --paper-dim:#efe4d0;
+      --amber:#c17a34; --amber-light:#e3a668; --sage:#748a6a; --sage-bg:#eaf0e6;
+      --ink:#26190f; --ink-soft:#6b5c4c; --line:rgba(38,25,15,0.14);
+      --error:#b23b3b; --error-bg:rgba(178,59,59,0.08); --success:#4c6b41; --success-bg:#eaf0e6;
+      --radius:4px;
+    }
+    *{box-sizing:border-box; margin:0; padding:0;}
+    html,body{height:100%;}
+    body{font-family:'Inter', sans-serif; background:var(--paper); color:var(--ink); min-height:100vh;}
+    a{color:inherit; text-decoration:none;}
+
+    .topbar{position:sticky; top:0; z-index:20; background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%); color:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px;}
+    .topbar-left{display:flex; align-items:center; gap:14px;}
+    .seal{width:34px; height:34px; border-radius:50%; border:1.5px solid var(--amber); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+    .seal svg{width:16px; height:16px; stroke:var(--amber-light);}
+    .brand-name{font-size:12.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber-light); font-weight:600;}
+    .topbar-crumb{font-size:13px; color:rgba(247,241,230,0.5); padding-left:14px; margin-left:14px; border-left:1px solid rgba(247,241,230,0.18);}
+    .topbar-crumb strong{color:rgba(247,241,230,0.92); font-weight:600;}
+    .topbar-right{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+    .nav-link{font-size:13px; color:rgba(247,241,230,0.65); padding:8px 12px; border-radius:var(--radius); text-decoration:none; font-weight:600;}
+    .nav-link:hover{background:rgba(247,241,230,0.08); color:var(--paper);}
+    .nav-link.active{background:rgba(247,241,230,0.12); color:var(--paper);}
+    .signout-btn{background:none; border:1px solid rgba(247,241,230,0.25); color:var(--paper); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius); cursor:pointer;}
+    .signout-btn:hover{background:rgba(247,241,230,0.08);}
+
+    .page{max-width:1180px; margin:0 auto; padding:44px 32px 80px;}
+    .eyebrow{font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); font-weight:700; margin-bottom:10px;}
+    .page-head{margin-bottom:28px;}
+    .page-head h1{font-family:'Newsreader', serif; font-weight:500; font-size:32px; color:var(--espresso); margin-bottom:6px;}
+    .page-head .sub{color:var(--ink-soft); font-size:14.5px;}
+
+    .hero-card{background:linear-gradient(135deg, #c17a34 0%, #a85a26 100%); border-radius:8px; padding:28px 32px; color:#fff; display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:24px; box-shadow:0 4px 20px rgba(168,90,38,0.22);}
+    .hero-label{font-size:13px; font-weight:500; opacity:0.85; margin-bottom:4px;}
+    .hero-name{font-family:'Newsreader', serif; font-weight:500; font-size:34px; line-height:1.15; margin-bottom:10px;}
+    .hero-store{display:flex; align-items:center; gap:8px; font-size:13.5px; opacity:0.82;}
+    .hero-store svg{width:15px; height:15px; stroke:currentColor;}
+    .hero-register{display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.35); padding:11px 18px; border-radius:100px; font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; flex-shrink:0;}
+    .hero-register:hover{background:rgba(255,255,255,0.28);}
+    .hero-register svg{width:16px; height:16px; stroke:currentColor;}
+
+    .stats-row{display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:24px;}
+    .stat-card{background:#fff; border:1px solid var(--line); border-radius:6px; padding:22px 24px; display:flex; align-items:center; gap:18px;}
+    .stat-icon{width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+    .stat-icon svg{width:22px; height:22px;}
+    .stat-icon.members{background:rgba(193,122,52,0.12);}
+    .stat-icon.members svg{stroke:var(--amber);}
+    .stat-icon.points{background:rgba(193,122,52,0.1);}
+    .stat-icon.points svg{stroke:var(--amber);}
+    .stat-num{font-family:'Newsreader', serif; font-weight:500; font-size:36px; color:var(--espresso); line-height:1.1; margin-bottom:4px;}
+    .stat-label{font-size:11.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); font-weight:600;}
+    .stat-card.loading .stat-num,.stat-card.loading .stat-label{visibility:hidden;}
+    .stat-card.loading{position:relative;}
+    .stat-card.loading::after{content:""; position:absolute; left:50%; top:50%; width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:50%; border:2.5px solid var(--line); border-top-color:var(--amber); animation:spin 0.7s linear infinite;}
+
+    .batch-banner{display:flex; align-items:center; gap:14px; border-radius:100px; padding:14px 22px; margin-bottom:32px; cursor:pointer; transition:background .18s ease, box-shadow .18s ease; text-decoration:none; color:var(--ink); border:1px solid rgba(116,138,106,0.25); background:var(--sage-bg);}
+    .batch-banner:hover{box-shadow:0 2px 10px rgba(38,25,15,0.08); transform:translateY(-1px);}
+    .batch-banner.active-batch{background:var(--sage-bg); border-color:rgba(116,138,106,0.35);}
+    .batch-banner.no-batch{background:rgba(193,122,52,0.08); border-color:rgba(193,122,52,0.28);}
+    .batch-banner.no-batch .batch-icon{background:rgba(193,122,52,0.15);}
+    .batch-banner.no-batch .batch-icon svg{stroke:var(--amber);}
+    .batch-banner.no-batch .batch-text{color:var(--amber);}
+    .batch-icon{width:32px; height:32px; border-radius:50%; background:rgba(116,138,106,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+    .batch-icon svg{width:16px; height:16px; stroke:var(--sage);}
+    .batch-text{flex:1; font-size:14px; font-weight:500;}
+    .batch-chevron{width:18px; height:18px; stroke:var(--sage); flex-shrink:0; opacity:0.7;}
+
+    .section-head{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+    .section-head .accent-bar{width:3px; height:18px; border-radius:2px; background:var(--amber);}
+    .section-head .section-icon{width:18px; height:18px; stroke:var(--amber);}
+    .section-head h2{font-weight:700; font-size:15px; color:var(--espresso);}
+    .section-head .view-all{margin-left:auto; font-size:13px; font-weight:600; color:var(--amber);}
+
+    .quick-actions{margin-bottom:36px;}
+    .actions-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;}
+    .action-card{background:#fff; border:1px solid var(--line); border-radius:8px; padding:18px; display:flex; align-items:flex-start; gap:14px; transition:transform .18s ease, box-shadow .18s ease;}
+    .action-card:hover{transform:translateY(-2px); box-shadow:0 6px 20px rgba(38,25,15,0.08); border-color:rgba(193,122,52,0.3);}
+    .action-card.primary{background:var(--amber); border-color:var(--amber); color:#fff;}
+    .action-card.primary .action-title{color:#fff;}
+    .action-card.primary .action-sub{color:rgba(255,255,255,0.8);}
+    .action-icon{width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+    .action-icon svg{width:18px; height:18px;}
+    .action-card.primary .action-icon{background:rgba(255,255,255,0.22);}
+    .action-card.primary .action-icon svg{stroke:#fff;}
+    .action-icon.brown{background:rgba(38,25,15,0.07);}
+    .action-icon.brown svg{stroke:var(--espresso);}
+    .action-icon.gray{background:rgba(107,92,76,0.1);}
+    .action-icon.gray svg{stroke:var(--ink-soft);}
+    .action-icon.purple{background:rgba(120,100,160,0.12);}
+    .action-icon.purple svg{stroke:#7a6490;}
+    .action-icon.mint{background:rgba(116,138,106,0.15);}
+    .action-icon.mint svg{stroke:var(--sage);}
+    .action-title{font-size:14px; font-weight:700; color:var(--ink); margin-bottom:2px;}
+    .action-sub{font-size:12.5px; color:var(--ink-soft);}
+
+    .members-card{background:#fff; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+    .member-row{display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--line);}
+    .member-row:last-child{border-bottom:none;}
+    .member-avatar{width:38px; height:38px; border-radius:50%; background:var(--paper-dim); color:var(--espresso); display:flex; align-items:center; justify-content:center; font-family:'Newsreader', serif; font-weight:600; font-size:14px; flex-shrink:0; border:1px solid var(--line);}
+    .member-info{flex:1; min-width:0;}
+    .member-name-row{display:flex; align-items:center; gap:8px; margin-bottom:2px;}
+    .member-name{font-weight:600; font-size:14px;}
+    .new-badge{padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:700; text-transform:uppercase; background:var(--sage-bg); color:var(--sage);}
+    .member-phone{font-size:12.5px; color:var(--ink-soft);}
+    .member-points{display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:100px; background:var(--paper-dim); font-size:12.5px; font-weight:600;}
+    .member-points svg{width:12px; height:12px; stroke:var(--amber);}
+
+    .list-state{padding:48px 18px; text-align:center; color:var(--ink-soft); display:flex; flex-direction:column; align-items:center; gap:10px;}
+    .list-state .spinner{width:22px; height:22px; border-radius:50%; border:2.5px solid var(--line); border-top-color:var(--amber); animation:spin 0.7s linear infinite;}
+    .list-state .state-title{font-family:'Newsreader', serif; font-size:16px; color:var(--espresso);}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    .modal-overlay{position:fixed; inset:0; background:rgba(21,14,9,0.55); display:none; align-items:center; justify-content:center; z-index:50; padding:24px;}
+    .modal-overlay.show{display:flex;}
+    .modal{background:var(--paper); border-radius:10px; width:100%; max-width:420px; padding:28px 28px 24px; box-shadow:0 12px 40px rgba(21,14,9,0.2);}
+    .modal-head{display:flex; align-items:center; gap:10px; margin-bottom:18px;}
+    .modal-head .dot{width:10px; height:10px; border-radius:50%; background:var(--amber); flex-shrink:0;}
+    .modal-head h3{font-family:'Newsreader', serif; font-weight:500; font-size:22px; color:var(--espresso);}
+    .modal-field{margin-bottom:16px;}
+    .modal-field label{display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:6px;}
+    .modal-field input{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:8px; font-family:'Inter',sans-serif; font-size:14px; background:#fff; color:var(--ink); outline:none;}
+    .modal-field input:focus{border-color:var(--amber); box-shadow:0 0 0 3px rgba(193,122,52,0.15);}
+    .modal-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
+    .modal-chip{display:flex; align-items:center; gap:8px; padding:11px 14px; border:1.5px solid var(--line); border-radius:8px; background:#fff; font-size:13.5px; font-weight:600;}
+    .modal-chip svg{width:15px; height:15px; stroke:var(--amber); flex-shrink:0;}
+    .modal-actions{display:flex; gap:10px; margin-top:8px; justify-content:flex-end;}
+    .modal-actions .btn{padding:11px 18px; border-radius:8px; font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; border:1.5px solid transparent;}
+    .btn-cancel{background:#fff; border-color:var(--line); color:var(--ink);}
+    .btn-start{background:var(--amber); color:#fff; border-color:var(--amber);}
+    .btn-start:hover{background:#a8672a;}
+    .btn-close-batch{background:var(--error); color:#fff; border-color:var(--error);}
+    .btn:disabled{opacity:0.55; cursor:not-allowed;}
+
+    @media (max-width: 900px){.actions-grid{grid-template-columns:repeat(2, 1fr);}}
+    @media (max-width: 760px){
+      .page{padding:28px 16px 60px;}
+      .topbar{padding:0 16px; height:auto; min-height:64px; flex-wrap:wrap; gap:8px; padding-top:10px; padding-bottom:10px;}
+      .hero-card{flex-direction:column; align-items:flex-start;}
+      .actions-grid{grid-template-columns:1fr 1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="seal">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+    </div>
+    <div class="brand-name">CAFE912</div>
+    <div class="topbar-crumb">Admin Portal / <strong>Dashboard</strong></div>
+  </div>
+  <div class="topbar-right">
+    <a class="nav-link active" href="dashboard.html">Dashboard</a>
+    <a class="nav-link" href="user_Management.html">Users</a>
+    <a class="nav-link" href="sale_Management.html">Sales</a>
+    <a class="nav-link" href="held_Sale.html">Held Sales</a>
+    <a class="nav-link" href="category_Management.html">Categories</a>
+    <a class="nav-link" href="item_Management.html">Items</a>
+    <a class="nav-link" href="batch_Management.html">Batches</a>
+    <a class="nav-link" href="customer_Management.html">Customers</a>
+    <a class="nav-link" href="stock_Management.html">Stock</a>
+    <a class="nav-link" href="sale_history.html">Sale History</a>
+    <a class="nav-link" href="item_Sales_Chart.html">Item Sales Chart</a>
+    <button class="signout-btn" id="signOutBtn">Sign out</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="page-head">
+    <div class="eyebrow">ADMIN PORTAL</div>
+    <h1>Dashboard</h1>
+    <p class="sub" id="pageGreeting">Good morning — here's what's happening at Cafe912 today.</p>
+  </div>
+
+  <div class="hero-card">
+    <div class="hero-left">
+      <div class="hero-label" id="heroGreeting">Good morning,</div>
+      <div class="hero-name" id="heroName">Maya</div>
+      <div class="hero-store">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Cafe 912 – Colombo · CF912/CMB/01
+      </div>
+    </div>
+    <button class="hero-register" id="registerBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      Register
+    </button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card loading" id="statMembers">
+      <div class="stat-icon members">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div>
+        <div class="stat-num" id="statMembersNum">—</div>
+        <div class="stat-label">Members</div>
+      </div>
+    </div>
+    <div class="stat-card loading" id="statPoints">
+      <div class="stat-icon points">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div>
+        <div class="stat-num" id="statPointsNum">—</div>
+        <div class="stat-label">Points Pool</div>
+      </div>
+    </div>
+  </div>
+
+  <a class="batch-banner no-batch" href="#" id="batchBanner">
+    <div class="batch-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 2v4"/><path d="M16 2v4"/><path d="M3 10h18"/></svg>
+    </div>
+    <span class="batch-text" id="batchText">No active batch — Tap to start a new batch</span>
+    <svg class="batch-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+  </a>
+
+  <div class="quick-actions">
+    <div class="section-head">
+      <div class="accent-bar"></div>
+      <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <h2>Quick Actions</h2>
+    </div>
+    <div class="actions-grid">
+      <a class="action-card primary" href="sale_Management.html">
+        <div class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg></div>
+        <div><div class="action-title">Record Sale</div><div class="action-sub">Add a sale</div></div>
+      </a>
+      <a class="action-card" href="customer_Management.html">
+        <div class="action-icon brown"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <div><div class="action-title">Customers</div><div class="action-sub">View all</div></div>
+      </a>
+      <a class="action-card" href="sale_history.html">
+        <div class="action-icon brown"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
+        <div><div class="action-title">Sales</div><div class="action-sub">History</div></div>
+      </a>
+      <a class="action-card" href="item_Management.html">
+        <div class="action-icon gray"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/></svg></div>
+        <div><div class="action-title">Menu Items</div><div class="action-sub">Manage</div></div>
+      </a>
+      <a class="action-card" href="customer_Management.html">
+        <div class="action-icon brown"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
+        <div><div class="action-title">Register</div><div class="action-sub">New member</div></div>
+      </a>
+      <a class="action-card" href="held_Sale.html">
+        <div class="action-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></div>
+        <div><div class="action-title">Held Sales</div><div class="action-sub">Paused orders</div></div>
+      </a>
+      <a class="action-card" href="item_Sales_Chart.html">
+        <div class="action-icon mint"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+        <div><div class="action-title">Item Chart</div><div class="action-sub">Best sellers</div></div>
+      </a>
+      <a class="action-card" href="batch_Management.html">
+        <div class="action-icon gray"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></div>
+        <div><div class="action-title">Batches</div><div class="action-sub">Manage</div></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="recent-members">
+    <div class="section-head">
+      <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.8" style="stroke:var(--ink-soft)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <h2>Recent Members</h2>
+      <a class="view-all" href="customer_Management.html">View all</a>
+    </div>
+    <div class="members-card" id="recentMembersCard">
+      <div class="list-state"><div class="spinner"></div><div class="state-sub">Loading recent members…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Start Batch Modal -->
+<div class="modal-overlay" id="startBatchOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="dot"></span>
+      <h3>Start New Batch</h3>
+    </div>
+    <div class="modal-field">
+      <label>Batch label (optional)</label>
+      <input type="text" id="batchLabel" placeholder="e.g. 08 Sep 2026 Morning">
+    </div>
+    <div class="modal-field">
+      <label>Starting cash (Rs.)</label>
+      <input type="number" id="startingCash" min="0" step="0.01" value="0">
+    </div>
+    <div class="modal-row">
+      <div class="modal-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span id="startDateLabel">—</span>
+      </div>
+      <div class="modal-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span id="startTimeLabel">—</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-cancel" onclick="closeStartBatchModal()">Cancel</button>
+      <button type="button" class="btn btn-start" id="confirmStartBatchBtn" onclick="confirmStartBatch()">Start Batch</button>
+    </div>
+  </div>
+</div>
+
+<!-- Close Batch Modal -->
+<div class="modal-overlay" id="closeBatchOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="dot" style="background:var(--error)"></span>
+      <h3>Close Batch</h3>
+    </div>
+    <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:16px;line-height:1.5">
+      Closing <strong id="closeBatchName">this batch</strong>. Enter ending cash in the drawer.
+    </p>
+    <div class="modal-field">
+      <label>Ending cash (Rs.)</label>
+      <input type="number" id="endingCash" min="0" step="0.01" value="0">
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-cancel" onclick="closeCloseBatchModal()">Cancel</button>
+      <button type="button" class="btn btn-close-batch" id="confirmCloseBatchBtn" onclick="confirmCloseBatch()">Close Batch</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+  const API_BASE = 'http://localhost:8080/v1';
+
+  const ENDPOINTS = {
+    activeBatch: API_BASE + '/batches/active',
+    openBatch:   API_BASE + '/batches/open',
+    closeBatch:  API_BASE + '/batches/close',
+    customers:   API_BASE + '/customers'
+  };
+
+  let activeBatch = null;
+
+  function authHeaders() {
+    const h = {};
+    const token = localStorage.getItem('JWT');
+    if (token && token !== 'null' && token !== 'undefined') h['Authorization'] = 'Bearer ' + token;
+    return h;
+  }
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, c =>
+            ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+  function formatNumber(n) { return Number(n || 0).toLocaleString('en-US'); }
+
+  function parseJwt(token) {
+    try {
+      const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(atob(base64));
+    } catch (e) { return null; }
+  }
+  function currentUsername() {
+    const token = localStorage.getItem('JWT');
+    const p = token ? parseJwt(token) : null;
+    return (p && (p.username || p.sub)) || localStorage.getItem('userName') || 'admin';
+  }
+  function nowLabels() {
+    const d = new Date();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const dateStr = String(d.getDate()).padStart(2,'0') + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+    const timeStr = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    return { dateStr, timeStr, labelDefault: dateStr };
+  }
+  function greetingByTime() {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return 'Good morning';
+    if (h >= 12 && h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  function setBatchBanner() {
+    const $b = $('#batchBanner');
+    if (activeBatch && (activeBatch.batchId || activeBatch.id)) {
+      const code = activeBatch.batchCode || activeBatch.batchId || activeBatch.id;
+      $b.removeClass('no-batch').addClass('active-batch');
+      $('#batchText').text('Active batch · ' + code + ' — Tap to close');
+    } else {
+      activeBatch = null;
+      $b.removeClass('active-batch').addClass('no-batch');
+      $('#batchText').text('No active batch — Tap to start a new batch');
+    }
+  }
+
+  function loadActiveBatch() {
+    $.ajax({
+      url: ENDPOINTS.activeBatch,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (res) {
+        const b = res?.data || res;
+        if (b && (b.batchId || b.id) && String(b.batchStatus || 'OPEN').toUpperCase() !== 'CLOSED') {
+          activeBatch = b;
+        } else {
+          activeBatch = null;
+        }
+        setBatchBanner();
+      },
+      error: function () {
+        activeBatch = null;
+        setBatchBanner();
+      }
+    });
+  }
+
+  function openStartBatchModal() {
+    const n = nowLabels();
+    $('#batchLabel').val(n.labelDefault);
+    $('#startingCash').val(0);
+    $('#startDateLabel').text(n.dateStr);
+    $('#startTimeLabel').text(n.timeStr);
+    $('#startBatchOverlay').addClass('show');
+  }
+  function closeStartBatchModal() { $('#startBatchOverlay').removeClass('show'); }
+
+  function confirmStartBatch() {
+    const openedBy = currentUsername();
+    const startingCash = Number($('#startingCash').val()) || 0;
+    if (startingCash < 0) { alert('Enter a valid starting cash.'); return; }
+
+    const btn = $('#confirmStartBatchBtn');
+    btn.prop('disabled', true).text('Starting…');
+
+    $.ajax({
+      url: ENDPOINTS.openBatch,
+      type: 'POST',
+      contentType: 'application/json',
+      headers: authHeaders(),
+      data: JSON.stringify({ openedBy: openedBy, startingCash: startingCash }),
+      success: function (res) {
+        activeBatch = res?.data || res;
+        setBatchBanner();
+        closeStartBatchModal();
+      },
+      error: function (xhr) {
+        alert(xhr.responseJSON?.message || 'Could not open batch.');
+      },
+      complete: function () {
+        btn.prop('disabled', false).text('Start Batch');
+      }
+    });
+  }
+
+  function openCloseBatchModal() {
+    if (!activeBatch) return;
+    $('#closeBatchName').text(activeBatch.batchCode || activeBatch.batchId || 'this batch');
+    $('#endingCash').val(0);
+    $('#closeBatchOverlay').addClass('show');
+  }
+  function closeCloseBatchModal() { $('#closeBatchOverlay').removeClass('show'); }
+
+  function confirmCloseBatch() {
+    if (!activeBatch) return;
+
+    const endingCash = Number($('#endingCash').val()) || 0;
+    const closedBy = currentUsername();
+    const btn = $('#confirmCloseBatchBtn');
+    btn.prop('disabled', true).text('Closing…');
+
+    $.ajax({
+      url: ENDPOINTS.closeBatch,
+      type: 'POST',
+      contentType: 'application/json',
+      headers: authHeaders(),
+      data: JSON.stringify({ closedBy: closedBy, endingCash: endingCash }),
+      success: function () {
+        activeBatch = null;
+        setBatchBanner();
+        closeCloseBatchModal();
+      },
+      error: function (xhr) {
+        alert(xhr.responseJSON?.message || 'Could not close batch.');
+      },
+      complete: function () {
+        btn.prop('disabled', false).text('Close Batch');
+      }
+    });
+  }
+
+  function loadDashboard() {
+    $('#statMembers, #statPoints').addClass('loading');
+
+    $.ajax({
+      url: ENDPOINTS.customers,
+      type: 'GET',
+      headers: authHeaders(),
+      success: function (res) {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+
+        // MEMBERS = customer count
+        const membersCount = list.length;
+
+        // POINTS POOL = sum of all availablePoints
+        let pointsPool = 0;
+        list.forEach(function (c) {
+          const pts = c.loyaltyPoint && c.loyaltyPoint.availablePoints != null
+                  ? Number(c.loyaltyPoint.availablePoints)
+                  : 0;
+          pointsPool += pts;
+        });
+
+        $('#statMembersNum').text(formatNumber(membersCount));
+        $('#statPointsNum').text(formatNumber(pointsPool));
+        $('#statMembers, #statPoints').removeClass('loading');
+
+        // Recent members (last 5)
+        renderRecentMembersFromApi(list);
+      },
+      error: function (xhr) {
+        $('#statMembers, #statPoints').removeClass('loading');
+        $('#statMembersNum').text('—');
+        $('#statPointsNum').text('—');
+        $('#recentMembersCard').html(`
+        <div class="list-state">
+          <div class="state-title">Could not load members</div>
+          <div class="state-sub">Error ${xhr.status || ''}</div>
+        </div>`);
+      }
+    });
+  }
+
+  function renderRecentMembersFromApi(list) {
+    const $card = $('#recentMembersCard');
+    $card.empty();
+
+    if (!list || list.length === 0) {
+      $card.html(`
+      <div class="list-state">
+        <div class="state-title">No members yet</div>
+        <div class="state-sub">New registrations will appear here.</div>
+      </div>`);
+      return;
+    }
+
+    const sorted = list.slice().sort(function (a, b) {
+      const da = a.registeredAt ? new Date(a.registeredAt).getTime() : 0;
+      const db = b.registeredAt ? new Date(b.registeredAt).getTime() : 0;
+      return db - da;
+    });
+
+    sorted.slice(0, 5).forEach(function (c) {
+      const name = ((c.firstName || '') + ' ' + (c.lastName || '')).trim() || 'Customer';
+      const initial = name.charAt(0).toUpperCase();
+      const phone = c.phone || '—';
+      const pts = c.loyaltyPoint && c.loyaltyPoint.availablePoints != null
+              ? Number(c.loyaltyPoint.availablePoints)
+              : 0;
+      let isNew = false;
+      if (c.registeredAt) {
+        const days = (Date.now() - new Date(c.registeredAt).getTime()) / (1000 * 60 * 60 * 24);
+        isNew = days <= 7;
+      }
+      const newBadge = isNew ? '<span class="new-badge">new</span>' : '';
+
+      $card.append(`
+      <div class="member-row">
+        <div class="member-avatar">${escapeHtml(initial)}</div>
+        <div class="member-info">
+          <div class="member-name-row">
+            <span class="member-name">${escapeHtml(name)}</span>
+            ${newBadge}
+          </div>
+          <div class="member-phone">${escapeHtml(phone)}</div>
+        </div>
+        <div class="member-points">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          +${formatNumber(pts)}
+        </div>
+      </div>`);
+    });
+  }
+
+  $(document).ready(function () {
+
+    const g = greetingByTime();
+    $('#heroGreeting').text(g + ',');
+    $('#pageGreeting').text(g + " — here's what's happening at Cafe912 today.");
+
+    function setHeroName(name) {
+      if (name) {
+        $('#heroName').text(escapeHtml(name));
+      } else {
+        $('#heroName').text('Admin');
+      }
+    }
+
+    let displayName = localStorage.getItem('userName');
+    const looksLikeEmail = displayName && displayName.includes('@');
+
+    if (!displayName || looksLikeEmail) {
+      const token = localStorage.getItem('JWT');
+      const payload = token ? parseJwt(token) : null;
+      const usernameFromToken = payload ? (payload.username || payload.sub) : null;
+
+      if (token && usernameFromToken) {
+        $.ajax({
+          url: API_BASE + '/users/' + encodeURIComponent(usernameFromToken),
+          type: 'GET',
+          headers: authHeaders(),
+          success: function (res) {
+            const user = res?.data || res;
+            let name = '';
+
+            if (user.firstName) {
+              name = user.firstName;
+              if (user.lastName) name += ' ' + user.lastName;
+            } else if (user.name) {
+              name = user.name;
+            } else {
+              name = displayName || 'Admin';
+            }
+
+            localStorage.setItem('userName', name.trim());
+            setHeroName(name.trim());
+          },
+          error: function () {
+            setHeroName(displayName || 'Admin');
+          }
+        });
+      } else {
+        setHeroName(displayName || 'Admin');
+      }
+    } else {
+      setHeroName(displayName);
+    }
+
+    loadDashboard();
+    loadActiveBatch();
+
+    $('#batchBanner').on('click', function (e) {
+      e.preventDefault();
+      if (activeBatch) openCloseBatchModal();
+      else openStartBatchModal();
+    });
+
+    $('.modal-overlay').on('click', function (e) {
+      if (e.target === this) {
+        closeStartBatchModal();
+        closeCloseBatchModal();
+      }
+    });
+
+    $(document).on('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeStartBatchModal();
+        closeCloseBatchModal();
+      }
+    });
+
+    $('#signOutBtn').on('click', function () {
+      localStorage.removeItem('JWT');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      window.location.href = 'login.html';
+    });
+
+    $('#registerBtn').on('click', function () {
+      window.location.href = 'customer_Management.html';
+    });
+  });
+</script>
+</body>
+</html>
+

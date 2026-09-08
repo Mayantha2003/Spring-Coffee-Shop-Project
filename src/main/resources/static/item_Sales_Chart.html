@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Sales Chart · Cafe912</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --espresso:#241811;
+            --espresso-deep:#150e09;
+            --paper:#f7f1e6;
+            --paper-dim:#efe4d0;
+            --amber:#c17a34;
+            --amber-light:#e3a668;
+            --sage:#748a6a;
+            --sage-bg:#eaf0e6;
+            --ink:#26190f;
+            --ink-soft:#6b5c4c;
+            --line:rgba(38,25,15,0.14);
+            --error:#b23b3b;
+            --error-bg:rgba(178,59,59,0.08);
+            --success:#4c6b41;
+            --success-bg:#eaf0e6;
+            --radius:4px;
+        }
+        *{box-sizing:border-box; margin:0; padding:0;}
+        html,body{height:100%;}
+        body{
+            font-family:'Inter', sans-serif;
+            background:var(--paper);
+            color:var(--ink);
+            min-height:100vh;
+        }
+        @media (prefers-reduced-motion: reduce){
+            *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+        }
+        a{color:inherit;}
+
+        /* ===== TOPBAR ===== */
+        .topbar{position:sticky; top:0; z-index:20; background:linear-gradient(160deg, var(--espresso) 0%, var(--espresso-deep) 100%); color:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px;}
+        .topbar-left{display:flex; align-items:center; gap:14px;}
+        .seal{width:34px; height:34px; border-radius:50%; border:1.5px solid var(--amber); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+        .seal svg{width:16px; height:16px; stroke:var(--amber-light);}
+        .brand-name{font-size:12.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber-light); font-weight:600;}
+        .topbar-crumb{font-size:13px; color:rgba(247,241,230,0.5); padding-left:14px; margin-left:14px; border-left:1px solid rgba(247,241,230,0.18);}
+        .topbar-crumb strong{color:rgba(247,241,230,0.92); font-weight:600;}
+        .topbar-right{display:flex; align-items:center; gap:10px;}
+        .nav-link{font-size:13px; color:rgba(247,241,230,0.65); padding:8px 12px; border-radius:var(--radius); text-decoration:none; font-weight:600; transition:background .15s ease, color .15s ease;}
+        .nav-link:hover{background:rgba(247,241,230,0.08); color:var(--paper);}
+        .nav-link.active{background:rgba(247,241,230,0.12); color:var(--paper);}
+        .signout-btn{background:none; border:1px solid rgba(247,241,230,0.25); color:var(--paper); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius); cursor:pointer; transition:border-color .18s ease, background .18s ease;}
+        .signout-btn:hover{background:rgba(247,241,230,0.08); border-color:rgba(247,241,230,0.4);}
+
+        /* ===== PAGE ===== */
+        .page{
+            max-width:1180px;
+            margin:0 auto;
+            padding:44px 32px 80px;
+        }
+        .page-head{
+            display:flex; align-items:flex-end; justify-content:space-between;
+            gap:24px; margin-bottom:28px; flex-wrap:wrap;
+        }
+        .eyebrow{
+            font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase;
+            color:var(--amber); font-weight:700; margin-bottom:10px;
+        }
+        .page-head h1{
+            font-family:'Newsreader', serif; font-weight:500; font-size:32px;
+            color:var(--espresso); margin-bottom:6px;
+        }
+        .page-head .sub{color:var(--ink-soft); font-size:14.5px;}
+
+        .refresh-btn{
+            display:flex; align-items:center; gap:7px;
+            padding:11px 16px; background:#fff; color:var(--ink);
+            border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter',sans-serif;
+            font-size:13.5px; font-weight:600; cursor:pointer; transition:background .18s ease, border-color .18s ease;
+            flex-shrink:0;
+        }
+        .refresh-btn:hover{background:var(--paper-dim); border-color:var(--espresso);}
+        .refresh-btn svg{width:14px; height:14px;}
+        .refresh-btn.spinning svg{animation:spin 0.8s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        /* ===== FILTER ROWS (pills) ===== */
+        .filter-row{
+            display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;
+        }
+        .seg{
+            display:inline-flex; padding:3px; background:var(--paper-dim);
+            border-radius:100px; gap:2px; border:1px solid var(--line);
+        }
+        .seg .pill-btn{
+            border:none; background:none; font-family:'Inter',sans-serif; font-size:13px;
+            font-weight:600; color:var(--ink-soft); padding:9px 18px; border-radius:100px;
+            cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap;
+        }
+        .seg .pill-btn.active{background:var(--espresso); color:var(--paper);}
+        .seg .pill-btn:not(.active):hover{color:var(--ink);}
+
+        .loose-pills{display:flex; gap:8px; flex-wrap:wrap;}
+        .loose-pill{
+            border:1.5px solid var(--line); background:#fff; color:var(--ink-soft);
+            font-family:'Inter',sans-serif; font-size:13px; font-weight:600;
+            padding:9px 16px; border-radius:100px; cursor:pointer;
+            display:inline-flex; align-items:center; gap:6px;
+            transition:background .15s ease, border-color .15s ease, color .15s ease;
+        }
+        .loose-pill svg{width:12px; height:12px; stroke:var(--amber); flex-shrink:0;}
+        .loose-pill.active{background:var(--amber); border-color:var(--amber); color:#fff;}
+        .loose-pill.active svg{stroke:#fff;}
+        .loose-pill:not(.active):hover{border-color:var(--espresso); color:var(--ink);}
+
+        /* ===== STAT CARDS ===== */
+        .stats-grid{
+            display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin:26px 0 28px;
+        }
+        .stat-card{
+            background:#fff; border:1px solid var(--line); border-radius:6px;
+            padding:20px 22px;
+        }
+        .stat-card .num{font-family:'Newsreader', serif; font-size:30px; font-weight:500; color:var(--espresso); line-height:1.15;}
+        .stat-card.profit .num{color:var(--success);}
+        .stat-card .label{font-size:11.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-top:6px; font-weight:600;}
+
+        /* ===== LIST HEADER ===== */
+        .list-head{
+            display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:14px;
+        }
+        .list-head h2{font-family:'Newsreader', serif; font-size:19px; font-weight:500; color:var(--espresso);}
+        .list-head .count{font-size:13px; color:var(--ink-soft);}
+
+        /* ===== RANKED ITEM CARDS ===== */
+        .rank-list{display:flex; flex-direction:column; gap:12px;}
+        .rank-card{
+            background:#fff; border:1px solid var(--line); border-radius:6px;
+            padding:18px 20px; transition:box-shadow .15s ease, border-color .15s ease;
+        }
+        .rank-card:hover{border-color:rgba(38,25,15,0.24); box-shadow:0 2px 10px rgba(38,25,15,0.06);}
+        .rank-top{display:flex; align-items:center; gap:14px; margin-bottom:12px;}
+        .rank-badge{
+            width:32px; height:32px; border-radius:50%; flex-shrink:0;
+            display:flex; align-items:center; justify-content:center;
+            font-family:'Newsreader', serif; font-weight:600; font-size:13.5px; color:#fff;
+            background:var(--ink-soft);
+        }
+        .rank-badge.r1{background:#d9a01f;}
+        .rank-badge.r2{background:#9a9a9a;}
+        .rank-badge.r3{background:#c17a34;}
+        .rank-info{flex:1; min-width:0;}
+        .rank-name{font-weight:600; color:var(--ink); font-size:15px; line-height:1.3;}
+        .rank-cat{font-size:12px; color:var(--ink-soft); margin-top:1px;}
+        .rank-units{text-align:right; flex-shrink:0;}
+        .rank-units .num{color:var(--amber); font-weight:700; font-size:15px;}
+        .rank-units .lbl{font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+
+        .bar-track{
+            width:100%; height:7px; background:var(--paper-dim); border-radius:100px;
+            overflow:hidden; margin-bottom:12px;
+        }
+        .bar-fill{
+            height:100%; border-radius:100px;
+            background:linear-gradient(90deg, var(--amber) 0%, #e8703a 100%);
+            transition:width .4s ease;
+        }
+
+        .rank-foot{display:flex; gap:28px; flex-wrap:wrap;}
+        .rank-foot .metric .m-label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin-bottom:2px;}
+        .rank-foot .metric .m-value{font-size:13.5px; font-weight:600; color:var(--ink);}
+        .rank-foot .metric.profit .m-value{color:var(--success);}
+
+        /* ===== STATE (empty / loading / error / signin) ===== */
+        .state-card{
+            background:#fff; border:1px solid var(--line); border-radius:6px;
+            padding:60px 20px; text-align:center;
+        }
+        .state-box{display:flex; flex-direction:column; align-items:center; gap:10px; color:var(--ink-soft);}
+        .state-box svg{width:30px; height:30px; stroke:var(--ink-soft); opacity:0.5;}
+        .state-box .state-title{font-family:'Newsreader', serif; font-size:17px; color:var(--espresso); font-weight:500;}
+        .state-box .state-sub{font-size:13px; max-width:320px;}
+        .spinner{
+            width:22px; height:22px; border-radius:50%;
+            border:2.5px solid var(--line); border-top-color:var(--amber);
+            animation:spin 0.7s linear infinite;
+        }
+
+        .banner{
+            font-size:13px; padding:11px 14px; border-radius:var(--radius); margin-bottom:16px;
+            display:none; align-items:center; justify-content:space-between; gap:10px;
+        }
+        .banner.show{display:flex;}
+        .banner.error-banner{background:var(--error-bg); border:1px solid rgba(178,59,59,0.25); color:var(--error);}
+        .banner button{background:none; border:none; cursor:pointer; color:inherit; font-weight:700; font-size:14px;}
+
+        @media (max-width: 900px){
+            .stats-grid{grid-template-columns:repeat(2,1fr);}
+        }
+        @media (max-width: 760px){
+            .page{padding:28px 16px 60px;}
+            .topbar{padding:0 16px;}
+            .rank-foot{gap:18px;}
+        }
+        @media (max-width: 480px){
+            .stats-grid{grid-template-columns:1fr 1fr;}
+            .rank-top{flex-wrap:wrap;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="seal">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
+        </div>
+        <div class="brand-name">Cafe912</div>
+        <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>Item Sales Chart</strong></div>
+    </div>
+    <div class="topbar-right">
+        <a class="nav-link " href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="user_Management.html">Users</a>
+        <a class="nav-link" href="sale_Management.html">Sales</a>
+        <a class="nav-link" href="held_Sale.html">Held Sales</a>
+        <a class="nav-link" href="category_Management.html">Categories</a>
+        <a class="nav-link " href="item_Management.html">Items</a>
+        <a class="nav-link" href="batch_Management.html">Batches</a>
+        <a class="nav-link" href="customer_Management.html">Customers</a>
+        <a class="nav-link" href="stock_Management.html">Stock</a>
+        <a class="nav-link" href="sale_history.html">Sale History</a>
+        <a class="nav-link active " href="item_Sales_Chart.html">Item Sales Chart</a>
+        <button class="signout-btn" id="signOutBtn">Sign out</button>
+    </div>
+</div>
+
+<div class="page">
+    <div class="page-head">
+        <div>
+            <div class="eyebrow">Admin Portal</div>
+            <h1>Item Sales Chart</h1>
+            <p class="sub">Track which items are selling best, by period, category, and batch.</p>
+        </div>
+        <button class="refresh-btn" id="refreshBtn" onclick="handleRefresh()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            Refresh
+        </button>
+    </div>
+
+    <div class="banner error-banner" id="errorBanner">
+        <span id="errorBannerText">Something went wrong.</span>
+        <button onclick="dismissBanner()">&times;</button>
+    </div>
+
+    <!-- Period tabs -->
+    <div class="filter-row">
+        <div class="seg" id="periodSeg">
+            <button class="pill-btn active" data-period="today">Today</button>
+            <button class="pill-btn" data-period="month">This Month</button>
+            <button class="pill-btn" data-period="all">All Time</button>
+        </div>
+    </div>
+
+    <!-- Category pills (populated from backend) -->
+    <div class="filter-row loose-pills" id="categoryRow">
+        <button class="loose-pill active" data-cat="">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            All
+        </button>
+    </div>
+
+    <!-- Batch pills (populated from backend) -->
+    <div class="filter-row loose-pills" id="batchRow">
+        <button class="loose-pill active" data-batch="">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            All Batches
+        </button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="num" id="statUnits">0</div>
+            <div class="label">Units</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="statRevenue">Rs. 0</div>
+            <div class="label">Revenue</div>
+        </div>
+        <div class="stat-card profit">
+            <div class="num" id="statProfit">Rs. 0</div>
+            <div class="label">Profit</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="statItems">0</div>
+            <div class="label">Items</div>
+        </div>
+    </div>
+
+    <div class="list-head">
+        <h2>Ranked items</h2>
+        <span class="count" id="listCount"></span>
+    </div>
+
+    <div class="rank-list" id="rankList"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+
+    const API_BASE = 'http://localhost:8080/v1';
+
+    const ENDPOINTS = {
+        salesChart: API_BASE + '/sales/item-chart',
+        categories: API_BASE + '/categories',
+        batches: API_BASE + '/batches'
+    };
+
+    // ===== STATE =====
+    let state = { period: 'today', category: '', batch: '' };
+    let items = [];
+    let availableCategories = [];
+    let availableBatches = [];
+
+    // ===== HELPERS =====
+    function authHeaders() {
+        const h = {};
+        const token = localStorage.getItem('JWT');
+        if (token && token !== 'null' && token !== 'undefined') {
+            h['Authorization'] = 'Bearer ' + token;
+        }
+        return h;
+    }
+
+    function money(n){
+        return 'Rs. ' + Math.round(n || 0).toLocaleString('en-US');
+    }
+
+    function escapeHtml(str){
+        return String(str).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    function $id(id){ return document.getElementById(id); }
+
+    function showError(msg){
+        $id('errorBannerText').textContent = msg;
+        $('#errorBanner').addClass('show');
+    }
+
+    function dismissBanner(){
+        $('#errorBanner').removeClass('show');
+    }
+
+
+    // ===== RENDER =====
+    function render(){
+        const totals = items.reduce((acc, it) => {
+            acc.units += Number(it.units) || 0;
+            acc.revenue += Number(it.revenue) || 0;
+            acc.profit += Number(it.profit) || 0;
+            return acc;
+        }, { units:0, revenue:0, profit:0 });
+
+        $id('statUnits').textContent = totals.units.toLocaleString('en-US');
+        $id('statRevenue').textContent = money(totals.revenue);
+        $id('statProfit').textContent = money(totals.profit);
+        $id('statItems').textContent = items.length;
+
+        const sorted = [...items].sort((a,b) => b.units - a.units || b.revenue - a.revenue);
+        const maxShare = totals.units > 0 ? (sorted[0] ? (sorted[0].units / totals.units) * 100 : 0) : 0;
+
+        const listEl = $id('rankList');
+        listEl.innerHTML = '';
+
+        if (sorted.length === 0){
+            $id('listCount').textContent = '';
+            listEl.innerHTML = emptyStateHtml();
+            return;
+        }
+
+        $id('listCount').textContent = `${sorted.length} item${sorted.length === 1 ? '' : 's'}`;
+
+        sorted.forEach((it, idx) => {
+            const rank = idx + 1;
+            const share = totals.units > 0 ? (it.units / totals.units) * 100 : 0;
+            const barWidth = maxShare > 0 ? (share / maxShare) * 100 : 0;
+
+            let badgeClass = '';
+            if (rank === 1) badgeClass = 'r1';
+            else if (rank === 2) badgeClass = 'r2';
+            else if (rank === 3) badgeClass = 'r3';
+
+            const card = document.createElement('div');
+            card.className = 'rank-card';
+            card.innerHTML = `
+                <div class="rank-top">
+                    <div class="rank-badge ${badgeClass}">#${rank}</div>
+                    <div class="rank-info">
+                        <div class="rank-name">${escapeHtml(it.name)}</div>
+                        <div class="rank-cat">${escapeHtml(it.category || '—')}</div>
+                    </div>
+                    <div class="rank-units">
+                        <div class="num">${it.units} units</div>
+                        <div class="lbl">sold</div>
+                    </div>
+                </div>
+                <div class="bar-track"><div class="bar-fill" style="width:${barWidth}%"></div></div>
+                <div class="rank-foot">
+                    <div class="metric">
+                        <div class="m-label">Share</div>
+                        <div class="m-value">${share.toFixed(1)}%</div>
+                    </div>
+                    <div class="metric">
+                        <div class="m-label">Revenue</div>
+                        <div class="m-value">${money(it.revenue)}</div>
+                    </div>
+                    <div class="metric profit">
+                        <div class="m-label">Profit</div>
+                        <div class="m-value">${money(it.profit)}</div>
+                    </div>
+                </div>
+            `;
+            listEl.appendChild(card);
+        });
+    }
+
+    function emptyStateHtml(){
+        return `
+            <div class="state-card">
+                <div class="state-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <div class="state-title">No sales found</div>
+                    <div class="state-sub">Try a different period, category, or batch.</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function loadingStateHtml(){
+        return `
+            <div class="state-card">
+                <div class="state-box">
+                    <div class="spinner"></div>
+                    <div class="state-sub">Loading sales data…</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function errorStateHtml(){
+        return `
+            <div class="state-card">
+                <div class="state-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/></svg>
+                    <div class="state-title">Couldn't load sales data</div>
+                    <div class="state-sub">Check your connection, then try refreshing.</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function signInRequiredStateHtml(){
+        return `
+            <div class="state-card">
+                <div class="state-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <div class="state-title">Please sign in</div>
+                    <div class="state-sub">You need an admin session to view sales data.</div>
+                    <button class="refresh-btn" style="margin-top:6px;" onclick="window.location.href='login.html'">Go to sign in</button>
+                </div>
+            </div>
+        `;
+    }
+
+
+    // ===== DATA LOADING =====
+    function loadCategories(){
+        $.ajax({
+            url: ENDPOINTS.categories,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (res) {
+                const raw = Array.isArray(res) ? res : (res?.data || []);
+                availableCategories = raw.map(c =>
+                    (typeof c === 'object' && c !== null) ? (c.categoryName || c.name || String(c)) : String(c)
+                ).filter(Boolean);
+                renderCategoryPills();
+            },
+            error: function () {
+                // Fall back to whatever pills already exist ("All" only) — non-fatal.
+                availableCategories = [];
+                renderCategoryPills();
+            }
+        });
+    }
+
+    function loadBatches(){
+        $.ajax({
+            url: ENDPOINTS.batches,
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (res) {
+                const raw = Array.isArray(res) ? res : (res?.data || []);
+                availableBatches = raw.map(b => {
+                    if (typeof b === 'object' && b !== null) {
+                        const id = b.batchId ?? b.id ?? String(b);
+                        let label = '';
+                        if (b.openedAt) {
+                            const d = new Date(b.openedAt);
+                            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            label = String(d.getDate()).padStart(2,'0') + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+                        } else {
+                            label = b.batchCode || b.batchLabel || String(id);
+                        }
+
+                        return { id: id, label: label };
+                    }
+                    return { id: String(b), label: String(b) };
+                }).filter(b => b.id);
+                renderBatchPills();
+            },
+            error: function () {
+                availableBatches = [];
+                renderBatchPills();
+            }
+        });
+    }
+
+    function renderCategoryPills(){
+        const $row = $('#categoryRow');
+        $row.find('.loose-pill:not([data-cat=""])').remove();
+        availableCategories.forEach(cat => {
+            $row.append(`<button class="loose-pill" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}</button>`);
+        });
+    }
+
+    function renderBatchPills(){
+        const $row = $('#batchRow');
+        $row.find('.loose-pill:not([data-batch=""])').remove();
+        availableBatches.forEach(b => {
+            $row.append(`<button class="loose-pill" data-batch="${escapeHtml(b.id)}">${escapeHtml(b.label)}</button>`);
+        });
+    }
+
+    function loadSalesData(){
+        $id('refreshBtn').classList.add('spinning');
+        $id('rankList').innerHTML = loadingStateHtml();
+
+        const params = { period: state.period };
+        if (state.category) params.category = state.category;
+        if (state.batch) params.batchId = state.batch;
+
+        $.ajax({
+            url: ENDPOINTS.salesChart,
+            type: 'GET',
+            data: params,
+            headers: authHeaders(),
+            success: function (res) {
+                const raw = Array.isArray(res) ? res : (res?.data || []);
+                items = raw.map(it => ({
+                    name: it.name ?? it.itemName ?? '—',
+                    category: it.category ?? it.categoryName ?? '',
+                    units: Number(it.units ?? it.unitsSold ?? 0),
+                    revenue: Number(it.revenue ?? 0),
+                    profit: Number(it.profit ?? 0),
+                    batch: it.batch ?? it.batchId ?? ''
+                }));
+                render();
+            },
+            error: function (xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    items = [];
+                    $id('rankList').innerHTML = signInRequiredStateHtml();
+                    $id('statUnits').textContent = '—';
+                    $id('statRevenue').textContent = '—';
+                    $id('statProfit').textContent = '—';
+                    $id('statItems').textContent = '—';
+                    showError("Your session has expired or you don't have access. Please sign in again.");
+                } else {
+                    items = [];
+                    $id('rankList').innerHTML = errorStateHtml();
+                    showError("Couldn't load sales data. Please check the connection and try again.");
+                }
+            },
+            complete: function () {
+                $id('refreshBtn').classList.remove('spinning');
+            }
+        });
+    }
+
+    function handleRefresh(){
+        loadSalesData();
+    }
+
+
+    // ===== EVENT WIRING =====
+    document.getElementById('periodSeg').addEventListener('click', (e) => {
+        const btn = e.target.closest('.pill-btn');
+        if (!btn) return;
+        document.querySelectorAll('#periodSeg .pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.period = btn.dataset.period;
+        loadSalesData();
+    });
+
+    document.getElementById('categoryRow').addEventListener('click', (e) => {
+        const btn = e.target.closest('.loose-pill');
+        if (!btn) return;
+        document.querySelectorAll('#categoryRow .loose-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.category = btn.dataset.cat;
+        loadSalesData();
+    });
+
+    document.getElementById('batchRow').addEventListener('click', (e) => {
+        const btn = e.target.closest('.loose-pill');
+        if (!btn) return;
+        document.querySelectorAll('#batchRow .loose-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.batch = btn.dataset.batch;
+        loadSalesData();
+    });
+
+    document.getElementById('signOutBtn').addEventListener('click', () => {
+        localStorage.removeItem('JWT');
+        localStorage.removeItem('userId');
+        window.location.href = 'login.html';
+    });
+
+    // ===== INIT =====
+    $(document).ready(function () {
+        const token = localStorage.getItem('JWT');
+        if (!token || token === 'null' || token === 'undefined') {
+            $id('rankList').innerHTML = signInRequiredStateHtml();
+            $id('statUnits').textContent = '—';
+            $id('statRevenue').textContent = '—';
+            $id('statProfit').textContent = '—';
+            $id('statItems').textContent = '—';
+            return;
+        }
+        loadCategories();
+        loadBatches();
+        loadSalesData();
+    });
+</script>
+</body>
+</html>
