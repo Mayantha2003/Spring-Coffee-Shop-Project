@@ -142,10 +142,13 @@ public class SaleServiceImpl implements SaleService {
         }
 
         if (savedSale.getSaleStatus() == SaleStatus.COMPLETED) {
-            batch.recordSale(totalAmount, totalAmount);
+            BigDecimal profitAmount = totalAmount
+                    .multiply(BigDecimal.valueOf(0.42))
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            batch.recordSale(totalAmount, profitAmount);
             batchRepository.save(batch);
         }
-
         log.info("Sale created successfully with code: {}", savedSale.getSaleCode());
         return mapToDTO(savedSale);
     }

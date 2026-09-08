@@ -319,6 +319,7 @@
         <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>Sales History</strong></div>
     </div>
     <div class="topbar-right">
+        <a class="nav-link " href="dashboard.html">Dashboard</a>
         <a class="nav-link" href="user_Management.html">Users</a>
         <a class="nav-link active" href="sale_Management.html">Sales</a>
         <a class="nav-link" href="held_Sale.html">Held Sales</a>
@@ -327,7 +328,8 @@
         <a class="nav-link" href="batch_Management.html">Batches</a>
         <a class="nav-link" href="customer_Management.html">Customers</a>
         <a class="nav-link" href="stock_Management.html">Stock</a>
-        <a class="nav-link" href="sale_history.html">Sale History</a>
+        <a class="nav-link active" href="sale_history.html">Sale History</a>
+        <a class="nav-link" href="item_Sales_Chart.html">Item Sales Chart</a>
         <button class="signout-btn" id="signOutBtn">Sign out</button>
     </div>
 </div>
@@ -741,23 +743,53 @@
         $('#clearBtn').css('opacity', anyActive ? 1 : 0.45);
     }
 
-    function populateYearMonth(){
+    function populateYearMonth() {
         const year = new Date().getFullYear();
         const $year = $('#yearFilter');
         for (let y = year; y >= year - 5; y--) {
             $year.append(`<option value="${y}">${y}</option>`);
         }
-        const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const months = [
+            'January','February','March','April','May','June',
+            'July','August','September','October','November','December'
+        ];
         const $month = $('#monthFilter');
         months.forEach((m, i) => $month.append(`<option value="${i}">${m}</option>`));
     }
 
+    function loadBatchesForFilter() {
+        $.ajax({
+            url: 'http://localhost:8080/v1/batches',
+            type: 'GET',
+            headers: authHeaders(),
+            success: function (res) {
+                const list = Array.isArray(res) ? res : (res?.data || []);
+                const $sel = $('#batchFilter');
+                $sel.find('option:not(:first)').remove();
+
+                list.forEach(b => {
+                    const id = b.batchId ?? b.id;
+                    let label = b.batchCode || '';
+
+                    if (b.openedAt) {
+                        const d = new Date(b.openedAt);
+                        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                        label = String(d.getDate()).padStart(2,'0') + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+                        if (b.batchCode) label = b.batchCode + ' · ' + label;
+                    }
+
+                    $sel.append(`<option value="${id}">${escapeHtml(label)}</option>`);
+                });
+            }
+        });
+    }
     /* =========================================================
        EVENTS
        ========================================================= */
     $(document).ready(function () {
         populateYearMonth();
         loadSalesHistory();
+        loadBatchesForFilter();
 
         $('#batchFilter, #yearFilter, #monthFilter, #fromDate, #toDate, #sortFilter')
             .on('change', loadSalesHistory);

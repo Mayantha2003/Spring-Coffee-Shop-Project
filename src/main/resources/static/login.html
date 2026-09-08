@@ -425,19 +425,52 @@
                     localStorage.setItem("JWT", token);
 
                     const decoded = parseJwt(token);
-                    if (decoded && decoded.userId) {
-                        localStorage.setItem("userId", decoded.userId);
-                    }
 
-                    errorMsg.classList.remove('show');
-                    window.location.href = "user_Management.html";
+                    if (decoded) {
+                        if (decoded.userId) {
+                            localStorage.setItem("userId", decoded.userId);
+                        }
+                        const usernameFromToken = decoded.username || decoded.sub || username;
+                        $.ajax({
+                            url: 'http://localhost:8080/v1/users/' + encodeURIComponent(usernameFromToken),
+                            type: 'GET',
+                            headers: {
+                                'Authorization': 'Bearer ' + token
+                            },
+                            success: function(userRes) {
+                                const user = userRes.data || userRes;
+                                let name = '';
+
+                                if (user.firstName) {
+                                    name = user.firstName;
+                                    if (user.lastName) {
+                                        name += ' ' + user.lastName;
+                                    }
+                                } else if (user.name) {
+                                    name = user.name;
+                                } else {
+                                    name = usernameFromToken;
+                                }
+
+                                localStorage.setItem("userName", name.trim());
+                                errorMsg.classList.remove('show');
+                                window.location.href = "dashboard.html";
+                            },
+                            error: function() {
+                                localStorage.setItem("userName", usernameFromToken);
+                                window.location.href = "dashboard.html";
+                            }
+                        });
+                    } else {
+                        localStorage.setItem("userName", username);
+                        window.location.href = "dashboard.html";
+                    }
                 } else {
                     loginBtn.prop('disabled', false).html(`Sign In to Dashboard ${buttonIconSvg}`);
                     errorMsg.textContent = "Invalid token format received!";
                     errorMsg.classList.add('show');
                 }
-            },
-            error: function (response) {
+            },            error: function (response) {
                 loginBtn.prop('disabled', false).html(`Sign In to Dashboard ${buttonIconSvg}`);
                 errorMsg.classList.add('show');
 
@@ -472,3 +505,4 @@
 </script>
 </body>
 </html>
+
