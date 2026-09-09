@@ -16,10 +16,12 @@ public class ItemDTO {
     private String itemName;
     private String description;
     private BigDecimal price;
+    private BigDecimal costPrice;
     private BigDecimal discountPrice;
     private String imageUrl;
     private ItemStatus itemStatus;
     private boolean isVeg;
     private int prepTimeMinutes;
+    private Integer points;
     private long categoryId;
 }

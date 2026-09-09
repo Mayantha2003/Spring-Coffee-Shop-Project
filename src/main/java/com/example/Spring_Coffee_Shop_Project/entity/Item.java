@@ -30,6 +30,9 @@ public class Item {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(nullable = false)
+    private BigDecimal costPrice;
+
     private BigDecimal discountPrice;
     private String imageUrl;
 
@@ -38,6 +41,8 @@ public class Item {
 
     private boolean isVeg = true;
     private int prepTimeMinutes;
+
+    private Integer points;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)

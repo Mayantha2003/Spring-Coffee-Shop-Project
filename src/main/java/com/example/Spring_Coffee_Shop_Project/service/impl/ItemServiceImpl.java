@@ -63,20 +63,23 @@ public class ItemServiceImpl implements ItemService {
         }
 
         Item item = optionalItem.get();
+
         item.setItemName(itemDto.getItemName());
         item.setDescription(itemDto.getDescription());
         item.setPrice(itemDto.getPrice());
+        item.setCostPrice(itemDto.getCostPrice());
         item.setDiscountPrice(itemDto.getDiscountPrice());
         item.setImageUrl(itemDto.getImageUrl());
         item.setItemStatus(itemDto.getItemStatus() != null ? itemDto.getItemStatus() : ItemStatus.AVAILABLE);
         item.setVeg(itemDto.isVeg());
         item.setPrepTimeMinutes(itemDto.getPrepTimeMinutes());
+        item.setPoints(itemDto.getPoints());
         item.setCategory(optionalCategory.get());
 
-        Item updatedItem = itemRepository.save(item);
-        log.info("Item updated successfully with id: {}", updatedItem.getItemId());
-    }
+        itemRepository.save(item);
 
+        log.info("Item updated successfully with id: {}", item.getItemId());
+    }
     @Override
     public void deleteItem(long id) {
 
@@ -178,11 +181,13 @@ public class ItemServiceImpl implements ItemService {
                 .itemName(item.getItemName())
                 .description(item.getDescription())
                 .price(item.getPrice())
+                .costPrice(item.getCostPrice())
                 .discountPrice(item.getDiscountPrice())
                 .imageUrl(item.getImageUrl())
                 .itemStatus(item.getItemStatus())
                 .isVeg(item.isVeg())
                 .prepTimeMinutes(item.getPrepTimeMinutes())
+                .points(item.getPoints())
                 .categoryId(item.getCategory() != null ? item.getCategory().getCategoryId() : 0)
                 .build();
     }
@@ -193,11 +198,13 @@ public class ItemServiceImpl implements ItemService {
         item.setItemName(dto.getItemName());
         item.setDescription(dto.getDescription());
         item.setPrice(dto.getPrice());
+        item.setCostPrice(dto.getCostPrice());
         item.setDiscountPrice(dto.getDiscountPrice());
         item.setImageUrl(dto.getImageUrl());
         item.setItemStatus(dto.getItemStatus() != null ? dto.getItemStatus() : ItemStatus.AVAILABLE);
         item.setVeg(dto.isVeg());
         item.setPrepTimeMinutes(dto.getPrepTimeMinutes());
+        item.setPoints(dto.getPoints());
         item.setCategory(category);
         return item;
     }
