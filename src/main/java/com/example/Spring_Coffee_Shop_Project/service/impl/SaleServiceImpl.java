@@ -141,14 +141,26 @@ public class SaleServiceImpl implements SaleService {
             processLoyaltyPoints(savedSale, saleCreateDTO.getLoyaltyPointsUsed());
         }
 
+        // ===== REAL COST BASED PROFIT =====
         if (savedSale.getSaleStatus() == SaleStatus.COMPLETED) {
-            BigDecimal profitAmount = totalAmount
-                    .multiply(BigDecimal.valueOf(0.42))
+            BigDecimal totalCost = BigDecimal.ZERO;
+
+            for (SaleItem si : saleItems) {
+                BigDecimal costPrice = si.getItem().getCostPrice() != null
+                        ? si.getItem().getCostPrice()
+                        : BigDecimal.ZERO;
+
+                BigDecimal lineCost = costPrice.multiply(BigDecimal.valueOf(si.getQuantity()));
+                totalCost = totalCost.add(lineCost);
+            }
+
+            BigDecimal profitAmount = totalAmount.subtract(totalCost)
                     .setScale(2, RoundingMode.HALF_UP);
 
             batch.recordSale(totalAmount, profitAmount);
             batchRepository.save(batch);
         }
+
         log.info("Sale created successfully with code: {}", savedSale.getSaleCode());
         return mapToDTO(savedSale);
     }
@@ -402,8 +414,20 @@ public class SaleServiceImpl implements SaleService {
                     .sum();
         }
 
+        // ===== REAL COST BASED PROFIT =====
+        BigDecimal totalCost = BigDecimal.ZERO;
+
+        for (SaleItem si : sale.getSaleItems()) {
+            BigDecimal costPrice = si.getItem().getCostPrice() != null
+                    ? si.getItem().getCostPrice()
+                    : BigDecimal.ZERO;
+
+            BigDecimal lineCost = costPrice.multiply(BigDecimal.valueOf(si.getQuantity()));
+            totalCost = totalCost.add(lineCost);
+        }
+
         BigDecimal profit = sale.getTotalAmount()
-                .multiply(BigDecimal.valueOf(0.42))
+                .subtract(totalCost)
                 .setScale(0, RoundingMode.HALF_UP);
 
         String customerName = null;
@@ -595,6 +619,7 @@ public class SaleServiceImpl implements SaleService {
             fromDate = now.withDayOfMonth(1).toLocalDate().atStartOfDay();
             toDate   = fromDate.plusMonths(1);
         }
+
         String catFilter = (category == null || category.isBlank()) ? null : category.trim();
 
         List<Object[]> rows = saleItemRepository.findItemSalesChart(
@@ -604,17 +629,15 @@ public class SaleServiceImpl implements SaleService {
         List<ItemSalesChartDTO> result = new ArrayList<>();
 
         for (Object[] row : rows) {
-            String itemName     = (String) row[0];
-            String categoryName = (String) row[1];
-            Long unitsLong      = (Long) row[2];
-            BigDecimal revenue  = (BigDecimal) row[3];
+            String itemName      = (String) row[0];
+            String categoryName  = (String) row[1];
+            Long unitsLong       = (Long) row[2];
+            BigDecimal revenue   = row[3] != null ? (BigDecimal) row[3] : BigDecimal.ZERO;
+            BigDecimal totalCost = row[4] != null ? (BigDecimal) row[4] : BigDecimal.ZERO;
 
             int units = unitsLong != null ? unitsLong.intValue() : 0;
-            if (revenue == null) revenue = BigDecimal.ZERO;
 
-            // Same 42% profit logic used in sales history
-            BigDecimal profit = revenue
-                    .multiply(BigDecimal.valueOf(0.42))
+            BigDecimal profit = revenue.subtract(totalCost)
                     .setScale(0, RoundingMode.HALF_UP);
 
             result.add(ItemSalesChartDTO.builder()
