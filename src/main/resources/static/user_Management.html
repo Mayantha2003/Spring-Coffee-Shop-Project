@@ -51,7 +51,6 @@
         .signout-btn{background:none; border:1px solid rgba(247,241,230,0.25); color:var(--paper); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius); cursor:pointer; transition:border-color .18s ease, background .18s ease;}
         .signout-btn:hover{background:rgba(247,241,230,0.08); border-color:rgba(247,241,230,0.4);}
 
-        /* ===== PAGE ===== */
         .page{
             max-width:1180px;
             margin:0 auto;
@@ -76,7 +75,6 @@
         .head-stat .num{font-family:'Newsreader', serif; font-size:26px; color:var(--espresso); font-weight:500;}
         .head-stat .label{font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin-top:2px;}
 
-        /* ===== TOOLBAR ===== */
         .toolbar{
             display:flex; align-items:center; gap:12px;
             margin-bottom:20px; flex-wrap:wrap;
@@ -136,7 +134,6 @@
         .refresh-btn.ghost-btn:hover{background:var(--paper-dim); border-color:var(--espresso);}
         @keyframes spin{to{transform:rotate(360deg);}}
 
-        /* ===== TABLE CARD ===== */
         .table-card{
             background:#fff;
             border:1px solid var(--line);
@@ -168,6 +165,19 @@
         }
         .user-name{font-weight:600; color:var(--ink); line-height:1.3;}
         .user-email{color:var(--ink-soft); font-size:12.5px; margin-top:1px;}
+
+        .you-tag {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 8px;
+            border-radius: 100px;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: rgba(193, 122, 52, 0.15);
+            color: var(--amber);
+            vertical-align: middle;
+        }
 
         .pill{
             display:inline-flex; align-items:center; gap:5px;
@@ -222,7 +232,6 @@
         .banner.success-banner{background:var(--success-bg); border:1px solid rgba(76,107,65,0.25); color:var(--success);}
         .banner button{background:none; border:none; cursor:pointer; color:inherit; font-weight:700; font-size:14px;}
 
-        /* ===== MODAL ===== */
         .modal-overlay{
             position:fixed; inset:0; background:rgba(21,14,9,0.55);
             display:none; align-items:center; justify-content:center; z-index:50; padding:24px;
@@ -246,9 +255,17 @@
         }
         .field input:focus, .field select:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
         .field select{appearance:none;}
-        .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none;}
-        .field.invalid input, .field.invalid select{border-color:var(--error);}
-        .field.invalid .field-err{display:block;}
+        .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none; align-items:center; gap:5px;}
+        .field-err svg{width:12px; height:12px; stroke:var(--error); flex-shrink:0;}
+        .field.invalid input, .field.invalid select{border-color:var(--error); box-shadow:0 0 0 3px rgba(178,59,59,0.08);}
+        .field.invalid .field-err{display:flex;}
+        .field.valid input{border-color:var(--success);}
+        .password-strength{display:flex; gap:4px; margin-top:8px;}
+        .password-strength .bar{height:4px; flex:1; border-radius:2px; background:var(--line); transition:background .18s ease;}
+        .password-strength.weak .bar:nth-child(1){background:var(--error);}
+        .password-strength.medium .bar:nth-child(1), .password-strength.medium .bar:nth-child(2){background:var(--amber);}
+        .password-strength.strong .bar{background:var(--success);}
+        .password-strength-label{font-size:11px; color:var(--ink-soft); margin-top:4px;}
         .modal-actions{display:flex; gap:10px; margin-top:22px;}
         .btn{
             flex:1; padding:12px; border-radius:var(--radius); font-family:'Inter',sans-serif;
@@ -283,7 +300,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/><path d="M8 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2M12 3c-.6.7-.6 1.3 0 2s.6 1.3 0 2"/></svg>
         </div>
         <div class="brand-name">Cafe912</div>
-        <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>Item Management</strong></div>
+        <div class="topbar-crumb">Admin Portal &nbsp;/&nbsp; <strong>User Management</strong></div>
     </div>
     <div class="topbar-right">
         <a class="nav-link " href="dashboard.html">Dashboard</a>
@@ -300,7 +317,6 @@
         <button class="signout-btn" id="signOutBtn">Sign out</button>
     </div>
 </div>
-
 
 <div class="page">
     <div class="page-head">
@@ -340,6 +356,7 @@
         </div>
         <div class="filter-select">
             <select id="statusFilter">
+                <option value="">All Status</option>
             </select>
         </div>
         <button class="clear-filters" id="clearFiltersBtn" onclick="clearFilters()">Clear filters</button>
@@ -383,25 +400,29 @@
     <div class="modal">
         <h3>Edit user</h3>
         <p class="modal-sub">Update account details, then save your changes.</p>
-        <form id="editForm">
+        <form id="editForm" novalidate>
             <input type="hidden" id="editUserId">
             <div class="field-row">
-                <div class="field">
+                <div class="field" id="editFirstNameField">
                     <label for="editFirstName">First name</label>
-                    <input type="text" id="editFirstName" required>
+                    <input type="text" id="editFirstName" maxlength="50" required>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid first name (letters only, 2–50 chars).</span></div>
                 </div>
-                <div class="field">
+                <div class="field" id="editLastNameField">
                     <label for="editLastName">Last name</label>
-                    <input type="text" id="editLastName" required>
+                    <input type="text" id="editLastName" maxlength="50" required>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid last name (letters only, 2–50 chars).</span></div>
                 </div>
             </div>
-            <div class="field">
+            <div class="field" id="editEmailField">
                 <label for="editEmail">Email</label>
-                <input type="email" id="editEmail" required>
+                <input type="email" id="editEmail" maxlength="100" required>
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span id="editEmailErrText">Enter a valid email address.</span></div>
             </div>
-            <div class="field">
+            <div class="field" id="editPhoneField">
                 <label for="editPhone">Phone number</label>
-                <input type="tel" id="editPhone">
+                <input type="tel" id="editPhone" maxlength="20">
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid phone number (7–15 digits, may start with +).</span></div>
             </div>
             <div class="field-row">
                 <div class="field">
@@ -429,43 +450,46 @@
         <p class="modal-sub">Create a new admin or staff account.</p>
         <form id="addForm" novalidate>
             <div class="field-row">
-                <div class="field">
+                <div class="field" id="addFirstNameField">
                     <label for="addFirstName">First name</label>
-                    <input type="text" id="addFirstName" placeholder="e.g. Nadia" required>
-                    <div class="field-err" id="addFirstNameErr">Please enter a first name.</div>
+                    <input type="text" id="addFirstName" maxlength="50" placeholder="e.g. Nadia" required>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid first name (letters only, 2–50 chars).</span></div>
                 </div>
-                <div class="field">
+                <div class="field" id="addLastNameField">
                     <label for="addLastName">Last name</label>
-                    <input type="text" id="addLastName" placeholder="e.g. Fernando" required>
-                    <div class="field-err" id="addLastNameErr">Please enter a last name.</div>
+                    <input type="text" id="addLastName" maxlength="50" placeholder="e.g. Fernando" required>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid last name (letters only, 2–50 chars).</span></div>
                 </div>
             </div>
-            <div class="field">
+            <div class="field" id="addEmailField">
                 <label for="addEmail">Email</label>
-                <input type="email" id="addEmail" placeholder="admin@cafe912.com" required>
-                <div class="field-err" id="addEmailErr">Please enter a valid email address.</div>
+                <input type="email" id="addEmail" maxlength="100" placeholder="admin@cafe912.com" required>
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span id="addEmailErrText">Enter a valid email address.</span></div>
             </div>
-            <div class="field">
+            <div class="field" id="addPhoneField">
                 <label for="addPhone">Phone number</label>
-                <input type="tel" id="addPhone" placeholder="e.g. +94 77 123 4567">
+                <input type="tel" id="addPhone" maxlength="20" placeholder="e.g. +94 77 123 4567">
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid phone number (7–15 digits, may start with +).</span></div>
             </div>
             <div class="field-row">
-                <div class="field">
+                <div class="field" id="addPasswordField">
                     <label for="addPassword">Password</label>
                     <input type="password" id="addPassword" placeholder="Create a password" autocomplete="new-password" required>
-                    <div class="field-err" id="addPasswordErr">Must be at least 8 characters.</div>
+                    <div class="password-strength" id="addPasswordStrength"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+                    <div class="password-strength-label" id="addPasswordStrengthLabel">&nbsp;</div>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Must be at least 8 characters, with a letter and a number.</span></div>
                 </div>
-                <div class="field">
+                <div class="field" id="addConfirmPasswordField">
                     <label for="addConfirmPassword">Confirm password</label>
                     <input type="password" id="addConfirmPassword" placeholder="Re-enter password" autocomplete="new-password" required>
-                    <div class="field-err" id="addConfirmPasswordErr">Passwords do not match.</div>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Passwords do not match.</span></div>
                 </div>
             </div>
             <div class="field-row">
-                <div class="field">
+                <div class="field" id="addRoleField">
                     <label for="addRole">Role</label>
                     <select id="addRole"></select>
-                    <div class="field-err" id="addRoleErr">Please select a role.</div>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Please select a role.</span></div>
                 </div>
                 <div class="field">
                     <label for="addStatus">Status</label>
@@ -514,6 +538,18 @@
         return h;
     }
 
+    function getCurrentUsername() {
+        const token = localStorage.getItem('JWT');
+        if (!token) return null;
+
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+            return (payload.username || payload.sub || '').toLowerCase();
+        } catch (e) {
+            return null;
+        }
+    }
+
     function escapeHtml(str) {
         return String(str).replace(/[&<>"']/g, c => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -550,6 +586,261 @@
         return 'status-pending';
     }
 
+    // =======================================================
+    // VALIDATION LAYER (industry-grade, shared by Add + Edit)
+    // =======================================================
+
+    const VALIDATION_RULES = {
+        // Unicode-aware: letters, spaces, apostrophes, hyphens, periods (e.g. "Jean-Luc", "O'Brien", "Mary Ann")
+        name: /^[\p{L}][\p{L}\s'.-]{1,49}$/u,
+        // Loose RFC 5322-ish email pattern, good enough for client-side gatekeeping
+        email: /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/,
+        // Accepts +, digits, spaces, hyphens, parentheses as typed; digit-count is checked separately (7–15 per E.164)
+        phoneShape: /^\+?[0-9\s().-]{7,20}$/,
+        // At least one letter and one number, 8+ characters
+        passwordHasLetter: /[A-Za-z]/,
+        passwordHasNumber: /[0-9]/
+    };
+
+    const DUPLICATE_EMAIL_ERR = 'A user with this email already exists.';
+
+    function normalizeDigits(phone) {
+        return (phone || '').replace(/\D/g, '');
+    }
+
+    function validateNameValue(value) {
+        const v = (value || '').trim();
+        if (v.length < 2) return { valid: false, reason: 'too_short' };
+        if (v.length > 50) return { valid: false, reason: 'too_long' };
+        if (!VALIDATION_RULES.name.test(v)) return { valid: false, reason: 'bad_chars' };
+        return { valid: true };
+    }
+
+    function validatePhoneValue(value, required) {
+        const v = (value || '').trim();
+        if (!v) return required ? { valid: false, reason: 'required' } : { valid: true };
+        if (!VALIDATION_RULES.phoneShape.test(v)) return { valid: false, reason: 'bad_chars' };
+        const digits = normalizeDigits(v);
+        if (digits.length < 7 || digits.length > 15) return { valid: false, reason: 'bad_length' };
+        return { valid: true };
+    }
+
+    function validateEmailValue(value) {
+        const v = (value || '').trim();
+        if (!v) return { valid: false, reason: 'required' };
+        if (v.length > 100) return { valid: false, reason: 'too_long' };
+        if (!VALIDATION_RULES.email.test(v)) return { valid: false, reason: 'bad_format' };
+        return { valid: true };
+    }
+
+    function isDuplicateEmail(email, excludeId) {
+        const normalized = (email || '').trim().toLowerCase();
+        if (!normalized) return false;
+        return allUsers.some(u => {
+            const id = u.userId ?? u.id;
+            if (excludeId !== undefined && excludeId !== null && String(id) === String(excludeId)) return false;
+            return (u.username || u.email || '').trim().toLowerCase() === normalized;
+        });
+    }
+
+    function passwordStrengthScore(value) {
+        const v = value || '';
+        if (v.length < 8) return 0;
+        let score = 1;
+        if (VALIDATION_RULES.passwordHasLetter.test(v) && VALIDATION_RULES.passwordHasNumber.test(v)) score++;
+        if (v.length >= 12 && /[^A-Za-z0-9]/.test(v)) score++;
+        return score; // 0 = too short/invalid, 1 = weak, 2 = medium, 3 = strong
+    }
+
+    function validatePasswordValue(value) {
+        const v = value || '';
+        if (v.length < 8) return { valid: false, reason: 'too_short' };
+        if (!VALIDATION_RULES.passwordHasLetter.test(v) || !VALIDATION_RULES.passwordHasNumber.test(v)) {
+            return { valid: false, reason: 'needs_letter_number' };
+        }
+        return { valid: true };
+    }
+
+    function setFieldValidity($fieldWrap, isValid) {
+        $fieldWrap.toggleClass('invalid', !isValid);
+        $fieldWrap.toggleClass('valid', isValid);
+    }
+
+    function updatePasswordStrengthUI() {
+        const v = $('#addPassword').val();
+        const score = passwordStrengthScore(v);
+        const $bar = $('#addPasswordStrength');
+        const $label = $('#addPasswordStrengthLabel');
+        $bar.removeClass('weak medium strong');
+        if (!v) { $label.text('\u00a0'); return; }
+        if (score <= 1) { $bar.addClass('weak'); $label.text('Weak — add a number and mix of characters'); }
+        else if (score === 2) { $bar.addClass('medium'); $label.text('Medium strength'); }
+        else { $bar.addClass('strong'); $label.text('Strong password'); }
+    }
+
+    // Runs all field validators for the Add User form.
+    function validateAddForm() {
+        let valid = true;
+
+        const firstRes = validateNameValue($('#addFirstName').val());
+        setFieldValidity($('#addFirstNameField'), firstRes.valid);
+        if (!firstRes.valid) valid = false;
+
+        const lastRes = validateNameValue($('#addLastName').val());
+        setFieldValidity($('#addLastNameField'), lastRes.valid);
+        if (!lastRes.valid) valid = false;
+
+        const emailVal = $('#addEmail').val();
+        const emailRes = validateEmailValue(emailVal);
+        const $emailField = $('#addEmailField');
+        const $emailErrText = $('#addEmailErrText');
+        if (!emailRes.valid) {
+            $emailErrText.text('Enter a valid email address.');
+            setFieldValidity($emailField, false);
+            valid = false;
+        } else if (isDuplicateEmail(emailVal, null)) {
+            $emailErrText.text(DUPLICATE_EMAIL_ERR);
+            setFieldValidity($emailField, false);
+            valid = false;
+        } else {
+            setFieldValidity($emailField, true);
+        }
+
+        const phoneRes = validatePhoneValue($('#addPhone').val(), false);
+        setFieldValidity($('#addPhoneField'), phoneRes.valid);
+        if (!phoneRes.valid) valid = false;
+
+        const passRes = validatePasswordValue($('#addPassword').val());
+        setFieldValidity($('#addPasswordField'), passRes.valid);
+        if (!passRes.valid) valid = false;
+
+        const confirmMatches = $('#addConfirmPassword').val() === $('#addPassword').val() && !!$('#addConfirmPassword').val();
+        setFieldValidity($('#addConfirmPasswordField'), confirmMatches);
+        if (!confirmMatches) valid = false;
+
+        const roleOk = !!$('#addRole').val();
+        setFieldValidity($('#addRoleField'), roleOk);
+        if (!roleOk) valid = false;
+
+        return valid;
+    }
+
+    // Runs all field validators for the Edit User form.
+    function validateEditForm() {
+        let valid = true;
+        const excludeId = Number($('#editUserId').val());
+
+        const firstRes = validateNameValue($('#editFirstName').val());
+        setFieldValidity($('#editFirstNameField'), firstRes.valid);
+        if (!firstRes.valid) valid = false;
+
+        const lastRes = validateNameValue($('#editLastName').val());
+        setFieldValidity($('#editLastNameField'), lastRes.valid);
+        if (!lastRes.valid) valid = false;
+
+        const emailVal = $('#editEmail').val();
+        const emailRes = validateEmailValue(emailVal);
+        const $emailField = $('#editEmailField');
+        const $emailErrText = $('#editEmailErrText');
+        if (!emailRes.valid) {
+            $emailErrText.text('Enter a valid email address.');
+            setFieldValidity($emailField, false);
+            valid = false;
+        } else if (isDuplicateEmail(emailVal, excludeId)) {
+            $emailErrText.text(DUPLICATE_EMAIL_ERR);
+            setFieldValidity($emailField, false);
+            valid = false;
+        } else {
+            setFieldValidity($emailField, true);
+        }
+
+        const phoneRes = validatePhoneValue($('#editPhone').val(), false);
+        setFieldValidity($('#editPhoneField'), phoneRes.valid);
+        if (!phoneRes.valid) valid = false;
+
+        return valid;
+    }
+
+    // Wires live (on-input / on-blur) validation.
+    function wireLiveValidation() {
+        $('#addFirstName, #editFirstName').each(function () {
+            const prefix = this.id.startsWith('add') ? 'add' : 'edit';
+            $(this).on('input blur', function () {
+                const v = $(this).val();
+                setFieldValidity($('#' + prefix + 'FirstNameField'), validateNameValue(v).valid || v.trim() === '');
+            });
+        });
+        $('#addLastName, #editLastName').each(function () {
+            const prefix = this.id.startsWith('add') ? 'add' : 'edit';
+            $(this).on('input blur', function () {
+                const v = $(this).val();
+                setFieldValidity($('#' + prefix + 'LastNameField'), validateNameValue(v).valid || v.trim() === '');
+            });
+        });
+
+        $('#addEmail').on('input blur', function () {
+            const v = $(this).val();
+            const res = validateEmailValue(v);
+            const $field = $('#addEmailField');
+            if (v.trim() === '') { setFieldValidity($field, true); return; }
+            if (!res.valid) {
+                $('#addEmailErrText').text('Enter a valid email address.');
+                setFieldValidity($field, false);
+            } else if (isDuplicateEmail(v, null)) {
+                $('#addEmailErrText').text(DUPLICATE_EMAIL_ERR);
+                setFieldValidity($field, false);
+            } else {
+                setFieldValidity($field, true);
+            }
+        });
+        $('#editEmail').on('input blur', function () {
+            const v = $(this).val();
+            const excludeId = Number($('#editUserId').val());
+            const res = validateEmailValue(v);
+            const $field = $('#editEmailField');
+            if (v.trim() === '') { setFieldValidity($field, true); return; }
+            if (!res.valid) {
+                $('#editEmailErrText').text('Enter a valid email address.');
+                setFieldValidity($field, false);
+            } else if (isDuplicateEmail(v, excludeId)) {
+                $('#editEmailErrText').text(DUPLICATE_EMAIL_ERR);
+                setFieldValidity($field, false);
+            } else {
+                setFieldValidity($field, true);
+            }
+        });
+
+        $('#addPhone, #editPhone').each(function () {
+            const prefix = this.id.startsWith('add') ? 'add' : 'edit';
+            $(this).on('input blur', function () {
+                setFieldValidity($('#' + prefix + 'PhoneField'), validatePhoneValue($(this).val(), false).valid);
+            });
+        });
+
+        $('#addPassword').on('input', function () {
+            updatePasswordStrengthUI();
+            const v = $(this).val();
+            setFieldValidity($('#addPasswordField'), v === '' || validatePasswordValue(v).valid);
+            const confirmVal = $('#addConfirmPassword').val();
+            if (confirmVal) {
+                setFieldValidity($('#addConfirmPasswordField'), confirmVal === v);
+            }
+        });
+        $('#addConfirmPassword').on('input blur', function () {
+            const v = $(this).val();
+            setFieldValidity($('#addConfirmPasswordField'), v === '' || v === $('#addPassword').val());
+        });
+
+        $('#addRole').on('change', function () {
+            setFieldValidity($('#addRoleField'), !!$(this).val());
+        });
+    }
+
+    // Basic client-side sanitization: trims and collapses internal whitespace runs.
+    function sanitizeInput(value) {
+        return (value || '').trim().replace(/\s+/g, ' ');
+    }
+
 
     // UI – TABLE / FILTER / RENDER
     function getFilteredUsers() {
@@ -575,6 +866,20 @@
         const body = $('#userTableBody');
         body.empty();
 
+        const currentUsername = getCurrentUsername();
+
+        // Find current user's role from the loaded users list
+        let currentUserRole = null;
+        if (currentUsername) {
+            const me = allUsers.find(u =>
+                (u.username || '').toLowerCase() === currentUsername ||
+                (u.email || '').toLowerCase() === currentUsername
+            );
+            if (me) currentUserRole = (me.userRole || '').toUpperCase();
+        }
+
+        const isSuperAdmin = currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'SUPER ADMIN';
+
         if (allUsers.length === 0) {
             renderEmptyState('No users yet', 'When admin or staff accounts are created, they\'ll show up here.');
             $('#tableFootCount').text('Showing 0 users');
@@ -595,34 +900,72 @@
             const role = u.userRole || '—';
             const status = u.userstatus || u.status || 'PENDING';
 
+            // Check if this is the currently logged-in user
+            const isCurrentUser = currentUsername && (
+                (u.username || '').toLowerCase() === currentUsername ||
+                (u.email || '').toLowerCase() === currentUsername
+            );
+
+            const youTag = isCurrentUser ? `<span class="you-tag">You</span>` : '';
+
+            // Build actions
+            let actionsHtml = `<div class="row-actions">`;
+
+            // Edit button → hide for the logged-in user
+            if (!isCurrentUser) {
+                actionsHtml += `
+                <button class="icon-btn edit-btn" title="Edit user">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                    </svg>
+                </button>
+            `;
+            }
+
+            // Delete button → only Super Admin + not the current user
+            if (!isCurrentUser && isSuperAdmin) {
+                actionsHtml += `
+                <button class="icon-btn danger delete-btn" title="Delete user">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"/>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                        <path d="M10 11v6"/>
+                        <path d="M14 11v6"/>
+                    </svg>
+                </button>
+            `;
+            }
+
+            actionsHtml += `</div>`;
+
             const row = $(`
-        <tr>
-          <td>
-            <div class="user-cell">
-              <div class="avatar">${initials(u)}</div>
-              <div>
-                <div class="user-name">${escapeHtml(name)}</div>
-                <div class="user-email">${escapeHtml(email)}</div>
-              </div>
-            </div>
-          </td>
-          <td>${escapeHtml(phone)}</td>
-          <td><span class="pill role">${escapeHtml(role)}</span></td>
-          <td><span class="pill ${statusClass(status)}">${escapeHtml(String(status).toLowerCase())}</span></td>
-          <td>
-            <div class="row-actions">
-              <button class="icon-btn edit-btn" title="Edit user">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
-              </button>
-              <button class="icon-btn danger delete-btn" title="Delete user">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `);
-            row.find('.edit-btn').on('click', () => openEditModal(u));
-            row.find('.delete-btn').on('click', () => openDeleteModal(u));
+            <tr>
+                <td>
+                    <div class="user-cell">
+                        <div class="avatar">${initials(u)}</div>
+                        <div>
+                            <div class="user-name">${escapeHtml(name)} ${youTag}</div>
+                            <div class="user-email">${escapeHtml(email)}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>${escapeHtml(phone)}</td>
+                <td><span class="pill role">${escapeHtml(role)}</span></td>
+                <td><span class="pill ${statusClass(status)}">${escapeHtml(String(status).toLowerCase())}</span></td>
+                <td>${actionsHtml}</td>
+            </tr>
+        `);
+
+            // Attach events only when buttons exist
+            if (!isCurrentUser) {
+                row.find('.edit-btn').on('click', () => openEditModal(u));
+            }
+            if (!isCurrentUser && isSuperAdmin) {
+                row.find('.delete-btn').on('click', () => openDeleteModal(u));
+            }
+
             body.append(row);
         });
 
@@ -632,7 +975,6 @@
                 : `Showing ${users.length} users`
         );
     }
-
     function renderLoadingState() {
         $('#userTableBody').html(`
       <tr class="state-row"><td colspan="5">
@@ -701,38 +1043,16 @@
 
     function resetAddForm() {
         $('#addForm')[0].reset();
-        $('#addForm .field').removeClass('invalid');
+        $('#addForm .field').removeClass('invalid valid');
+        $('#addPasswordStrength').removeClass('weak medium strong');
+        $('#addPasswordStrengthLabel').text('\u00a0');
         $('#addStatus').val('ACTIVE');
         $('#createUserBtn').prop('disabled', false).text('Create user');
     }
 
-    function validateAddForm() {
-        $('#addForm .field').removeClass('invalid');
-        let valid = true;
-
-        if ($('#addFirstName').val().trim().length < 2) {
-            $('#addFirstName').closest('.field').addClass('invalid'); valid = false;
-        }
-        if ($('#addLastName').val().trim().length < 2) {
-            $('#addLastName').closest('.field').addClass('invalid'); valid = false;
-        }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('#addEmail').val().trim())) {
-            $('#addEmail').closest('.field').addClass('invalid'); valid = false;
-        }
-        if ($('#addPassword').val().length < 8) {
-            $('#addPassword').closest('.field').addClass('invalid'); valid = false;
-        }
-        if ($('#addConfirmPassword').val() !== $('#addPassword').val() || !$('#addConfirmPassword').val()) {
-            $('#addConfirmPassword').closest('.field').addClass('invalid'); valid = false;
-        }
-        if (!$('#addRole').val()) {
-            $('#addRole').closest('.field').addClass('invalid'); valid = false;
-        }
-        return valid;
-    }
-
     function openEditModal(u) {
         editingUser = u;
+        $('#editForm .field').removeClass('invalid valid');
         $('#editUserId').val(u.userId ?? u.id);
         $('#editFirstName').val(u.firstName || '');
         $('#editLastName').val(u.lastName || '');
@@ -779,6 +1099,8 @@
         $('#editForm').on('submit', function (e) { e.preventDefault(); saveUser(); });
         $('#addForm').on('submit', function (e) { e.preventDefault(); createUser(); });
 
+        wireLiveValidation();
+
         $('#signOutBtn').on('click', function () {
             localStorage.removeItem('JWT');
             localStorage.removeItem('userId');
@@ -807,15 +1129,14 @@
     const API_BASE = 'http://localhost:8080/v1/users';
 
     const ENDPOINTS = {
-        list:     API_BASE,                    // GET  – all users
-        roles:    API_BASE + '/roles',         // GET  – UserRole enum
-        statuses: API_BASE + '/statuses',      // GET  – UserStatus enum
-        create:   API_BASE + '/register',      // POST – create user
-        update:   API_BASE,                    // PUT  – update user
-        delete:   id => API_BASE + '/' + id    // DELETE
+        list:     API_BASE,
+        roles:    API_BASE + '/roles',
+        statuses: API_BASE + '/statuses',
+        create:   API_BASE + '/register',
+        update:   API_BASE,
+        delete:   id => API_BASE + '/' + id
     };
 
-    // GET roles → fill role dropdowns
     function loadRoles() {
         $.ajax({
             url: ENDPOINTS.roles,
@@ -850,7 +1171,6 @@
         });
     }
 
-    // GET statuses → fill status dropdowns
     function loadStatuses() {
         $.ajax({
             url: ENDPOINTS.statuses,
@@ -898,7 +1218,6 @@
         });
     }
 
-    // GET all users
     function loadUsers() {
         $('#refreshBtn').addClass('spinning');
         renderLoadingState();
@@ -927,17 +1246,19 @@
         });
     }
 
-    // POST create user
     function createUser() {
-        if (!validateAddForm()) return;
+        if (!validateAddForm()) {
+            showError('Please fix the highlighted fields before creating this user.');
+            return;
+        }
 
         const payload = {
             userId: 0,
-            username: $('#addEmail').val().trim(),
+            username: sanitizeInput($('#addEmail').val()),
             password: $('#addPassword').val(),
-            firstName: $('#addFirstName').val().trim(),
-            lastName: $('#addLastName').val().trim(),
-            phone: $('#addPhone').val().trim(),
+            firstName: sanitizeInput($('#addFirstName').val()),
+            lastName: sanitizeInput($('#addLastName').val()),
+            phone: sanitizeInput($('#addPhone').val()),
             userRole: $('#addRole').val(),
             userstatus: $('#addStatus').val()
         };
@@ -958,7 +1279,7 @@
             },
             error: function (xhr) {
                 let msg = `Couldn't create this user (error ${xhr.status}).`;
-                if (xhr.status === 409) msg = 'A user with this email already exists.';
+                if (xhr.status === 409) msg = DUPLICATE_EMAIL_ERR;
                 else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
                 showError(msg);
             },
@@ -968,14 +1289,18 @@
         });
     }
 
-    // PUT update user
     function saveUser() {
+        if (!validateEditForm()) {
+            showError('Please fix the highlighted fields before saving this user.');
+            return;
+        }
+
         const payload = {
             userId: Number($('#editUserId').val()),
-            username: $('#editEmail').val().trim(),
-            firstName: $('#editFirstName').val().trim(),
-            lastName: $('#editLastName').val().trim(),
-            phone: $('#editPhone').val().trim(),
+            username: sanitizeInput($('#editEmail').val()),
+            firstName: sanitizeInput($('#editFirstName').val()),
+            lastName: sanitizeInput($('#editLastName').val()),
+            phone: sanitizeInput($('#editPhone').val()),
             userRole: $('#editRole').val(),
             userstatus: $('#editStatus').val()
         };
@@ -994,8 +1319,11 @@
                 closeEditModal();
                 loadUsers();
             },
-            error: function () {
-                showError('Failed to update user.');
+            error: function (xhr) {
+                let msg = 'Failed to update user.';
+                if (xhr.status === 409) msg = DUPLICATE_EMAIL_ERR;
+                else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+                showError(msg);
             },
             complete: function () {
                 btn.prop('disabled', false).text('Save changes');
@@ -1003,7 +1331,6 @@
         });
     }
 
-    // DELETE user
     function confirmDelete() {
         if (!deletingUser) return;
         const id = deletingUser.userId ?? deletingUser.id;

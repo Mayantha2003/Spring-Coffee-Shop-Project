@@ -126,14 +126,19 @@
     .modal .modal-sub{font-size:13.5px; color:var(--ink-soft); margin-bottom:22px;}
     .field{margin-bottom:16px;}
     .field label{display:block; font-size:12px; font-weight:600; color:var(--ink); margin-bottom:6px;}
+    .field .char-count{float:right; font-weight:400; color:var(--ink-soft); font-size:11px;}
+    .field .char-count.near-limit{color:var(--amber);}
+    .field .char-count.at-limit{color:var(--error);}
     .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
     .field input, .field select, .field textarea{width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter', sans-serif; font-size:14px; background:#fff; color:var(--ink); outline:none; transition:border-color .18s ease, box-shadow .18s ease;}
     .field textarea{resize:vertical; min-height:64px;}
     .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
     .field select{appearance:none;}
-    .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none;}
-    .field.invalid input, .field.invalid select, .field.invalid textarea{border-color:var(--error);}
-    .field.invalid .field-err{display:block;}
+    .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none; align-items:center; gap:5px;}
+    .field-err svg{width:12px; height:12px; stroke:var(--error); flex-shrink:0;}
+    .field.invalid input, .field.invalid select, .field.invalid textarea{border-color:var(--error); box-shadow:0 0 0 3px rgba(178,59,59,0.08);}
+    .field.invalid .field-err{display:flex;}
+    .field.valid input, .field.valid textarea{border-color:var(--success);}
     .field-hint{font-size:11.5px; color:var(--ink-soft); margin-top:6px;}
     .modal-actions{display:flex; gap:10px; margin-top:22px;}
     .btn{flex:1; padding:12px; border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; border:1.5px solid transparent; transition:background .15s ease, border-color .15s ease;}
@@ -263,24 +268,28 @@
   <div class="modal">
     <h3>Edit category</h3>
     <p class="modal-sub">Update the category details, then save your changes.</p>
-    <form id="editForm">
+    <form id="editForm" novalidate>
       <input type="hidden" id="editCategoryId">
-      <div class="field">
+      <div class="field" id="editCategoryNameField">
         <label for="editCategoryName">Category name</label>
-        <input type="text" id="editCategoryName" required>
+        <input type="text" id="editCategoryName" maxlength="50" required>
+        <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span id="editCategoryNameErrText">Enter a valid category name (2–50 chars, letters/numbers).</span></div>
       </div>
-      <div class="field">
-        <label for="editDescription">Description</label>
-        <textarea id="editDescription" placeholder="Short description shown to staff"></textarea>
+      <div class="field" id="editDescriptionField">
+        <label for="editDescription">Description <span class="char-count" id="editDescCount">0 / 200</span></label>
+        <textarea id="editDescription" maxlength="200" placeholder="Short description shown to staff"></textarea>
+        <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Description can't exceed 200 characters.</span></div>
       </div>
       <div class="field-row">
-        <div class="field">
+        <div class="field" id="editIconField">
           <label for="editIcon">Icon (emoji)</label>
           <input type="text" id="editIcon" maxlength="4" placeholder="☕">
+          <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Icon can be at most 4 characters — one emoji works best.</span></div>
         </div>
-        <div class="field">
+        <div class="field" id="editDisplayOrderField">
           <label for="editDisplayOrder">Display order</label>
-          <input type="number" id="editDisplayOrder" min="0" step="1" value="0">
+          <input type="number" id="editDisplayOrder" min="0" max="999" step="1" value="0">
+          <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a whole number between 0 and 999.</span></div>
         </div>
       </div>
       <div class="field">
@@ -304,23 +313,26 @@
     <h3>Add category</h3>
     <p class="modal-sub">Create a new menu category.</p>
     <form id="addForm" novalidate>
-      <div class="field">
+      <div class="field" id="addCategoryNameField">
         <label for="addCategoryName">Category name</label>
-        <input type="text" id="addCategoryName" placeholder="e.g. Beverages" required>
-        <div class="field-err" id="addCategoryNameErr">Please enter a category name (2+ characters).</div>
+        <input type="text" id="addCategoryName" maxlength="50" placeholder="e.g. Beverages" required>
+        <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span id="addCategoryNameErrText">Enter a valid category name (2–50 chars, letters/numbers).</span></div>
       </div>
-      <div class="field">
-        <label for="addDescription">Description</label>
-        <textarea id="addDescription" placeholder="Short description shown to staff"></textarea>
+      <div class="field" id="addDescriptionField">
+        <label for="addDescription">Description <span class="char-count" id="addDescCount">0 / 200</span></label>
+        <textarea id="addDescription" maxlength="200" placeholder="Short description shown to staff"></textarea>
+        <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Description can't exceed 200 characters.</span></div>
       </div>
       <div class="field-row">
-        <div class="field">
+        <div class="field" id="addIconField">
           <label for="addIcon">Icon (emoji)</label>
           <input type="text" id="addIcon" maxlength="4" placeholder="☕">
+          <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Icon can be at most 4 characters — one emoji works best.</span></div>
         </div>
-        <div class="field">
+        <div class="field" id="addDisplayOrderField">
           <label for="addDisplayOrder">Display order</label>
-          <input type="number" id="addDisplayOrder" min="0" step="1" value="0">
+          <input type="number" id="addDisplayOrder" min="0" max="999" step="1" value="0">
+          <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a whole number between 0 and 999.</span></div>
         </div>
       </div>
       <div class="field">
@@ -402,6 +414,157 @@
     if (Array.isArray(c.items)) return c.items.length;
     if (typeof c.itemCount === 'number') return c.itemCount;
     return 0;
+  }
+
+  // =======================================================
+  // VALIDATION LAYER (industry-grade, shared by Add + Edit)
+  // =======================================================
+
+  const VALIDATION_RULES = {
+    // Unicode-aware: letters, numbers, spaces, ampersands, apostrophes, hyphens, periods (e.g. "Tea & Coffee", "Chef's Specials")
+    categoryName: /^[\p{L}\p{N}][\p{L}\p{N}\s&'.,-]{1,49}$/u,
+    // Whole numbers only, kept within a sane display-order range
+    displayOrder: /^\d+$/
+  };
+
+  const DUPLICATE_NAME_ERR = 'A category with this name already exists.';
+
+  function validateCategoryNameValue(value) {
+    const v = (value || '').trim();
+    if (v.length < 2) return { valid: false, reason: 'too_short' };
+    if (v.length > 50) return { valid: false, reason: 'too_long' };
+    if (!VALIDATION_RULES.categoryName.test(v)) return { valid: false, reason: 'bad_chars' };
+    return { valid: true };
+  }
+
+  function validateDescriptionValue(value) {
+    const v = (value || '').trim();
+    if (v.length > 200) return { valid: false, reason: 'too_long' };
+    return { valid: true };
+  }
+
+  function validateIconValue(value) {
+    const v = (value || '').trim();
+    if (!v) return { valid: true };
+    // Count by Unicode grapheme-ish unit so a single emoji (which may be multiple code units) still passes
+    const graphemeCount = Array.from(v).length;
+    if (graphemeCount > 4) return { valid: false, reason: 'too_long' };
+    return { valid: true };
+  }
+
+  function validateDisplayOrderValue(value) {
+    const v = String(value ?? '').trim();
+    if (v === '') return { valid: true }; // defaults to 0 downstream
+    if (!VALIDATION_RULES.displayOrder.test(v)) return { valid: false, reason: 'bad_format' };
+    const n = Number(v);
+    if (n < 0 || n > 999) return { valid: false, reason: 'out_of_range' };
+    return { valid: true };
+  }
+
+  // Checks the proposed name against categories already loaded (case-insensitive), excluding the category being edited.
+  function isDuplicateName(name, excludeId) {
+    const normalized = (name || '').trim().toLowerCase();
+    if (!normalized) return false;
+    return allCategories.some(c => {
+      const id = c.categoryId ?? c.id;
+      if (excludeId !== undefined && excludeId !== null && String(id) === String(excludeId)) return false;
+      return (c.categoryName || '').trim().toLowerCase() === normalized;
+    });
+  }
+
+  function setFieldValidity($fieldWrap, isValid) {
+    $fieldWrap.toggleClass('invalid', !isValid);
+    $fieldWrap.toggleClass('valid', isValid);
+  }
+
+  function setFieldError($fieldWrap, message) {
+    if (message) {
+      $fieldWrap.find('.field-err span').text(message);
+    }
+  }
+
+  // Runs all field validators for a given form prefix ("add" or "edit").
+  // Returns true only if every field passes; marks each field's UI state along the way.
+  function validateCategoryForm(prefix) {
+    let allValid = true;
+    const excludeId = prefix === 'edit' ? Number($('#editCategoryId').val()) : null;
+
+    const nameVal = $('#' + prefix + 'CategoryName').val();
+    const nameRes = validateCategoryNameValue(nameVal);
+    const $nameField = $('#' + prefix + 'CategoryNameField');
+    const $nameErrText = $('#' + prefix + 'CategoryNameErrText');
+    if (!nameRes.valid) {
+      $nameErrText.text('Enter a valid category name (2–50 chars, letters/numbers).');
+      setFieldValidity($nameField, false);
+      allValid = false;
+    } else if (isDuplicateName(nameVal, excludeId)) {
+      $nameErrText.text(DUPLICATE_NAME_ERR);
+      setFieldValidity($nameField, false);
+      allValid = false;
+    } else {
+      setFieldValidity($nameField, true);
+    }
+
+    const descRes = validateDescriptionValue($('#' + prefix + 'Description').val());
+    setFieldValidity($('#' + prefix + 'DescriptionField'), descRes.valid);
+    if (!descRes.valid) allValid = false;
+
+    const iconRes = validateIconValue($('#' + prefix + 'Icon').val());
+    setFieldValidity($('#' + prefix + 'IconField'), iconRes.valid);
+    if (!iconRes.valid) allValid = false;
+
+    const orderRes = validateDisplayOrderValue($('#' + prefix + 'DisplayOrder').val());
+    setFieldValidity($('#' + prefix + 'DisplayOrderField'), orderRes.valid);
+    if (!orderRes.valid) allValid = false;
+
+    return allValid;
+  }
+
+  // Wires live (on-input / on-blur) validation for a given form prefix.
+  function wireLiveValidation(prefix) {
+    $('#' + prefix + 'CategoryName').on('input blur', function () {
+      const v = $(this).val();
+      const empty = v.trim() === '';
+      const res = validateCategoryNameValue(v);
+      const $field = $('#' + prefix + 'CategoryNameField');
+      const $errText = $('#' + prefix + 'CategoryNameErrText');
+      if (empty) { setFieldValidity($field, true); return; }
+      if (!res.valid) {
+        $errText.text('Enter a valid category name (2–50 chars, letters/numbers).');
+        setFieldValidity($field, false);
+      } else {
+        const excludeId = prefix === 'edit' ? Number($('#editCategoryId').val()) : null;
+        if (isDuplicateName(v, excludeId)) {
+          $errText.text(DUPLICATE_NAME_ERR);
+          setFieldValidity($field, false);
+        } else {
+          setFieldValidity($field, true);
+        }
+      }
+    });
+
+    $('#' + prefix + 'Description').on('input blur', function () {
+      const len = $(this).val().length;
+      const $count = $('#' + prefix + 'DescCount');
+      $count.text(len + ' / 200');
+      $count.toggleClass('at-limit', len >= 200);
+      $count.toggleClass('near-limit', len >= 170 && len < 200);
+      setFieldValidity($('#' + prefix + 'DescriptionField'), validateDescriptionValue($(this).val()).valid);
+    });
+
+    $('#' + prefix + 'Icon').on('input blur', function () {
+      setFieldValidity($('#' + prefix + 'IconField'), validateIconValue($(this).val()).valid);
+    });
+
+    $('#' + prefix + 'DisplayOrder').on('input blur', function () {
+      const v = $(this).val();
+      setFieldValidity($('#' + prefix + 'DisplayOrderField'), v.trim() === '' || validateDisplayOrderValue(v).valid);
+    });
+  }
+
+  // Basic client-side sanitization: trims and collapses internal whitespace runs.
+  function sanitizeInput(value) {
+    return (value || '').trim().replace(/\s+/g, ' ');
   }
 
   // UI – TABLE / FILTER / RENDER
@@ -550,30 +713,26 @@
 
   function resetAddForm() {
     $('#addForm')[0].reset();
-    $('#addForm .field').removeClass('invalid');
+    $('#addForm .field').removeClass('invalid valid');
     $('#addStatus').val('ACTIVE');
     $('#addDisplayOrder').val(0);
+    $('#addDescCount').text('0 / 200').removeClass('near-limit at-limit');
     $('#createCategoryBtn').prop('disabled', false).text('Create category');
-  }
-
-  function validateAddForm() {
-    $('#addForm .field').removeClass('invalid');
-    let valid = true;
-    if ($('#addCategoryName').val().trim().length < 2) {
-      $('#addCategoryName').closest('.field').addClass('invalid');
-      valid = false;
-    }
-    return valid;
   }
 
   function openEditModal(c) {
     editingCategory = c;
+    $('#editForm .field').removeClass('invalid valid');
     $('#editCategoryId').val(c.categoryId ?? c.id);
     $('#editCategoryName').val(c.categoryName || '');
     $('#editDescription').val(c.description || '');
     $('#editIcon').val(c.icon || '');
     $('#editDisplayOrder').val(c.displayOrder ?? 0);
     $('#editStatus').val((c.categoryStatus || 'ACTIVE').toUpperCase());
+    const descLen = (c.description || '').length;
+    $('#editDescCount').text(descLen + ' / 200')
+            .toggleClass('at-limit', descLen >= 200)
+            .toggleClass('near-limit', descLen >= 170 && descLen < 200);
     $('#saveCategoryBtn').prop('disabled', false).text('Save changes');
     $('#editOverlay').addClass('show');
   }
@@ -611,6 +770,9 @@
     $('#statusFilter').on('change', renderTable);
     $('#editForm').on('submit', function (e) { e.preventDefault(); saveCategory(); });
     $('#addForm').on('submit', function (e) { e.preventDefault(); createCategory(); });
+
+    wireLiveValidation('add');
+    wireLiveValidation('edit');
 
     $('#signOutBtn').on('click', function () {
       localStorage.removeItem('JWT');
@@ -725,12 +887,15 @@
 
   // POST create category
   function createCategory() {
-    if (!validateAddForm()) return;
+    if (!validateCategoryForm('add')) {
+      showError('Please fix the highlighted fields before creating this category.');
+      return;
+    }
 
     const payload = {
-      categoryName: $('#addCategoryName').val().trim(),
-      description: $('#addDescription').val().trim(),
-      icon: $('#addIcon').val().trim(),
+      categoryName: sanitizeInput($('#addCategoryName').val()),
+      description: sanitizeInput($('#addDescription').val()),
+      icon: sanitizeInput($('#addIcon').val()),
       displayOrder: Number($('#addDisplayOrder').val()) || 0,
       categoryStatus: $('#addStatus').val()
     };
@@ -751,7 +916,7 @@
       },
       error: function (xhr) {
         let msg = `Couldn't create this category (error ${xhr.status}).`;
-        if (xhr.status === 409) msg = 'A category with this name already exists.';
+        if (xhr.status === 409) msg = DUPLICATE_NAME_ERR;
         else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
         showError(msg);
       },
@@ -763,11 +928,16 @@
 
   // PUT update category
   function saveCategory() {
+    if (!validateCategoryForm('edit')) {
+      showError('Please fix the highlighted fields before saving this category.');
+      return;
+    }
+
     const payload = {
       categoryId: Number($('#editCategoryId').val()),
-      categoryName: $('#editCategoryName').val().trim(),
-      description: $('#editDescription').val().trim(),
-      icon: $('#editIcon').val().trim(),
+      categoryName: sanitizeInput($('#editCategoryName').val()),
+      description: sanitizeInput($('#editDescription').val()),
+      icon: sanitizeInput($('#editIcon').val()),
       displayOrder: Number($('#editDisplayOrder').val()) || 0,
       categoryStatus: $('#editStatus').val()
     };
@@ -786,8 +956,11 @@
         closeEditModal();
         loadCategories();
       },
-      error: function () {
-        showError('Failed to update category.');
+      error: function (xhr) {
+        let msg = 'Failed to update category.';
+        if (xhr.status === 409) msg = DUPLICATE_NAME_ERR;
+        else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+        showError(msg);
       },
       complete: function () {
         btn.prop('disabled', false).text('Save changes');

@@ -283,7 +283,7 @@ public class StockServiceImpl implements StockService {
     public List<StockTransactionDTO> getAllTransactions() {
         log.info("Fetching all stock transactions...");
 
-        List<StockTransaction> transactions = transactionRepository.findAll();
+        List<StockTransaction> transactions = transactionRepository.findAllWithDetails();
         List<StockTransactionDTO> dtoList = new ArrayList<>();
 
         for (StockTransaction t : transactions) {

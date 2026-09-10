@@ -95,6 +95,7 @@
 
         .price-cell{font-family:'Newsreader', serif; font-size:15px; color:var(--espresso);}
         .price-cell .strike{color:var(--ink-soft); text-decoration:line-through; font-size:12.5px; margin-left:6px; font-family:'Inter',sans-serif;}
+        .price-cell .margin{display:block; font-family:'Inter',sans-serif; font-size:11px; color:var(--ink-soft); margin-top:2px;}
 
         .pill{display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:100px; font-size:11.5px; font-weight:600; text-transform:capitalize; white-space:nowrap;}
         .pill::before{content:""; width:6px; height:6px; border-radius:50%; flex-shrink:0;}
@@ -137,16 +138,23 @@
         .modal .modal-sub{font-size:13.5px; color:var(--ink-soft); margin-bottom:22px;}
         .field{margin-bottom:16px;}
         .field label{display:block; font-size:12px; font-weight:600; color:var(--ink); margin-bottom:6px;}
+        .field .char-count{float:right; font-weight:400; color:var(--ink-soft); font-size:11px;}
+        .field .char-count.near-limit{color:var(--amber);}
+        .field .char-count.at-limit{color:var(--error);}
         .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
         .field-row.three{grid-template-columns:1fr 1fr 1fr;}
         .field input, .field select, .field textarea{width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:var(--radius); font-family:'Inter', sans-serif; font-size:14px; background:#fff; color:var(--ink); outline:none; transition:border-color .18s ease, box-shadow .18s ease;}
         .field textarea{resize:vertical; min-height:64px;}
         .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--espresso); box-shadow:0 0 0 3px rgba(193,122,52,0.14);}
         .field select{appearance:none;}
-        .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none;}
-        .field.invalid input, .field.invalid select, .field.invalid textarea{border-color:var(--error);}
-        .field.invalid .field-err{display:block;}
+        .field-err{font-size:11.5px; color:var(--error); margin-top:6px; display:none; align-items:center; gap:5px;}
+        .field-err svg{width:12px; height:12px; stroke:var(--error); flex-shrink:0;}
+        .field.invalid input, .field.invalid select, .field.invalid textarea{border-color:var(--error); box-shadow:0 0 0 3px rgba(178,59,59,0.08);}
+        .field.invalid .field-err{display:flex;}
+        .field.valid input{border-color:var(--success);}
         .field-hint{font-size:11.5px; color:var(--ink-soft); margin-top:6px;}
+        .field-warn{font-size:11.5px; color:var(--amber); margin-top:6px; display:none; align-items:center; gap:5px;}
+        .field-warn.show{display:flex;}
         .image-preview{margin-top:10px; display:none; align-items:center; gap:10px;}
         .image-preview.show{display:flex;}
         .image-preview img{width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid var(--line);}
@@ -285,15 +293,17 @@
     <div class="modal">
         <h3>Edit item</h3>
         <p class="modal-sub">Update the item details, then save your changes.</p>
-        <form id="editForm">
+        <form id="editForm" novalidate>
             <input type="hidden" id="editItemId">
-            <div class="field">
+            <div class="field" id="editItemNameField">
                 <label for="editItemName">Item name</label>
-                <input type="text" id="editItemName" required>
+                <input type="text" id="editItemName" maxlength="100" required>
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span id="editItemNameErrText">Enter a valid item name (2–100 chars).</span></div>
             </div>
-            <div class="field">
-                <label for="editDescription">Description</label>
-                <textarea id="editDescription" placeholder="Short description shown on the menu"></textarea>
+            <div class="field" id="editDescriptionField">
+                <label for="editDescription">Description <span class="char-count" id="editDescCount">0 / 500</span></label>
+                <textarea id="editDescription" maxlength="500" placeholder="Short description shown on the menu"></textarea>
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Description can't exceed 500 characters.</span></div>
             </div>
             <div class="field-row">
                 <div class="field">
@@ -302,29 +312,40 @@
                 </div>
                 <div class="field">
                     <label for="editStatus">Status</label>
-                    <select id="editStatus">
-                        <option value="">All statuses</option>
-                    </select>
+                    <select id="editStatus"></select>
                 </div>
             </div>
             <div class="field-row three">
-                <div class="field">
-                    <label for="editPrice">Price</label>
+                <div class="field" id="editPriceField">
+                    <label for="editPrice">Selling price</label>
                     <input type="number" id="editPrice" min="0" step="0.01" required>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid selling price (0 or more).</span></div>
                 </div>
-                <div class="field">
+                <div class="field" id="editCostPriceField">
+                    <label for="editCostPrice">Cost price</label>
+                    <input type="number" id="editCostPrice" min="0" step="0.01" required>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid cost price (0 or more).</span></div>
+                </div>
+                <div class="field" id="editDiscountPriceField">
                     <label for="editDiscountPrice">Discount price</label>
                     <input type="number" id="editDiscountPrice" min="0" step="0.01" placeholder="Optional">
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Discount price must be less than the selling price.</span></div>
                 </div>
-                <div class="field">
-                    <label for="editPrepTime">Prep time (min)</label>
-                    <input type="number" id="editPrepTime" min="0" step="1" placeholder="e.g. 5">
-                </div>
+            </div>
+            <div class="field-warn" id="editMarginWarn">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/></svg>
+                <span>Selling price is below cost price — this item would sell at a loss.</span>
+            </div>
+            <div class="field" id="editPrepTimeField">
+                <label for="editPrepTime">Prep time (min)</label>
+                <input type="number" id="editPrepTime" min="0" step="1" placeholder="e.g. 5">
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a whole number of minutes (0 or more).</span></div>
             </div>
             <div class="field">
                 <label for="editImageFile">Item image</label>
                 <input type="file" id="editImageFile" accept="image/*">
                 <div class="field-hint" id="currentImageHint">No image set</div>
+                <div class="field-err" id="editImageFileErr"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Please choose an image under 5 MB (JPG, PNG, or WEBP).</span></div>
                 <div class="image-preview" id="editImagePreview">
                     <img id="editImagePreviewImg" src="" alt="preview">
                     <span style="font-size:12px; color:var(--ink-soft);">New image selected</span>
@@ -351,46 +372,57 @@
         <h3>Add item</h3>
         <p class="modal-sub">Create a new menu item.</p>
         <form id="addForm" novalidate>
-            <div class="field">
+            <div class="field" id="addItemNameField">
                 <label for="addItemName">Item name</label>
-                <input type="text" id="addItemName" placeholder="e.g. Cappuccino" required>
-                <div class="field-err" id="addItemNameErr">Please enter an item name (2+ characters).</div>
+                <input type="text" id="addItemName" maxlength="100" placeholder="e.g. Cappuccino" required>
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span id="addItemNameErrText">Enter a valid item name (2–100 chars).</span></div>
             </div>
-            <div class="field">
-                <label for="addDescription">Description</label>
-                <textarea id="addDescription" placeholder="Short description shown on the menu"></textarea>
+            <div class="field" id="addDescriptionField">
+                <label for="addDescription">Description <span class="char-count" id="addDescCount">0 / 500</span></label>
+                <textarea id="addDescription" maxlength="500" placeholder="Short description shown on the menu"></textarea>
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Description can't exceed 500 characters.</span></div>
             </div>
             <div class="field-row">
-                <div class="field">
+                <div class="field" id="addCategoryField">
                     <label for="addCategory">Category</label>
                     <select id="addCategory" required></select>
-                    <div class="field-err" id="addCategoryErr">Please select a category.</div>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Please select a category.</span></div>
                 </div>
                 <div class="field">
                     <label for="addStatus">Status</label>
-                    <select id="addStatus">
-                        <option value="">All statuses</option>
-                    </select>
+                    <select id="addStatus"></select>
                 </div>
             </div>
             <div class="field-row three">
-                <div class="field">
-                    <label for="addPrice">Price</label>
+                <div class="field" id="addPriceField">
+                    <label for="addPrice">Selling price</label>
                     <input type="number" id="addPrice" min="0" step="0.01" placeholder="0.00" required>
-                    <div class="field-err" id="addPriceErr">Enter a valid price.</div>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid selling price (0 or more).</span></div>
                 </div>
-                <div class="field">
+                <div class="field" id="addCostPriceField">
+                    <label for="addCostPrice">Cost price</label>
+                    <input type="number" id="addCostPrice" min="0" step="0.01" placeholder="0.00" required>
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a valid cost price (0 or more).</span></div>
+                </div>
+                <div class="field" id="addDiscountPriceField">
                     <label for="addDiscountPrice">Discount price</label>
                     <input type="number" id="addDiscountPrice" min="0" step="0.01" placeholder="Optional">
+                    <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Discount price must be less than the selling price.</span></div>
                 </div>
-                <div class="field">
-                    <label for="addPrepTime">Prep time (min)</label>
-                    <input type="number" id="addPrepTime" min="0" step="1" placeholder="e.g. 5">
-                </div>
+            </div>
+            <div class="field-warn" id="addMarginWarn">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/></svg>
+                <span>Selling price is below cost price — this item would sell at a loss.</span>
+            </div>
+            <div class="field" id="addPrepTimeField">
+                <label for="addPrepTime">Prep time (min)</label>
+                <input type="number" id="addPrepTime" min="0" step="1" placeholder="e.g. 5">
+                <div class="field-err"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Enter a whole number of minutes (0 or more).</span></div>
             </div>
             <div class="field">
                 <label for="addImageFile">Item image</label>
                 <input type="file" id="addImageFile" accept="image/*">
+                <div class="field-err" id="addImageFileErr"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Please choose an image under 5 MB (JPG, PNG, or WEBP).</span></div>
                 <div class="image-preview" id="addImagePreview">
                     <img id="addImagePreviewImg" src="" alt="preview">
                     <span style="font-size:12px; color:var(--ink-soft);">Image selected</span>
@@ -425,7 +457,6 @@
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-
     // STATE VARIABLES
     let allItems = [];
     let allCategories = [];
@@ -433,6 +464,8 @@
     let editingItem = null;
     let deletingItem = null;
 
+    const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+    const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
     // HELPERS
     function authHeaders() {
@@ -494,6 +527,217 @@
         return 'status-' + s;
     }
 
+    // =======================================================
+    // VALIDATION LAYER
+    // =======================================================
+    const VALIDATION_RULES = {
+        itemName: /^[\p{L}\p{N}][\p{L}\p{N}\s&'.,()-]{1,99}$/u
+    };
+
+    const DUPLICATE_NAME_ERR = 'An item with this name already exists.';
+
+    function validateItemNameValue(value) {
+        const v = (value || '').trim();
+        if (v.length < 2) return { valid: false, reason: 'too_short' };
+        if (v.length > 100) return { valid: false, reason: 'too_long' };
+        if (!VALIDATION_RULES.itemName.test(v)) return { valid: false, reason: 'bad_chars' };
+        return { valid: true };
+    }
+
+    function validateDescriptionValue(value) {
+        const v = (value || '').trim();
+        if (v.length > 500) return { valid: false, reason: 'too_long' };
+        return { valid: true };
+    }
+
+    function validateMoneyValue(value, required) {
+        const v = String(value ?? '').trim();
+        if (v === '') return required ? { valid: false, reason: 'required' } : { valid: true };
+        const n = Number(v);
+        if (isNaN(n) || n < 0) return { valid: false, reason: 'invalid' };
+        return { valid: true };
+    }
+
+    function validateDiscountValue(discountValue, priceValue) {
+        const v = String(discountValue ?? '').trim();
+        if (v === '') return { valid: true };
+        const n = Number(v);
+        if (isNaN(n) || n < 0) return { valid: false, reason: 'invalid' };
+        const price = Number(priceValue);
+        if (!isNaN(price) && n >= price) return { valid: false, reason: 'not_less_than_price' };
+        return { valid: true };
+    }
+
+    function validatePrepTimeValue(value) {
+        const v = String(value ?? '').trim();
+        if (v === '') return { valid: true };
+        if (!/^\d+$/.test(v)) return { valid: false, reason: 'invalid' };
+        return { valid: true };
+    }
+
+    function validateImageFile(inputEl) {
+        if (!inputEl || !inputEl.files || !inputEl.files[0]) return { valid: true };
+        const file = inputEl.files[0];
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return { valid: false, reason: 'bad_type' };
+        if (file.size > MAX_IMAGE_BYTES) return { valid: false, reason: 'too_large' };
+        return { valid: true };
+    }
+
+    function isDuplicateItemName(name, excludeId) {
+        const normalized = (name || '').trim().toLowerCase();
+        if (!normalized) return false;
+        return allItems.some(it => {
+            const id = it.itemId ?? it.id;
+            if (excludeId !== undefined && excludeId !== null && String(id) === String(excludeId)) return false;
+            return (it.itemName || '').trim().toLowerCase() === normalized;
+        });
+    }
+
+    function setFieldValidity($fieldWrap, isValid) {
+        $fieldWrap.toggleClass('invalid', !isValid);
+        $fieldWrap.toggleClass('valid', isValid);
+    }
+
+    function updateMarginWarning(prefix) {
+        const price = Number($('#' + prefix + 'Price').val());
+        const cost = Number($('#' + prefix + 'CostPrice').val());
+        const show = !isNaN(price) && !isNaN(cost) && $('#' + prefix + 'Price').val() !== '' && $('#' + prefix + 'CostPrice').val() !== '' && price < cost;
+        $('#' + prefix + 'MarginWarn').toggleClass('show', show);
+    }
+
+    function validateItemForm(prefix) {
+        let allValid = true;
+        const excludeId = prefix === 'edit' ? Number($('#editItemId').val()) : null;
+
+        const nameVal = $('#' + prefix + 'ItemName').val();
+        const nameRes = validateItemNameValue(nameVal);
+        const $nameField = $('#' + prefix + 'ItemNameField');
+        const $nameErrText = $('#' + prefix + 'ItemNameErrText');
+        if (!nameRes.valid) {
+            $nameErrText.text('Enter a valid item name (2–100 chars).');
+            setFieldValidity($nameField, false);
+            allValid = false;
+        } else if (isDuplicateItemName(nameVal, excludeId)) {
+            $nameErrText.text(DUPLICATE_NAME_ERR);
+            setFieldValidity($nameField, false);
+            allValid = false;
+        } else {
+            setFieldValidity($nameField, true);
+        }
+
+        const descRes = validateDescriptionValue($('#' + prefix + 'Description').val());
+        setFieldValidity($('#' + prefix + 'DescriptionField'), descRes.valid);
+        if (!descRes.valid) allValid = false;
+
+        const categoryOk = !!$('#' + prefix + 'Category').val();
+        if (prefix === 'add') {
+            setFieldValidity($('#addCategoryField'), categoryOk);
+            if (!categoryOk) allValid = false;
+        }
+
+        const priceRes = validateMoneyValue($('#' + prefix + 'Price').val(), true);
+        setFieldValidity($('#' + prefix + 'PriceField'), priceRes.valid);
+        if (!priceRes.valid) allValid = false;
+
+        const costRes = validateMoneyValue($('#' + prefix + 'CostPrice').val(), true);
+        setFieldValidity($('#' + prefix + 'CostPriceField'), costRes.valid);
+        if (!costRes.valid) allValid = false;
+
+        const discountRes = validateDiscountValue($('#' + prefix + 'DiscountPrice').val(), $('#' + prefix + 'Price').val());
+        setFieldValidity($('#' + prefix + 'DiscountPriceField'), discountRes.valid);
+        if (!discountRes.valid) allValid = false;
+
+        const prepRes = validatePrepTimeValue($('#' + prefix + 'PrepTime').val());
+        setFieldValidity($('#' + prefix + 'PrepTimeField'), prepRes.valid);
+        if (!prepRes.valid) allValid = false;
+
+        const imageRes = validateImageFile(document.getElementById(prefix + 'ImageFile'));
+        if (!imageRes.valid) {
+            $('#' + prefix + 'ImageFileErr').css('display', 'flex');
+            allValid = false;
+        } else {
+            $('#' + prefix + 'ImageFileErr').css('display', 'none');
+        }
+
+        updateMarginWarning(prefix);
+        return allValid;
+    }
+
+    function wireLiveValidation(prefix) {
+        $('#' + prefix + 'ItemName').on('input blur', function () {
+            const v = $(this).val();
+            const empty = v.trim() === '';
+            const res = validateItemNameValue(v);
+            const $field = $('#' + prefix + 'ItemNameField');
+            const $errText = $('#' + prefix + 'ItemNameErrText');
+            if (empty) { setFieldValidity($field, true); return; }
+            if (!res.valid) {
+                $errText.text('Enter a valid item name (2–100 chars).');
+                setFieldValidity($field, false);
+            } else {
+                const excludeId = prefix === 'edit' ? Number($('#editItemId').val()) : null;
+                if (isDuplicateItemName(v, excludeId)) {
+                    $errText.text(DUPLICATE_NAME_ERR);
+                    setFieldValidity($field, false);
+                } else {
+                    setFieldValidity($field, true);
+                }
+            }
+        });
+
+        $('#' + prefix + 'Description').on('input blur', function () {
+            const len = $(this).val().length;
+            const $count = $('#' + prefix + 'DescCount');
+            $count.text(len + ' / 500');
+            $count.toggleClass('at-limit', len >= 500);
+            $count.toggleClass('near-limit', len >= 450 && len < 500);
+            setFieldValidity($('#' + prefix + 'DescriptionField'), validateDescriptionValue($(this).val()).valid);
+        });
+
+        if (prefix === 'add') {
+            $('#addCategory').on('change', function () {
+                setFieldValidity($('#addCategoryField'), !!$(this).val());
+            });
+        }
+
+        $('#' + prefix + 'Price').on('input blur', function () {
+            const v = $(this).val();
+            setFieldValidity($('#' + prefix + 'PriceField'), v.trim() === '' || validateMoneyValue(v, true).valid);
+            const discountVal = $('#' + prefix + 'DiscountPrice').val();
+            if (discountVal !== '') {
+                setFieldValidity($('#' + prefix + 'DiscountPriceField'), validateDiscountValue(discountVal, v).valid);
+            }
+            updateMarginWarning(prefix);
+        });
+
+        $('#' + prefix + 'CostPrice').on('input blur', function () {
+            const v = $(this).val();
+            setFieldValidity($('#' + prefix + 'CostPriceField'), v.trim() === '' || validateMoneyValue(v, true).valid);
+            updateMarginWarning(prefix);
+        });
+
+        $('#' + prefix + 'DiscountPrice').on('input blur', function () {
+            const v = $(this).val();
+            setFieldValidity($('#' + prefix + 'DiscountPriceField'), validateDiscountValue(v, $('#' + prefix + 'Price').val()).valid);
+        });
+
+        $('#' + prefix + 'PrepTime').on('input blur', function () {
+            setFieldValidity($('#' + prefix + 'PrepTimeField'), validatePrepTimeValue($(this).val()).valid);
+        });
+
+        $('#' + prefix + 'ImageFile').on('change', function () {
+            const res = validateImageFile(this);
+            $('#' + prefix + 'ImageFileErr').css('display', res.valid ? 'none' : 'flex');
+            if (!res.valid) {
+                $('#' + prefix + 'ImagePreview').removeClass('show');
+                $(this).val('');
+            }
+        });
+    }
+
+    function sanitizeInput(value) {
+        return (value || '').trim().replace(/\s+/g, ' ');
+    }
 
     // UI – TABLE / FILTER / RENDER
     function getFilteredItems() {
@@ -642,8 +886,7 @@
         renderTable();
     }
 
-
-    // UI – MODALS (Add / Edit / Delete)
+    // UI – MODALS
     function openAddModal() {
         resetAddForm();
         $('#addOverlay').addClass('show');
@@ -656,44 +899,39 @@
 
     function resetAddForm() {
         $('#addForm')[0].reset();
-        $('#addForm .field').removeClass('invalid');
+        $('#addForm .field').removeClass('invalid valid');
+        $('#addMarginWarn').removeClass('show');
         $('#addStatus').val('AVAILABLE');
         $('input[name="addIsVeg"][value="true"]').prop('checked', true);
         $('#addImagePreview').removeClass('show');
         $('#addImagePreviewImg').attr('src', '');
+        $('#addImageFileErr').css('display', 'none');
+        $('#addDescCount').text('0 / 500').removeClass('near-limit at-limit');
         $('#createItemBtn').prop('disabled', false).text('Create item');
-    }
-
-    function validateAddForm() {
-        $('#addForm .field').removeClass('invalid');
-        let valid = true;
-        if ($('#addItemName').val().trim().length < 2) {
-            $('#addItemName').closest('.field').addClass('invalid'); valid = false;
-        }
-        if (!$('#addCategory').val()) {
-            $('#addCategory').closest('.field').addClass('invalid'); valid = false;
-        }
-        const price = $('#addPrice').val();
-        if (price === '' || isNaN(price) || Number(price) < 0) {
-            $('#addPrice').closest('.field').addClass('invalid'); valid = false;
-        }
-        return valid;
     }
 
     function openEditModal(it) {
         editingItem = it;
+        $('#editForm .field').removeClass('invalid valid');
+        $('#editMarginWarn').removeClass('show');
         $('#editItemId').val(it.itemId ?? it.id);
         $('#editItemName').val(it.itemName || '');
         $('#editDescription').val(it.description || '');
         $('#editCategory').val(categoryIdOf(it));
         $('#editStatus').val((it.itemStatus || 'AVAILABLE').toUpperCase());
         $('#editPrice').val(it.price ?? '');
+        $('#editCostPrice').val(it.costPrice ?? '');
         $('#editDiscountPrice').val(it.discountPrice ?? '');
         $('#editPrepTime').val(it.prepTimeMinutes ?? '');
         $('#editImageFile').val('');
+        $('#editImageFileErr').css('display', 'none');
         $('#editImagePreview').removeClass('show');
         $('#editImagePreviewImg').attr('src', '');
         $('#currentImageHint').text(it.imageUrl ? 'Current image: ' + it.imageUrl.split('/').pop() : 'No image set');
+        const descLen = (it.description || '').length;
+        $('#editDescCount').text(descLen + ' / 500')
+            .toggleClass('at-limit', descLen >= 500)
+            .toggleClass('near-limit', descLen >= 450 && descLen < 500);
         $(`input[name="editIsVeg"][value="${it.isVeg !== false}"]`).prop('checked', true);
         $('#saveItemBtn').prop('disabled', false).text('Save changes');
         $('#editOverlay').addClass('show');
@@ -716,7 +954,6 @@
         deletingItem = null;
     }
 
-
     // EVENT LISTENERS
     $(document).ready(function () {
         const token = localStorage.getItem('JWT');
@@ -733,16 +970,18 @@
         $('#editForm').on('submit', function (e) { e.preventDefault(); saveItem(); });
         $('#addForm').on('submit', function (e) { e.preventDefault(); createItem(); });
 
+        wireLiveValidation('add');
+        wireLiveValidation('edit');
+
         $('#signOutBtn').on('click', function () {
             localStorage.removeItem('JWT');
             localStorage.removeItem('userId');
             window.location.href = 'login.html';
         });
 
-        // Image preview – Add
         $('#addImageFile').on('change', function () {
             const file = this.files[0];
-            if (file) {
+            if (file && validateImageFile(this).valid) {
                 const reader = new FileReader();
                 reader.onload = e => {
                     $('#addImagePreviewImg').attr('src', e.target.result);
@@ -752,10 +991,9 @@
             }
         });
 
-        // Image preview – Edit
         $('#editImageFile').on('change', function () {
             const file = this.files[0];
-            if (file) {
+            if (file && validateImageFile(this).valid) {
                 const reader = new FileReader();
                 reader.onload = e => {
                     $('#editImagePreviewImg').attr('src', e.target.result);
@@ -782,21 +1020,19 @@
         });
     });
 
-    // API ENDPOINTS + AJAX CALLS
-
+    // API
     const API_BASE = 'http://localhost:8080/v1/items';
 
     const ENDPOINTS = {
-        list:       API_BASE,                                    // GET  – all items
-        create:     API_BASE,                                    // POST – create item
-        update:     API_BASE,                                    // PUT  – update item
-        delete:     id => API_BASE + '/' + id,                   // DELETE
-        statuses:   API_BASE + '/statuses',                      // GET  – ItemStatus enum
-        categories: 'http://localhost:8080/v1/categories',       // GET  – for dropdowns
-        upload:     'http://localhost:8080/v1/items/upload'      // POST – image upload
+        list:       API_BASE,
+        create:     API_BASE,
+        update:     API_BASE,
+        delete:     id => API_BASE + '/' + id,
+        statuses:   API_BASE + '/statuses',
+        categories: 'http://localhost:8080/v1/categories',
+        upload:     'http://localhost:8080/v1/items/upload'
     };
 
-    // Upload image → returns URL or null
     function uploadImage(inputId) {
         return new Promise(resolve => {
             const fileInput = document.getElementById(inputId);
@@ -827,7 +1063,6 @@
         });
     }
 
-    // GET ItemStatus enum → fill status dropdowns
     function loadItemStatuses() {
         $.ajax({
             url: ENDPOINTS.statuses,
@@ -875,7 +1110,6 @@
         });
     }
 
-    // GET categories → fill category dropdowns
     function loadCategories() {
         $.ajax({
             url: ENDPOINTS.categories,
@@ -908,7 +1142,6 @@
         });
     }
 
-    // GET all items
     function loadItems() {
         $('#refreshBtn').addClass('spinning');
         renderLoadingState();
@@ -937,9 +1170,11 @@
         });
     }
 
-    // POST create item
     async function createItem() {
-        if (!validateAddForm()) return;
+        if (!validateItemForm('add')) {
+            showError('Please fix the highlighted fields before creating this item.');
+            return;
+        }
 
         const btn = $('#createItemBtn');
         btn.prop('disabled', true).text('Creating…');
@@ -949,9 +1184,10 @@
         const prepTime = $('#addPrepTime').val();
 
         const payload = {
-            itemName: $('#addItemName').val().trim(),
-            description: $('#addDescription').val().trim(),
+            itemName: sanitizeInput($('#addItemName').val()),
+            description: sanitizeInput($('#addDescription').val()),
             price: Number($('#addPrice').val()),
+            costPrice: Number($('#addCostPrice').val()),
             discountPrice: discount === '' ? null : Number(discount),
             imageUrl: imageUrl || '',
             itemStatus: $('#addStatus').val(),
@@ -973,7 +1209,7 @@
             },
             error: function (xhr) {
                 let msg = `Couldn't create this item (error ${xhr.status}).`;
-                if (xhr.status === 409) msg = 'An item with this name already exists.';
+                if (xhr.status === 409) msg = DUPLICATE_NAME_ERR;
                 else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
                 showError(msg);
             },
@@ -983,8 +1219,12 @@
         });
     }
 
-    // PUT update item
     async function saveItem() {
+        if (!validateItemForm('edit')) {
+            showError('Please fix the highlighted fields before saving this item.');
+            return;
+        }
+
         const id = $('#editItemId').val();
         const btn = $('#saveItemBtn');
         btn.prop('disabled', true).text('Saving…');
@@ -996,9 +1236,10 @@
 
         const payload = {
             itemId: Number(id),
-            itemName: $('#editItemName').val().trim(),
-            description: $('#editDescription').val().trim(),
+            itemName: sanitizeInput($('#editItemName').val()),
+            description: sanitizeInput($('#editDescription').val()),
             price: Number($('#editPrice').val()),
+            costPrice: Number($('#editCostPrice').val()),
             discountPrice: discount === '' ? null : Number(discount),
             imageUrl: finalImageUrl,
             itemStatus: $('#editStatus').val(),
@@ -1018,8 +1259,11 @@
                 closeEditModal();
                 loadItems();
             },
-            error: function () {
-                showError('Failed to update item.');
+            error: function (xhr) {
+                let msg = 'Failed to update item.';
+                if (xhr.status === 409) msg = DUPLICATE_NAME_ERR;
+                else if (xhr.responseJSON?.message) msg = xhr.responseJSON.message;
+                showError(msg);
             },
             complete: function () {
                 btn.prop('disabled', false).text('Save changes');
@@ -1027,7 +1271,6 @@
         });
     }
 
-    // DELETE item
     function confirmDelete() {
         if (!deletingItem) return;
         const id = deletingItem.itemId ?? deletingItem.id;
