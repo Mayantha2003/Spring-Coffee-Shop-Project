@@ -123,7 +123,7 @@ public class CustomerServiceImpl implements CustomerService {
     public List<CustomerDTO> getAllCustomers() {
         log.info("Fetching all customers...");
 
-        List<Customer> customers = customerRepository.findAll();
+        List<Customer> customers = customerRepository.findAllWithLoyaltyPoint();
         List<CustomerDTO> list = new ArrayList<>();
         for (Customer c : customers) {
             list.add(mapToDTO(c));
@@ -141,8 +141,7 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         String prefix = query.trim();
-        List<Customer> customers = customerRepository
-                .findByFirstNameStartingWithIgnoreCaseOrLastNameStartingWithIgnoreCase(prefix, prefix);
+        List<Customer> customers = customerRepository.searchByNameWithLoyaltyPoint(prefix);
 
         List<CustomerDTO> result = new ArrayList<>();
         for (Customer c : customers) {
@@ -161,7 +160,7 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         String cleaned = phone.trim().replaceAll("\\s+", "");
-        List<Customer> customers = customerRepository.findByPhoneContaining(cleaned);
+        List<Customer> customers = customerRepository.searchByPhoneWithLoyaltyPoint(cleaned);
 
         List<CustomerDTO> result = new ArrayList<>();
         for (Customer c : customers) {

@@ -2,6 +2,7 @@ package com.example.Spring_Coffee_Shop_Project.repository;
 
 import com.example.Spring_Coffee_Shop_Project.entity.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -20,7 +21,27 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     Optional<Customer> findByPhone(String phone);
 
-    List<Customer> findByFirstNameStartingWithIgnoreCaseOrLastNameStartingWithIgnoreCase(String firstNamePrefix, String lastNamePrefix);
+    @Query("""
+        SELECT DISTINCT c
+        FROM Customer c
+        LEFT JOIN FETCH c.loyaltyPoint
+        """)
+    List<Customer> findAllWithLoyaltyPoint();
 
-    List<Customer> findByPhoneContaining(String phone);
+    @Query("""
+        SELECT DISTINCT c
+        FROM Customer c
+        LEFT JOIN FETCH c.loyaltyPoint
+        WHERE LOWER(c.firstName) LIKE LOWER(CONCAT(:prefix, '%'))
+           OR LOWER(c.lastName) LIKE LOWER(CONCAT(:prefix, '%'))
+        """)
+    List<Customer> searchByNameWithLoyaltyPoint(String prefix);
+
+    @Query("""
+        SELECT DISTINCT c
+        FROM Customer c
+        LEFT JOIN FETCH c.loyaltyPoint
+        WHERE c.phone LIKE CONCAT('%', :phone, '%')
+        """)
+    List<Customer> searchByPhoneWithLoyaltyPoint(String phone);
 }
