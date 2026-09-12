@@ -9,25 +9,14 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     List<Sale> findByBatchBatchId(long batchId);
     List<Sale> findByCustomerCustomerId(long customerId);
-    List<Sale> findByUserUserId(long userId);
     List<Sale> findBySaleStatus(SaleStatus saleStatus);
     List<Sale> findAllByOrderByCreatedAtDesc();
-    Optional<Sale> findBySaleCode(String saleCode);
-    boolean existsBySaleCode(String saleCode);
-    long countByBatchBatchId(long batchId);
-
-    @Query("SELECT s FROM Sale s JOIN FETCH s.saleItems si JOIN FETCH si.item WHERE s.saleId = :saleId")
-    Optional<Sale> findByIdWithItems(@Param("saleId") long saleId);
-
-    @Query("SELECT COUNT(s) FROM Sale s WHERE s.createdAt BETWEEN :start AND :end")
-    long countByCreatedAtBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     // ===== Sales History filter query =====
     @Query("""

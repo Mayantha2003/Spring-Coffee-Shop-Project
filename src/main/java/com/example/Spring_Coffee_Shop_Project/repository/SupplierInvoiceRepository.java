@@ -11,8 +11,6 @@ import java.util.List;
 @Repository
 public interface SupplierInvoiceRepository extends JpaRepository<SupplierInvoice, Long> {
 
-    List<SupplierInvoice> findByStatusOrderByCreatedAtDesc(InvoiceStatus status);
-
     List<SupplierInvoice> findAllByOrderByCreatedAtDesc();
 
     @Query("SELECT i FROM SupplierInvoice i LEFT JOIN FETCH i.items WHERE i.invoiceId = :id")

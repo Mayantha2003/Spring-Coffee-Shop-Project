@@ -3,7 +3,6 @@ package com.example.Spring_Coffee_Shop_Project.controller;
 import com.example.Spring_Coffee_Shop_Project.constant.CommonResponse;
 import com.example.Spring_Coffee_Shop_Project.dto.AuthDTO;
 import com.example.Spring_Coffee_Shop_Project.dto.UserDTO;
-import com.example.Spring_Coffee_Shop_Project.entity.User;
 import com.example.Spring_Coffee_Shop_Project.enumeration.UserRole;
 import com.example.Spring_Coffee_Shop_Project.enumeration.UserStatus;
 import com.example.Spring_Coffee_Shop_Project.security.JwtUtil;
