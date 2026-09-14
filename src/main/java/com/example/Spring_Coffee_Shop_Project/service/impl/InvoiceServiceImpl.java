@@ -55,10 +55,6 @@ public class InvoiceServiceImpl implements InvoiceService {
             .connectTimeout(Duration.ofSeconds(60))
             .build();
 
-    // =========================
-    // Gemini Configuration
-    // =========================
-
     @Value("${gemini.api.key:}")
     private String geminiApiKey;
 
@@ -71,10 +67,6 @@ public class InvoiceServiceImpl implements InvoiceService {
     // Minimum score required for automatic item matching
     private static final double MATCH_THRESHOLD = 0.55;
 
-
-    // =========================================================
-    // SCAN INVOICE
-    // =========================================================
 
     @Override
     public SupplierInvoiceDTO scanInvoice(MultipartFile file) {

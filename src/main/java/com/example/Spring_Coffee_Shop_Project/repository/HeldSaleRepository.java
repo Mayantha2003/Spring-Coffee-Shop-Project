@@ -13,5 +13,4 @@ public interface HeldSaleRepository extends JpaRepository<HeldSale, Long> {
 
     List<HeldSale> findByBatchBatchId(Long batchId);
 
-    List<HeldSale> findByCustomerCustomerId(Long customerId);
 }

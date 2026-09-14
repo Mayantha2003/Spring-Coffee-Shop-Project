@@ -250,9 +250,10 @@
         <div class="action-icon gray"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 9h13a3 3 0 0 1 0 6h-1"/><path d="M4 9v6a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9"/></svg></div>
         <div><div class="action-title">Menu Items</div><div class="action-sub">Manage</div></div>
       </a>
-      <a class="action-card" href="customer_Management.html">
+      <a class="action-card" href="customer_Management.html?action=add">
         <div class="action-icon brown"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
-        <div><div class="action-title">Register</div><div class="action-sub">New member</div></div>
+        <div><div class="action-title">Register</div><div class="action-sub">New member</div>
+        </div>
       </a>
       <a class="action-card" href="held_Sale.html">
         <div class="action-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg></div>
@@ -669,7 +670,11 @@
       window.location.href = 'login.html';
     });
 
-    $('#registerBtn').on('click', function () {
+    $('#registerBtn',).on('click', function () {
+      window.location.href = 'customer_Management.html?action=add';
+    });
+
+    $('#customerManagement').on('click', function () {
       window.location.href = 'customer_Management.html?action=add';
     });
   });

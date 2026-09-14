@@ -1,7 +1,6 @@
 package com.example.Spring_Coffee_Shop_Project.repository;
 
 import com.example.Spring_Coffee_Shop_Project.entity.SupplierInvoice;
-import com.example.Spring_Coffee_Shop_Project.enumeration.InvoiceStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

@@ -13,7 +13,7 @@ import java.util.List;
 public interface SaleItemRepository extends JpaRepository<SaleItem, Long> {
 
     @Query("""
-    SELECT 
+    SELECT
         i.itemName,
         c.categoryName,
         SUM(si.quantity),

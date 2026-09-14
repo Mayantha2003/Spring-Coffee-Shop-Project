@@ -19,8 +19,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     boolean existsByEmailAndCustomerIdNot(String email, long customerId);
 
-    Optional<Customer> findByPhone(String phone);
-
     @Query("""
         SELECT DISTINCT c
         FROM Customer c
